@@ -28,6 +28,8 @@ import { RankingPage } from './pages/RankingPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResultPage } from './pages/ResultPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { StockAnalysisPage } from './pages/StockAnalysisPage'
+import { CryptoAnalysisPage } from './pages/CryptoAnalysisPage'
 import { TradingTerminalPage } from './pages/TradingTerminalPage'
 import { api } from './services/api'
 import type { Asset, MarketEvent, MarketOverview, Portfolio, Top10ComparisonItem, Transaction } from './types'
@@ -143,6 +145,9 @@ const MainAppContent: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/analisis" element={<AnalysisPage />} />
+          <Route path="/analisis/acciones" element={<StockAnalysisPage />} />
+          <Route path="/analisis/criptos" element={<CryptoAnalysisPage />} />
 
           <Route path="/simulador" element={<Navigate to="/exchange" replace />} />
 
