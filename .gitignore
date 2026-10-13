@@ -53,3 +53,7 @@ Thumbs.db
 *.log
 *.sqlite
 *.db
+
+# Documentación privada
+PROJECT_OVERVIEW_MASTER.md
+*.private.md
