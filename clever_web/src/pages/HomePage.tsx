@@ -79,16 +79,188 @@ const COMMUNITY_POSTS = [
   },
 ]
 
+/* ------------------------------------------------------------------ */
+/*  Componentes pequeños reutilizables                                 */
+/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Animaciones                                                        */
+/* ------------------------------------------------------------------ */
+
+const HOME_STYLES = `
+/* --- Animaciones de iconos en hover (según el icono) --- */
+.ico{display:inline-block;transform-origin:center}
+.group:hover .ico-wiggle{animation:ico-wiggle .5s ease-in-out infinite}
+.group:hover .ico-tilt{animation:ico-tilt .7s ease-in-out infinite}
+.group:hover .ico-flip{animation:ico-flip 1s ease-in-out infinite}
+.group:hover .ico-bounce{animation:ico-bounce .6s ease-in-out infinite}
+.group:hover .ico-rise{animation:ico-rise .8s ease-in-out infinite}
+.group:hover .ico-pour{animation:ico-pour 1s ease-in-out infinite}
+.group:hover .ico-spin{animation:ico-spin 1.6s linear infinite}
+.group:hover .ico-flash{animation:ico-flash .6s ease-in-out infinite}
+.group:hover .ico-pop{animation:ico-pop .7s ease-in-out infinite}
+@keyframes ico-wiggle{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-3px) rotate(-14deg)}75%{transform:translateX(3px) rotate(14deg)}}
+@keyframes ico-tilt{0%,100%{transform:rotate(0) scale(1)}30%{transform:rotate(-12deg) scale(1.12)}70%{transform:rotate(10deg) scale(1.12)}}
+@keyframes ico-flip{0%{transform:perspective(160px) rotateY(0)}50%{transform:perspective(160px) rotateY(180deg) scale(1.1)}100%{transform:perspective(160px) rotateY(360deg)}}
+@keyframes ico-bounce{0%,100%{transform:translateY(0) rotate(0)}40%{transform:translateY(-7px) rotate(-8deg)}70%{transform:translateY(0) rotate(6deg)}}
+@keyframes ico-rise{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.15)}}
+@keyframes ico-pour{0%,100%{transform:rotate(0)}40%,60%{transform:rotate(-28deg) translateY(-2px)}}
+@keyframes ico-spin{to{transform:rotate(360deg)}}
+@keyframes ico-flash{0%,100%{transform:scale(1);opacity:1}30%{transform:scale(1.3);opacity:.7}50%{transform:scale(.9);opacity:1}70%{transform:scale(1.25);opacity:.8}}
+@keyframes ico-pop{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+
+/* --- Fondo animado del bloque "Continúa donde lo dejaste" --- */
+.learn-grad{background:linear-gradient(120deg,rgba(10,116,196,.18),rgba(99,102,241,.14),rgba(16,185,129,.13),rgba(10,116,196,.18));background-size:300% 300%;animation:learn-shift 12s ease-in-out infinite}
+@keyframes learn-shift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.learn-dot{animation:learn-float 6s ease-in-out infinite}
+@keyframes learn-float{0%,100%{transform:translateY(0);opacity:.2}50%{transform:translateY(-16px);opacity:.65}}
+
+.learn-scroll{animation:learn-scroll 18s linear infinite}
+@keyframes learn-scroll{from{transform:translateX(0)}to{transform:translateX(-400px)}}
+.learn-candle{transform-box:fill-box;transform-origin:center;animation:learn-candle 3.6s ease-in-out infinite}
+@keyframes learn-candle{0%,100%{transform:scaleY(.9)}50%{transform:scaleY(1.07)}}
+.learn-dash{stroke-dasharray:4 6;animation:learn-dash 1.4s linear infinite}
+@keyframes learn-dash{to{stroke-dashoffset:-20}}
+.learn-live{transform-box:fill-box;transform-origin:center;animation:learn-live 2.2s ease-out infinite}
+@keyframes learn-live{0%{transform:scale(.6);opacity:.9}100%{transform:scale(3);opacity:0}}
+
+/* --- Credencial de perfil --- */
+.profile-banner{background:linear-gradient(120deg,#0a74c4,#6366f1,#8b5cf6,#0a74c4);background-size:300% 300%;animation:learn-shift 10s ease-in-out infinite}
+.profile-grid{background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:18px 18px}
+.profile-ring{background:conic-gradient(from 0deg,#0a74c4,#8b5cf6,#16a34a,#f59e0b,#0a74c4);animation:profile-spin 6s linear infinite}
+@keyframes profile-spin{to{transform:rotate(360deg)}}
+.profile-orb{animation:learn-float 7s ease-in-out infinite}
+.profile-shine{background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.28) 50%,transparent 58%);background-size:260% 100%;animation:profile-shine 6s ease-in-out infinite}
+@keyframes profile-shine{0%{background-position:160% 0}60%,100%{background-position:-60% 0}}
+
+`
+
+// Elige la animación según el icono de FontAwesome
+const iconAnim = (icon: string = ''): string => {
+  const i = icon.toLowerCase()
+  if (/gamepad|dice|puzzle|joystick/.test(i)) return 'ico-wiggle'
+  if (/film|clapper|video|tv|ticket/.test(i)) return 'ico-tilt'
+  if (/book|scroll|journal|pen|note/.test(i)) return 'ico-flip'
+  if (/music|headphones|guitar|microphone|record/.test(i)) return 'ico-bounce'
+  if (/landmark|building|monument|column|chart|coins|trend|arrow-up/.test(i)) return 'ico-rise'
+  if (/flask|vial|microscope|brain/.test(i)) return 'ico-pour'
+  if (/globe|earth|atom|compass|gear/.test(i)) return 'ico-spin'
+  if (/bolt|fire|zap/.test(i)) return 'ico-flash'
+  return 'ico-pop'
+}
+
+// Fondo animado en ciclo (tema trading): una gráfica de velas que avanza sin parar
+// (como un mercado en vivo), con línea de precio, volumen, línea de precio actual
+// con pulso y partículas flotando. El "tile" mide 400 unidades y se repite 2 veces
+// para que el bucle sea continuo y sin saltos.
+const TILE_W = 400
+const STEP = 40
+const X0 = 20
+const CLOSES = [112, 98, 104, 84, 92, 70, 78, 58, 72, 96] // menor y = precio más alto
+const WICKS = [8, 12, 7, 10, 9, 12, 8, 11, 7, 10]
+const VOLUME = [14, 22, 12, 26, 16, 30, 18, 28, 20, 24]
+
+const CANDLE_DEFS = CLOSES.map((close, i) => {
+  const open = CLOSES[(i + CLOSES.length - 1) % CLOSES.length]
+  const top = Math.min(open, close)
+  const bottom = Math.max(open, close)
+  return {
+    x: X0 + i * STEP,
+    top,
+    height: Math.max(bottom - top, 6),
+    wick: WICKS[i],
+    up: close < open,
+  }
+})
+
+// Línea de precio suave que empata exactamente con el siguiente tile
+const LINE_D = (() => {
+  const pts = [...CLOSES, CLOSES[0]].map((y, i) => ({ x: X0 + i * STEP, y }))
+  const mid = (a: { x: number; y: number }, b: { x: number; y: number }) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
+  let d = `M${pts[0].x} ${pts[0].y}`
+  const m0 = mid(pts[0], pts[1])
+  d += ` L${m0.x} ${m0.y}`
+  for (let i = 1; i < pts.length - 1; i++) {
+    const m = mid(pts[i], pts[i + 1])
+    d += ` Q${pts[i].x} ${pts[i].y} ${m.x} ${m.y}`
+  }
+  const last = pts[pts.length - 1]
+  d += ` L${last.x} ${last.y}`
+  return d
+})()
+
+const DOTS = [
+  { x: 60, y: 30 }, { x: 150, y: 52 }, { x: 230, y: 24 },
+  { x: 300, y: 40 }, { x: 350, y: 20 }, { x: 100, y: 46 },
+]
+
+const ChartTile: React.FC<{ dx: number }> = ({ dx }) => (
+  <g transform={`translate(${dx} 0)`}>
+    {/* volumen */}
+    {CANDLE_DEFS.map((c, i) => (
+      <rect key={`v${i}`} x={c.x - 7} y={155 - VOLUME[i]} width="14" height={VOLUME[i]} rx="2" fill="var(--primary)" fillOpacity="0.14" />
+    ))}
+    {/* velas */}
+    {CANDLE_DEFS.map((c, i) => {
+      const color = c.up ? '#16a34a' : '#ef4444'
+      return (
+        <g key={c.x} className="learn-candle" style={{ animationDelay: `${i * 0.35}s` }}>
+          <line x1={c.x} x2={c.x} y1={c.top - c.wick} y2={c.top + c.height + c.wick} stroke={color} strokeOpacity="0.45" strokeWidth="2" strokeLinecap="round" />
+          <rect x={c.x - 7} y={c.top} width="14" height={c.height} rx="3" fill={color} fillOpacity="0.38" />
+        </g>
+      )
+    })}
+    {/* línea de precio */}
+    <path d={LINE_D} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </g>
+)
+
+const LearningBackground: React.FC = () => (
+  <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div className="absolute inset-0 learn-grad"></div>
+    <svg
+      className="absolute right-0 top-0 h-full w-full sm:w-[72%]"
+      viewBox="0 0 400 160"
+      preserveAspectRatio="xMaxYMid slice"
+      style={{
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 40%)',
+        maskImage: 'linear-gradient(to right, transparent 0%, #000 40%)',
+      }}
+    >
+      {/* cuadrícula fija */}
+      {[40, 80, 120].map((y) => (
+        <line key={y} x1="0" x2="400" y1={y} y2={y} stroke="var(--primary)" strokeOpacity="0.1" />
+      ))}
+
+      {/* gráfica que avanza en bucle */}
+      <g className="learn-scroll">
+        <ChartTile dx={0} />
+        <ChartTile dx={TILE_W} />
+      </g>
+
+      {/* línea de precio actual (fija) con marcador pulsante */}
+      <line className="learn-dash" x1="0" x2="400" y1="64" y2="64" stroke="#16a34a" strokeOpacity="0.55" strokeWidth="1.2" />
+      <circle cx="388" cy="64" r="4" fill="#16a34a" />
+      <circle className="learn-live" cx="388" cy="64" r="4" fill="none" stroke="#16a34a" strokeWidth="1.5" />
+
+      {/* partículas */}
+      {DOTS.map((d, i) => (
+        <circle key={i} className="learn-dot" cx={d.x} cy={d.y} r="2.5" fill="#8b5cf6" style={{ animationDelay: `${i * 0.9}s` }} />
+      ))}
+    </svg>
+  </div>
+)
+
 const ToolCard: React.FC<{ tool: (typeof TOOLS)[number] }> = ({ tool }) => (
   <Link
     to={tool.to}
-    className="platform-card platform-card-hover p-5 flex flex-col items-center text-center gap-3 block text-decoration-none"
+    className="platform-card platform-card-hover group p-5 flex flex-col items-center text-center gap-3 block text-decoration-none"
   >
     <div
-      className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl"
+      className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl transition-transform duration-300 group-hover:scale-110"
       style={{ background: `${tool.color}1f`, color: tool.color }}
     >
-      <i className={tool.icon}></i>
+      <i className={`${tool.icon} ico ${iconAnim(tool.icon)}`}></i>
     </div>
     <h3 className="text-sm font-bold text-[var(--text)]">{tool.title}</h3>
     <p className="text-xs text-[var(--text-muted)] leading-relaxed">{tool.desc}</p>
@@ -111,10 +283,10 @@ const CategoryCard: React.FC<{
       style={{ backgroundImage: `radial-gradient(circle at 100% 50%, ${a.glow}, transparent 60%)` }}
     >
       <div
-        className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-lg"
+        className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-lg transition-transform duration-300 group-hover:scale-110"
         style={{ background: a.bg, color: a.fg }}
       >
-        <i className={cat.icon}></i>
+        <i className={`${cat.icon} ico ${iconAnim(cat.icon)}`}></i>
       </div>
 
       <div className="min-w-0">
@@ -161,43 +333,108 @@ export const HomePage: React.FC = () => {
 
   const visibleCats = showAllAreas ? CATEGORIES : CATEGORIES.slice(0, 4)
 
+  /* ---------------- Widgets de la columna derecha ---------------- */
+
+  const displayName: string = (user as any).username || (user as any).name || 'Usuario'
+  const avatarUrl: string | undefined = (user as any).avatar || (user as any).avatarUrl
+  const xpPct = Math.min(100, (user.xp / user.xpToNext) * 100)
+
   const ProfileWidget = (
-    <div className="platform-card p-5 space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-[var(--bg-alt)] border border-[var(--border)] flex items-center justify-center text-lg text-[var(--primary)]">
-          <i className="fa-solid fa-user"></i>
+    <div className="platform-card relative isolate overflow-hidden p-0">
+      {/* Banner con degradado animado, cuadrícula y orbes */}
+      <div className="relative h-24 profile-banner overflow-hidden">
+        <div className="absolute inset-0 profile-grid opacity-60"></div>
+        <div className="profile-orb absolute -left-4 top-6 w-16 h-16 rounded-full bg-white/25 blur-xl"></div>
+        <div
+          className="profile-orb absolute right-2 -top-2 w-20 h-20 rounded-full bg-fuchsia-300/30 blur-xl"
+          style={{ animationDelay: '2s' }}
+        ></div>
+        {/* Ranura de credencial */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-black/30 border border-white/30"></div>
+        <div className="absolute top-3 left-4 text-[10px] font-mono font-bold tracking-widest text-white/90">
+          CLEVER
         </div>
-        <div className="min-w-0">
-          <div className="text-sm font-bold text-[var(--text)] truncate">
-            {(user as any).username || (user as any).name || 'Usuario'}
+        <div className="absolute top-3 right-4 text-[10px] font-mono tracking-widest text-white/80">
+          CREDENCIAL
+        </div>
+      </div>
+
+      {/* Foto centrada con aro animado */}
+      <div className="-mt-12 flex justify-center">
+        <div className="relative w-[104px] h-[104px]">
+          <div className="absolute inset-0 rounded-full profile-ring"></div>
+          <div className="absolute inset-[4px] rounded-full bg-[var(--bg)] flex items-center justify-center overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+            ) : (
+              <i className="fa-solid fa-user text-4xl text-[var(--primary)]"></i>
+            )}
           </div>
-          <div className="text-[11px] text-[var(--text-muted)]">
-            Nivel {user.level} &middot; {user.levelLabel}
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--primary)] text-white border-2 border-[var(--bg)] flex items-center justify-center text-xs font-bold shadow">
+            {user.level}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="p-2 bg-[var(--bg-alt)] rounded border border-[var(--border)]">
+      {/* Nombre y rango debajo */}
+      <div className="text-center px-5 pt-3 space-y-1.5">
+        <div className="text-lg font-extrabold text-[var(--text)] tracking-tight truncate">{displayName}</div>
+        <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[var(--bg-alt)] border border-[var(--border)] text-[var(--primary)]">
+          Nivel {user.level} &middot; {user.levelLabel}
+        </span>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-3 gap-2 px-5 pt-4">
+        <div className="p-2 bg-[var(--bg-alt)] rounded-lg border border-[var(--border)] text-center">
           <i className="fa-solid fa-fire text-orange-500 text-sm"></i>
           <div className="text-sm font-bold text-[var(--text)] mt-1">{user.streak}</div>
           <div className="text-[10px] text-[var(--text-muted)]">Racha</div>
         </div>
-        <div className="p-2 bg-[var(--bg-alt)] rounded border border-[var(--border)]">
+        <div className="p-2 bg-[var(--bg-alt)] rounded-lg border border-[var(--border)] text-center">
           <i className="fa-solid fa-star text-yellow-500 text-sm"></i>
           <div className="text-sm font-bold text-[var(--text)] mt-1">{user.level}</div>
           <div className="text-[10px] text-[var(--text-muted)]">Nivel</div>
         </div>
-        <div className="p-2 bg-[var(--bg-alt)] rounded border border-[var(--border)]">
+        <div className="p-2 bg-[var(--bg-alt)] rounded-lg border border-[var(--border)] text-center">
           <i className="fa-solid fa-coins text-amber-500 text-sm"></i>
           <div className="text-sm font-bold text-[var(--text)] mt-1">{user.coins}</div>
           <div className="text-[10px] text-[var(--text-muted)]">Monedas</div>
         </div>
       </div>
 
-      <Link to="/perfil" className="w-full platform-btn-secondary py-2 text-xs font-semibold justify-center">
-        Ver perfil
-      </Link>
+      {/* Barra de XP */}
+      <div className="px-5 pt-4 space-y-1">
+        <div className="flex justify-between text-[10px] font-mono text-[var(--text-muted)]">
+          <span>XP</span>
+          <span>
+            {user.xp} / {user.xpToNext}
+          </span>
+        </div>
+        <div className="w-full h-1.5 bg-[var(--bg-alt)] rounded overflow-hidden">
+          <div className="h-full bg-[var(--primary)]" style={{ width: `${xpPct}%` }}></div>
+        </div>
+      </div>
+
+      <div className="px-5 pt-4">
+        <Link to="/perfil" className="w-full platform-btn-secondary py-2 text-xs font-semibold justify-center">
+          Ver perfil
+        </Link>
+      </div>
+
+      {/* Código de barras decorativo */}
+      <div className="px-5 py-4">
+        <div
+          className="h-5 rounded-sm opacity-40"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px 4px, var(--text) 4px 5px, transparent 5px 8px, var(--text) 8px 11px, transparent 11px 13px)',
+          }}
+        ></div>
+      </div>
+
+      {/* Brillo holográfico */}
+      <div className="absolute inset-0 pointer-events-none profile-shine"></div>
     </div>
   )
 
@@ -313,12 +550,13 @@ export const HomePage: React.FC = () => {
 
   if (isGuest) {
     return (
-      <div className="max-w-6xl mx-auto py-6 space-y-12">
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[480px]">
-          <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
-              <i className="fa-solid fa-sparkles text-[10px]"></i>
-              <span>Cleverkor &middot; Mascota Oficial Kor</span>
+      <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+        <style>{HOME_STYLES}</style>
+        <div className="space-y-8 min-w-0">
+          {/* Hero compacto */}
+          <section className="space-y-3">
+            <div className="text-xs font-mono text-[var(--primary)] uppercase tracking-wider">
+              Plataforma Educativa &middot; Mercado Financiero
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold text-[var(--text)] tracking-tight leading-tight">
@@ -424,29 +662,15 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 space-y-12">
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[400px]">
-        <div className="lg:col-span-7 space-y-4 min-w-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--primary)] bg-[var(--surface-alt)] px-2.5 py-1 rounded border border-[var(--border)]">
-              <i className="fa-solid fa-robot text-[10px]"></i>
-              <span>Kor &middot; Mentor Activo</span>
-            </div>
-          </div>
+    <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+        <style>{HOME_STYLES}</style>
+      <div className="space-y-10 min-w-0">
+        {/* Continúa donde lo dejaste */}
+        <section className="space-y-3">
+          <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
 
-          <div
-            className="platform-card relative overflow-hidden p-6 sm:p-8 space-y-4"
-            style={{
-              backgroundImage:
-                'linear-gradient(135deg, rgba(10,116,196,0.14) 0%, rgba(99,102,241,0.10) 55%, transparent 100%)',
-            }}
-          >
-            <i
-              className={`${currentCat.icon} absolute -right-4 -bottom-6 text-[9rem] pointer-events-none`}
-              style={{ color: 'var(--primary)', opacity: 0.08 }}
-              aria-hidden="true"
-            ></i>
+          <div className="platform-card relative isolate overflow-hidden p-6 sm:p-8 space-y-4">
+            <LearningBackground />
 
             <div className="flex items-center gap-3 max-w-sm">
               <div className="flex-1 h-2 bg-[var(--bg-alt)] rounded overflow-hidden border border-[var(--border)]">
@@ -552,6 +776,14 @@ export const HomePage: React.FC = () => {
           {RankingWidget}
         </aside>
       </div>
+
+      {/* Columna derecha */}
+      <aside className="space-y-5">
+        {ProfileWidget}
+        {MissionWidget}
+        {ProgressWidget}
+        {MentorWidget}
+      </aside>
     </div>
   )
 }
