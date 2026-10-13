@@ -79,16 +79,7 @@ const COMMUNITY_POSTS = [
   },
 ]
 
-/* ------------------------------------------------------------------ */
-/*  Componentes pequeños reutilizables                                 */
-/* ------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------ */
-/*  Animaciones                                                        */
-/* ------------------------------------------------------------------ */
-
 const HOME_STYLES = `
-/* --- Animaciones de iconos en hover (según el icono) --- */
 .ico{display:inline-block;transform-origin:center}
 .group:hover .ico-wiggle{animation:ico-wiggle .5s ease-in-out infinite}
 .group:hover .ico-tilt{animation:ico-tilt .7s ease-in-out infinite}
@@ -109,7 +100,6 @@ const HOME_STYLES = `
 @keyframes ico-flash{0%,100%{transform:scale(1);opacity:1}30%{transform:scale(1.3);opacity:.7}50%{transform:scale(.9);opacity:1}70%{transform:scale(1.25);opacity:.8}}
 @keyframes ico-pop{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
 
-/* --- Fondo animado del bloque "Continúa donde lo dejaste" --- */
 .learn-grad{background:linear-gradient(120deg,rgba(10,116,196,.18),rgba(99,102,241,.14),rgba(16,185,129,.13),rgba(10,116,196,.18));background-size:300% 300%;animation:learn-shift 12s ease-in-out infinite}
 @keyframes learn-shift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .learn-dot{animation:learn-float 6s ease-in-out infinite}
@@ -124,7 +114,6 @@ const HOME_STYLES = `
 .learn-live{transform-box:fill-box;transform-origin:center;animation:learn-live 2.2s ease-out infinite}
 @keyframes learn-live{0%{transform:scale(.6);opacity:.9}100%{transform:scale(3);opacity:0}}
 
-/* --- Credencial de perfil --- */
 .profile-banner{background:linear-gradient(120deg,#0a74c4,#6366f1,#8b5cf6,#0a74c4);background-size:300% 300%;animation:learn-shift 10s ease-in-out infinite}
 .profile-grid{background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:18px 18px}
 .profile-ring{background:conic-gradient(from 0deg,#0a74c4,#8b5cf6,#16a34a,#f59e0b,#0a74c4);animation:profile-spin 6s linear infinite}
@@ -135,7 +124,6 @@ const HOME_STYLES = `
 
 `
 
-// Elige la animación según el icono de FontAwesome
 const iconAnim = (icon: string = ''): string => {
   const i = icon.toLowerCase()
   if (/gamepad|dice|puzzle|joystick/.test(i)) return 'ico-wiggle'
@@ -149,14 +137,10 @@ const iconAnim = (icon: string = ''): string => {
   return 'ico-pop'
 }
 
-// Fondo animado en ciclo (tema trading): una gráfica de velas que avanza sin parar
-// (como un mercado en vivo), con línea de precio, volumen, línea de precio actual
-// con pulso y partículas flotando. El "tile" mide 400 unidades y se repite 2 veces
-// para que el bucle sea continuo y sin saltos.
 const TILE_W = 400
 const STEP = 40
 const X0 = 20
-const CLOSES = [112, 98, 104, 84, 92, 70, 78, 58, 72, 96] // menor y = precio más alto
+const CLOSES = [112, 98, 104, 84, 92, 70, 78, 58, 72, 96]
 const WICKS = [8, 12, 7, 10, 9, 12, 8, 11, 7, 10]
 const VOLUME = [14, 22, 12, 26, 16, 30, 18, 28, 20, 24]
 
@@ -173,7 +157,6 @@ const CANDLE_DEFS = CLOSES.map((close, i) => {
   }
 })
 
-// Línea de precio suave que empata exactamente con el siguiente tile
 const LINE_D = (() => {
   const pts = [...CLOSES, CLOSES[0]].map((y, i) => ({ x: X0 + i * STEP, y }))
   const mid = (a: { x: number; y: number }, b: { x: number; y: number }) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
@@ -196,11 +179,9 @@ const DOTS = [
 
 const ChartTile: React.FC<{ dx: number }> = ({ dx }) => (
   <g transform={`translate(${dx} 0)`}>
-    {/* volumen */}
     {CANDLE_DEFS.map((c, i) => (
       <rect key={`v${i}`} x={c.x - 7} y={155 - VOLUME[i]} width="14" height={VOLUME[i]} rx="2" fill="var(--primary)" fillOpacity="0.14" />
     ))}
-    {/* velas */}
     {CANDLE_DEFS.map((c, i) => {
       const color = c.up ? '#16a34a' : '#ef4444'
       return (
@@ -210,7 +191,6 @@ const ChartTile: React.FC<{ dx: number }> = ({ dx }) => (
         </g>
       )
     })}
-    {/* línea de precio */}
     <path d={LINE_D} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
   </g>
 )
@@ -227,23 +207,19 @@ const LearningBackground: React.FC = () => (
         maskImage: 'linear-gradient(to right, transparent 0%, #000 40%)',
       }}
     >
-      {/* cuadrícula fija */}
       {[40, 80, 120].map((y) => (
         <line key={y} x1="0" x2="400" y1={y} y2={y} stroke="var(--primary)" strokeOpacity="0.1" />
       ))}
 
-      {/* gráfica que avanza en bucle */}
       <g className="learn-scroll">
         <ChartTile dx={0} />
         <ChartTile dx={TILE_W} />
       </g>
 
-      {/* línea de precio actual (fija) con marcador pulsante */}
       <line className="learn-dash" x1="0" x2="400" y1="64" y2="64" stroke="#16a34a" strokeOpacity="0.55" strokeWidth="1.2" />
       <circle cx="388" cy="64" r="4" fill="#16a34a" />
       <circle className="learn-live" cx="388" cy="64" r="4" fill="none" stroke="#16a34a" strokeWidth="1.5" />
 
-      {/* partículas */}
       {DOTS.map((d, i) => (
         <circle key={i} className="learn-dot" cx={d.x} cy={d.y} r="2.5" fill="#8b5cf6" style={{ animationDelay: `${i * 0.9}s` }} />
       ))}
@@ -333,15 +309,12 @@ export const HomePage: React.FC = () => {
 
   const visibleCats = showAllAreas ? CATEGORIES : CATEGORIES.slice(0, 4)
 
-  /* ---------------- Widgets de la columna derecha ---------------- */
-
   const displayName: string = (user as any).username || (user as any).name || 'Usuario'
   const avatarUrl: string | undefined = (user as any).avatar || (user as any).avatarUrl
   const xpPct = Math.min(100, (user.xp / user.xpToNext) * 100)
 
   const ProfileWidget = (
     <div className="platform-card relative isolate overflow-hidden p-0">
-      {/* Banner con degradado animado, cuadrícula y orbes */}
       <div className="relative h-24 profile-banner overflow-hidden">
         <div className="absolute inset-0 profile-grid opacity-60"></div>
         <div className="profile-orb absolute -left-4 top-6 w-16 h-16 rounded-full bg-white/25 blur-xl"></div>
@@ -349,7 +322,6 @@ export const HomePage: React.FC = () => {
           className="profile-orb absolute right-2 -top-2 w-20 h-20 rounded-full bg-fuchsia-300/30 blur-xl"
           style={{ animationDelay: '2s' }}
         ></div>
-        {/* Ranura de credencial */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-black/30 border border-white/30"></div>
         <div className="absolute top-3 left-4 text-[10px] font-mono font-bold tracking-widest text-white/90">
           CLEVER
@@ -359,7 +331,6 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Foto centrada con aro animado */}
       <div className="-mt-12 flex justify-center">
         <div className="relative w-[104px] h-[104px]">
           <div className="absolute inset-0 rounded-full profile-ring"></div>
@@ -376,7 +347,6 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Nombre y rango debajo */}
       <div className="text-center px-5 pt-3 space-y-1.5">
         <div className="text-lg font-extrabold text-[var(--text)] tracking-tight truncate">{displayName}</div>
         <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[var(--bg-alt)] border border-[var(--border)] text-[var(--primary)]">
@@ -384,7 +354,6 @@ export const HomePage: React.FC = () => {
         </span>
       </div>
 
-      {/* Estadísticas */}
       <div className="grid grid-cols-3 gap-2 px-5 pt-4">
         <div className="p-2 bg-[var(--bg-alt)] rounded-lg border border-[var(--border)] text-center">
           <i className="fa-solid fa-fire text-orange-500 text-sm"></i>
@@ -403,7 +372,6 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Barra de XP */}
       <div className="px-5 pt-4 space-y-1">
         <div className="flex justify-between text-[10px] font-mono text-[var(--text-muted)]">
           <span>XP</span>
@@ -422,7 +390,6 @@ export const HomePage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Código de barras decorativo */}
       <div className="px-5 py-4">
         <div
           className="h-5 rounded-sm opacity-40"
@@ -433,7 +400,6 @@ export const HomePage: React.FC = () => {
         ></div>
       </div>
 
-      {/* Brillo holográfico */}
       <div className="absolute inset-0 pointer-events-none profile-shine"></div>
     </div>
   )
@@ -550,13 +516,13 @@ export const HomePage: React.FC = () => {
 
   if (isGuest) {
     return (
-      <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
+      <div className="max-w-6xl mx-auto py-6 space-y-12">
         <style>{HOME_STYLES}</style>
-        <div className="space-y-8 min-w-0">
-          {/* Hero compacto */}
-          <section className="space-y-3">
-            <div className="text-xs font-mono text-[var(--primary)] uppercase tracking-wider">
-              Plataforma Educativa &middot; Mercado Financiero
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[480px]">
+          <div className="lg:col-span-7 space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
+              <i className="fa-solid fa-sparkles text-[10px]"></i>
+              <span>Cleverkor &middot; Mascota Oficial Kor</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-extrabold text-[var(--text)] tracking-tight leading-tight">
@@ -662,12 +628,17 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
-        <style>{HOME_STYLES}</style>
-      <div className="space-y-10 min-w-0">
-        {/* Continúa donde lo dejaste */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
+    <div className="max-w-6xl mx-auto py-6 space-y-12">
+      <style>{HOME_STYLES}</style>
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[400px]">
+        <div className="lg:col-span-7 space-y-4 min-w-0">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
+            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--primary)] bg-[var(--surface-alt)] px-2.5 py-1 rounded border border-[var(--border)]">
+              <i className="fa-solid fa-robot text-[10px]"></i>
+              <span>Kor &middot; Mentor Activo</span>
+            </div>
+          </div>
 
           <div className="platform-card relative isolate overflow-hidden p-6 sm:p-8 space-y-4">
             <LearningBackground />
@@ -776,14 +747,6 @@ export const HomePage: React.FC = () => {
           {RankingWidget}
         </aside>
       </div>
-
-      {/* Columna derecha */}
-      <aside className="space-y-5">
-        {ProfileWidget}
-        {MissionWidget}
-        {ProgressWidget}
-        {MentorWidget}
-      </aside>
     </div>
   )
 }
