@@ -2,12 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { CATEGORIES, MISSIONS_BY_CATEGORY } from '../data/catalog'
+import { CleverkorMascot3D } from '../components/CleverkorMascot3D'
 
-/* ------------------------------------------------------------------ */
-/*  Datos auxiliares                                                   */
-/* ------------------------------------------------------------------ */
-
-// Colores de acento para los iconos de categoría (se asignan por posición).
 const ACCENTS = [
   { fg: '#2563eb', bg: 'rgba(37,99,235,0.12)', glow: 'rgba(37,99,235,0.10)' },
   { fg: '#ea580c', bg: 'rgba(234,88,12,0.12)', glow: 'rgba(234,88,12,0.10)' },
@@ -19,7 +15,6 @@ const ACCENTS = [
   { fg: '#db2777', bg: 'rgba(219,39,119,0.12)', glow: 'rgba(219,39,119,0.10)' },
 ]
 
-// Herramientas prácticas (las 2 originales + Diario de Trading)
 const TOOLS = [
   {
     to: '/exchange',
@@ -44,7 +39,6 @@ const TOOLS = [
   },
 ]
 
-// TODO: reemplazar por el ranking real (API / contexto)
 const TOP_RANKING = [
   { name: 'Juan P.', xp: 4500 },
   { name: 'María S.', xp: 4200 },
@@ -52,7 +46,6 @@ const TOP_RANKING = [
   { name: 'Ana G.', xp: 3650 },
 ]
 
-// TODO: reemplazar por publicaciones reales de la comunidad (API / contexto)
 const COMMUNITY_POSTS = [
   {
     id: 1,
@@ -280,7 +273,6 @@ const CategoryCard: React.FC<{
   onClick: () => void
 }> = ({ cat, index, onClick }) => {
   const a = ACCENTS[index % ACCENTS.length]
-  // Si tu catálogo trae los módulos, se cuentan; si no, se muestra 5 por defecto.
   const modules: number = cat.modules?.length ?? cat.modulesCount ?? 5
 
   return (
@@ -302,7 +294,6 @@ const CategoryCard: React.FC<{
         <p className="text-xs text-[var(--text-muted)]">{modules} módulos para explorar</p>
       </div>
 
-      {/* Icono de fondo difuminado */}
       <i
         className={`${cat.icon} absolute right-8 top-1/2 -translate-y-1/2 text-5xl pointer-events-none`}
         style={{ color: a.fg, opacity: 0.1 }}
@@ -312,10 +303,6 @@ const CategoryCard: React.FC<{
     </button>
   )
 }
-
-/* ------------------------------------------------------------------ */
-/*  Página                                                             */
-/* ------------------------------------------------------------------ */
 
 export const HomePage: React.FC = () => {
   const { user, isGuest, completeMission } = usePlatform()
@@ -330,7 +317,6 @@ export const HomePage: React.FC = () => {
   const isMissionDone = user._lastMissionDate === today
 
   const currentCat = CATEGORIES.find((c) => c.id === missionCat) || CATEGORIES[0]
-  // TODO: conecta aquí el progreso real del curso. Por ahora usa user.courseProgress si existe.
   const courseProgress: number = Math.min(100, Math.max(0, (user as any).courseProgress?.[missionCat] ?? 0))
   const nextLesson: string = (user as any).nextLesson?.[missionCat] ?? 'Siguiente lección'
 
@@ -469,7 +455,7 @@ export const HomePage: React.FC = () => {
       ) : (
         <button
           onClick={() => completeMission(missionCat)}
-          className="w-full platform-btn-primary py-1.5 text-xs font-semibold justify-center"
+          className="w-full platform-btn-primary py-1.5 text-xs font-semibold justify-center cursor-pointer"
         >
           Marcar como completada
         </button>
@@ -551,20 +537,17 @@ export const HomePage: React.FC = () => {
     <div className="p-4 bg-[var(--bg-alt)] border border-[var(--border)] rounded space-y-2">
       <div className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
         <i className="fa-solid fa-robot text-[10px] text-[var(--primary)]"></i>
-        <span>Mentor IA de Clever</span>
+        <span>Kor &middot; Mentor IA</span>
       </div>
       <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-        ¿Dudas sobre soportes, velas o gestión de riesgo? Consulta al tutor en cualquier momento.
+        ¿Dudas sobre soportes, velas o gestión de riesgo? Kor te orienta en cualquier momento.
       </p>
       <Link to="/mentor" className="text-xs text-[var(--primary)] font-semibold hover:underline block pt-1">
-        Abrir chat con Mentor &rarr;
+        Abrir chat con Kor &rarr;
       </Link>
     </div>
   )
 
-  /* ================================================================ */
-  /*  VISTA INVITADO                                                   */
-  /* ================================================================ */
   if (isGuest) {
     return (
       <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
@@ -576,20 +559,21 @@ export const HomePage: React.FC = () => {
               Plataforma Educativa &middot; Mercado Financiero
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-[var(--text)] tracking-tight leading-tight max-w-2xl">
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-[var(--text)] tracking-tight leading-tight">
               Aprende trading, finanzas y cultura digital con práctica real.
             </h1>
 
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-xl">
-              Domina el análisis técnico mediante lecciones estructuradas, evaluaciones adaptativas y operaciones
-              prácticas en el exchange spot con cotizaciones en vivo.
+            <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed max-w-xl">
+              Domina el análisis técnico con <strong>Kor</strong>, la mascota inteligente de Cleverkor, evaluaciones adaptativas y operaciones prácticas en el exchange spot con cotizaciones en vivo.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link to="/diagnostico?cat=trading" className="platform-btn-primary py-2.5 px-5 text-xs font-semibold">
+                <i className="fa-solid fa-graduation-cap text-xs"></i>
                 <span>Hacer examen diagnóstico</span>
               </Link>
               <Link to="/exchange" className="platform-btn-secondary py-2.5 px-5 text-xs font-semibold">
+                <i className="fa-solid fa-chart-line text-xs"></i>
                 <span>Ver mercado spot</span>
               </Link>
               <Link
@@ -599,84 +583,84 @@ export const HomePage: React.FC = () => {
                 Crear cuenta
               </Link>
             </div>
-          </section>
+          </div>
 
-          {/* Áreas de conocimiento desplegables */}
-          <section className="platform-card overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setAreasOpen((o) => !o)}
-              aria-expanded={areasOpen}
-              className="w-full flex items-center justify-between px-5 py-4 text-left"
-            >
-              <span className="flex items-center gap-3">
-                <i className="fa-solid fa-book-open text-[var(--primary)]"></i>
-                <span>
-                  <span className="block text-base font-bold text-[var(--text)]">Áreas de Conocimiento</span>
-                  <span className="block text-xs text-[var(--text-muted)]">
-                    Selecciona una categoría para comenzar tu ruta de estudio.
+          <div className="lg:col-span-5 h-[480px] w-full flex items-center justify-center relative overflow-visible">
+            <CleverkorMascot3D height="100%" />
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
+          <div className="space-y-8 min-w-0">
+            <section className="platform-card overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setAreasOpen((o) => !o)}
+                aria-expanded={areasOpen}
+                className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer"
+              >
+                <span className="flex items-center gap-3">
+                  <i className="fa-solid fa-book-open text-[var(--primary)]"></i>
+                  <span>
+                    <span className="block text-base font-bold text-[var(--text)]">Áreas de Conocimiento</span>
+                    <span className="block text-xs text-[var(--text-muted)]">
+                      Selecciona una categoría para comenzar tu ruta de estudio.
+                    </span>
                   </span>
                 </span>
-              </span>
-              <i
-                className={`fa-solid fa-chevron-down text-[var(--text-muted)] transition-transform ${
-                  areasOpen ? 'rotate-180' : ''
-                }`}
-              ></i>
-            </button>
+                <i
+                  className={`fa-solid fa-chevron-down text-[var(--text-muted)] transition-transform ${
+                    areasOpen ? 'rotate-180' : ''
+                  }`}
+                ></i>
+              </button>
 
-            {areasOpen && (
-              <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)] pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {visibleCats.map((cat, i) => (
-                    <CategoryCard key={cat.id} cat={cat} index={i} onClick={() => handleCategoryClick(cat.id)} />
-                  ))}
+              {areasOpen && (
+                <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)] pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {visibleCats.map((cat, i) => (
+                      <CategoryCard key={cat.id} cat={cat} index={i} onClick={() => handleCategoryClick(cat.id)} />
+                    ))}
+                  </div>
+
+                  {CATEGORIES.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAreas((s) => !s)}
+                      className="mx-auto flex items-center gap-1.5 text-xs font-semibold text-[var(--primary)] hover:underline cursor-pointer"
+                    >
+                      <span>{showAllAreas ? 'Ver menos' : 'Ver más'}</span>
+                      <i className={`fa-solid ${showAllAreas ? 'fa-chevron-up' : 'fa-chevron-down'} text-[10px]`}></i>
+                    </button>
+                  )}
                 </div>
+              )}
+            </section>
 
-                {CATEGORIES.length > 4 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllAreas((s) => !s)}
-                    className="mx-auto flex items-center gap-1.5 text-xs font-semibold text-[var(--primary)] hover:underline"
-                  >
-                    <span>{showAllAreas ? 'Ver menos' : 'Ver más'}</span>
-                    <i className={`fa-solid ${showAllAreas ? 'fa-chevron-up' : 'fa-chevron-down'} text-[10px]`}></i>
-                  </button>
-                )}
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Entrena tus decisiones con el mercado spot y desafíos.
+                </p>
               </div>
-            )}
-          </section>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {TOOLS.map((t) => (
+                  <ToolCard key={t.to} tool={t} />
+                ))}
+              </div>
+            </section>
+          </div>
 
-          {/* Herramientas prácticas */}
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
-              <p className="text-xs text-[var(--text-muted)]">
-                Entrena tus decisiones con el mercado spot y desafíos.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {TOOLS.map((t) => (
-                <ToolCard key={t.to} tool={t} />
-              ))}
-            </div>
-          </section>
+          <aside className="space-y-5">
+            {RankingWidget}
+            {MentorWidget}
+          </aside>
         </div>
-
-        {/* Columna derecha */}
-        <aside className="space-y-5">
-          {MissionWidget}
-          {ProgressWidget}
-          {RankingWidget}
-          {MentorWidget}
-        </aside>
       </div>
     )
   }
 
-  /* ================================================================ */
-  /*  VISTA REGISTRADO                                                 */
-  /* ================================================================ */
   return (
     <div className="max-w-6xl mx-auto py-4 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
         <style>{HOME_STYLES}</style>
@@ -696,7 +680,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div>
-              <div className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Curso</div>
+              <div className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Curso activo</div>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight">
                 {currentCat.name}
               </h3>
@@ -715,68 +699,82 @@ export const HomePage: React.FC = () => {
               </Link>
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Comunidad */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Únete a la comunidad</h2>
-            <Link to="/comunidad" className="text-xs text-[var(--primary)] font-medium hover:underline">
-              Ir a Comunidad
-            </Link>
-          </div>
+        <div className="lg:col-span-5 h-[400px] w-full flex items-center justify-center relative overflow-visible">
+          <CleverkorMascot3D height="100%" />
+        </div>
+      </section>
 
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
-            {COMMUNITY_POSTS.map((p) => (
-              <Link
-                key={p.id}
-                to="/comunidad"
-                className="platform-card platform-card-hover shrink-0 w-64 sm:w-72 snap-start p-4 space-y-3 block text-decoration-none"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[var(--bg-alt)] border border-[var(--border)] flex items-center justify-center text-[11px] font-bold text-[var(--primary)]">
-                    {p.author.charAt(0)}
-                  </div>
-                  <div className="leading-tight">
-                    <div className="text-xs font-bold text-[var(--text)]">
-                      {p.author} <span className="font-normal text-[var(--text-muted)]">&middot; {p.time}</span>
-                    </div>
-                    <div className="text-[11px] text-[var(--text-muted)]">#{p.channel}</div>
-                  </div>
-                </div>
-
-                <h3 className="text-sm font-bold text-[var(--text)] leading-snug">{p.title}</h3>
-                <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.body}</p>
-
-                <div className="flex items-center gap-4 pt-1 text-[11px] text-[var(--text-muted)]">
-                  <span className="flex items-center gap-1.5">
-                    <i className="fa-regular fa-heart"></i>
-                    {p.likes}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <i className="fa-regular fa-comment"></i>
-                    {p.comments}
-                  </span>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
+        <div className="space-y-10 min-w-0">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Únete a la comunidad</h2>
+              <Link to="/comunidad" className="text-xs text-[var(--primary)] font-medium hover:underline">
+                Ir a Comunidad
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
 
-        {/* Herramientas prácticas */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
-            <p className="text-xs text-[var(--text-muted)]">
-              Entrena tus decisiones con el mercado spot y desafíos.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {TOOLS.map((t) => (
-              <ToolCard key={t.to} tool={t} />
-            ))}
-          </div>
-        </section>
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              {COMMUNITY_POSTS.map((p) => (
+                <Link
+                  key={p.id}
+                  to="/comunidad"
+                  className="platform-card platform-card-hover shrink-0 w-64 sm:w-72 snap-start p-4 space-y-3 block text-decoration-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[var(--bg-alt)] border border-[var(--border)] flex items-center justify-center text-[11px] font-bold text-[var(--primary)]">
+                      {p.author.charAt(0)}
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold text-[var(--text)]">
+                        {p.author} <span className="font-normal text-[var(--text-muted)]">&middot; {p.time}</span>
+                      </div>
+                      <div className="text-[11px] text-[var(--text-muted)]">#{p.channel}</div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-sm font-bold text-[var(--text)] leading-snug">{p.title}</h3>
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">{p.body}</p>
+
+                  <div className="flex items-center gap-4 pt-1 text-[11px] text-[var(--text-muted)]">
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-regular fa-heart"></i>
+                      {p.likes}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-regular fa-comment"></i>
+                      {p.comments}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
+              <p className="text-xs text-[var(--text-muted)]">
+                Entrena tus decisiones con el mercado spot y desafíos.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {TOOLS.map((t) => (
+                <ToolCard key={t.to} tool={t} />
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-5">
+          {ProfileWidget}
+          {MissionWidget}
+          {ProgressWidget}
+          {MentorWidget}
+          {RankingWidget}
+        </aside>
       </div>
 
       {/* Columna derecha */}
