@@ -6,14 +6,20 @@ export const LoginPage: React.FC = () => {
   const { login } = usePlatform()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!identifier.trim() || !password) return
-    const ok = login(identifier.trim(), password)
-    if (ok) {
-      navigate('/')
+    setIsSubmitting(true)
+    try {
+      const ok = await login(identifier.trim(), password)
+      if (ok) {
+        navigate('/')
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -25,7 +31,7 @@ export const LoginPage: React.FC = () => {
             Iniciar Sesión
           </h1>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            Accede a tu cuenta y avances registrados.
+            Accede con tu usuario o correo registrado en cleverkor_db.
           </p>
         </div>
 
@@ -37,9 +43,10 @@ export const LoginPage: React.FC = () => {
             <input
               type="text"
               required
+              disabled={isSubmitting}
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="tu_usuario"
+              placeholder="admin o tu_usuario"
               className="platform-input"
             />
           </div>
@@ -51,6 +58,7 @@ export const LoginPage: React.FC = () => {
             <input
               type="password"
               required
+              disabled={isSubmitting}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -60,9 +68,17 @@ export const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full platform-btn-primary py-2 text-xs font-semibold justify-center"
+            disabled={isSubmitting}
+            className="w-full platform-btn-primary py-2 text-xs font-semibold justify-center disabled:opacity-60"
           >
-            Entrar
+            {isSubmitting ? (
+              <>
+                <i className="fa-solid fa-circle-notch fa-spin mr-1.5"></i>
+                Validando...
+              </>
+            ) : (
+              'Entrar'
+            )}
           </button>
         </form>
 

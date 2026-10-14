@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { ACHIEVEMENTS, MENTOR_KNOWLEDGE, MISSIONS_BY_CATEGORY, MODULES_BY_CATEGORY } from '../data/catalog'
 import type { DiagnosticResult, MentorMessage, UserProfile } from '../types/platform'
+import { userService } from '../services/userService'
 
 interface ToastItem {
   id: string
@@ -14,8 +15,8 @@ interface PlatformContextType {
   toasts: ToastItem[]
   isMentorOpen: boolean
   mentorMessages: MentorMessage[]
-  login: (identifier: string, pass: string) => boolean
-  register: (name: string, username: string, email: string, pass: string) => boolean
+  login: (identifier: string, pass: string) => Promise<boolean>
+  register: (name: string, username: string, email: string, pass: string) => Promise<boolean>
   logout: () => void
   addXP: (amount: number) => void
   addCoins: (amount: number) => void
@@ -165,46 +166,56 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [user])
 
-  const login = useCallback((identifier: string, pass: string): boolean => {
+  const login = useCallback(async (identifier: string, pass: string): Promise<boolean> => {
     try {
+      const backendUser = await userService.loginUser({ identifier, password: pass })
       const storedUsers: Record<string, UserProfile> = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '{}')
-      const found = Object.values(storedUsers).find(
-        (u) => u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase(),
-      )
-      if (!found) {
-        showToast('No se encontró una cuenta con esos datos.', 'error')
-        return false
+      const existing = storedUsers[backendUser.username] || createNewUser(backendUser.name, backendUser.username, backendUser.email, pass)
+      const mergedUser: UserProfile = {
+        ...existing,
+        name: backendUser.name,
+        username: backendUser.username,
+        email: backendUser.email,
+        avatar: backendUser.avatar || existing.avatar,
+        theme: backendUser.theme || existing.theme || 'light',
+        isGuest: false,
       }
-      if (found._demoPassword && found._demoPassword !== pass) {
-        showToast('Contraseña incorrecta.', 'error')
-        return false
-      }
-      localStorage.setItem(STORAGE_KEY_SESSION, found.username)
-      setUser(found)
-      showToast(`Sesión iniciada: ${found.name}`, 'success')
+      storedUsers[backendUser.username] = mergedUser
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(storedUsers))
+      localStorage.setItem(STORAGE_KEY_SESSION, backendUser.username)
+      setUser(mergedUser)
+      showToast(`Sesión iniciada: ${backendUser.name}`, 'success')
       return true
-    } catch {
-      showToast('Error al iniciar sesión.', 'error')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al iniciar sesión'
+      showToast(msg, 'error')
       return false
     }
   }, [showToast])
 
-  const register = useCallback((name: string, username: string, email: string, pass: string): boolean => {
+  const register = useCallback(async (name: string, username: string, email: string, pass: string): Promise<boolean> => {
     try {
+      const backendUser = await userService.createUser({
+        name,
+        username,
+        email,
+        password: pass,
+      })
       const storedUsers: Record<string, UserProfile> = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '{}')
-      if (storedUsers[username]) {
-        showToast('El nombre de usuario ya existe.', 'error')
-        return false
+      const newUser: UserProfile = {
+        ...createNewUser(backendUser.name, backendUser.username, backendUser.email, pass),
+        avatar: backendUser.avatar || null,
+        theme: backendUser.theme || 'light',
       }
-      const newUser = createNewUser(name, username, email, pass)
-      storedUsers[username] = newUser
+      storedUsers[backendUser.username] = newUser
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(storedUsers))
-      localStorage.setItem(STORAGE_KEY_SESSION, username)
+      localStorage.setItem(STORAGE_KEY_SESSION, backendUser.username)
       setUser(newUser)
-      showToast(`Cuenta creada para ${name}`, 'success')
+      showToast(`Cuenta registrada en cleverkor_db para ${backendUser.name}`, 'success')
       return true
-    } catch {
-      showToast('Error al registrar cuenta.', 'error')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al registrar cuenta'
+      showToast(msg, 'error')
       return false
     }
   }, [showToast])

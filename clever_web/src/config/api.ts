@@ -1,4 +1,12 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
+
+export const USER_ENDPOINTS = {
+  HEALTH: `${BACKEND_URL}/api/health`,
+  USERS: `${BACKEND_URL}/api/users`,
+  LOGIN: `${BACKEND_URL}/api/users/login`,
+  USER_DETAIL: (id: number | string) => `${BACKEND_URL}/api/users/${id}`,
+}
 
 export const ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,
