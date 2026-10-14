@@ -14,6 +14,8 @@ export interface AnalysisOption {
   description: string
   theme: AnalysisOptionTheme
   Illustration: React.FC<{ active: boolean }>
+  /** retraso de la animación de entrada, en ms */
+  delay?: number
 }
 
 /**
@@ -26,15 +28,22 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
     path: '/analisis/acciones',
     eyebrow: 'Mercado bursátil',
     title: 'Análisis de acciones',
-    description:
-      'Evalúa la evolución de empresas cotizadas mediante gráficos, tendencias y volumen.',
+    description: 'Evalúa la evolución de empresas cotizadas mediante gráficos, tendencias y volumen.',
+    delay: 0,
     theme: {
-      wash: 'from-slate-100',
-      border: 'hover:border-slate-400',
-      selectedBorder: 'border-[#1e3a5f] shadow-lg',
-      ring: 'focus-visible:ring-[#1e3a5f]',
-      accentText: 'text-[#1e3a5f]',
-      accentBg: 'bg-[#1e3a5f]',
+      surface: 'bg-gradient-to-br from-sky-50/80 via-white to-sky-100/50',
+      blobA: 'bg-sky-200/50',
+      blobB: 'bg-indigo-200/40',
+      dots: 'text-sky-300/60',
+      spotlight: 'rgba(125, 211, 252, 0.30)',
+      border: 'border-sky-100 hover:border-sky-200',
+      glow: 'hover:shadow-sky-200/70',
+      chip: 'bg-white/70 text-sky-700 ring-sky-100',
+      chipDot: 'bg-sky-400',
+      cta: 'bg-white/80 text-sky-800 ring-sky-100 group-hover:bg-sky-50',
+      ctaIcon: 'bg-sky-100 text-sky-700 group-hover:bg-sky-500 group-hover:text-white',
+      ring: 'focus-visible:ring-sky-300',
+      selected: 'ring-2 ring-sky-300',
     },
     Illustration: StocksIllustration,
   },
@@ -42,16 +51,23 @@ export const ANALYSIS_OPTIONS: AnalysisOption[] = [
     kind: 'criptos',
     path: '/analisis/criptos',
     eyebrow: 'Activos digitales',
-    title: 'Análisis de criptos',
-    description:
-      'Interpreta el comportamiento de criptomonedas y su estructura de mercado.',
+    title: 'Análisis de Blockchain',
+    description: 'Interpreta el comportamiento de criptomonedas y su estructura.',
+    delay: 140,
     theme: {
-      wash: 'from-teal-50',
-      border: 'hover:border-teal-600/50',
-      selectedBorder: 'border-teal-800 shadow-lg',
-      ring: 'focus-visible:ring-teal-800',
-      accentText: 'text-teal-800',
-      accentBg: 'bg-teal-800',
+      surface: 'bg-gradient-to-br from-violet-50/80 via-white to-fuchsia-100/40',
+      blobA: 'bg-violet-200/50',
+      blobB: 'bg-amber-200/40',
+      dots: 'text-violet-300/60',
+      spotlight: 'rgba(196, 181, 253, 0.32)',
+      border: 'border-violet-100 hover:border-violet-200',
+      glow: 'hover:shadow-violet-200/70',
+      chip: 'bg-white/70 text-violet-700 ring-violet-100',
+      chipDot: 'bg-violet-400',
+      cta: 'bg-white/80 text-violet-800 ring-violet-100 group-hover:bg-violet-50',
+      ctaIcon: 'bg-violet-100 text-violet-700 group-hover:bg-violet-500 group-hover:text-white',
+      ring: 'focus-visible:ring-violet-300',
+      selected: 'ring-2 ring-violet-300',
     },
     Illustration: CryptoIllustration,
   },

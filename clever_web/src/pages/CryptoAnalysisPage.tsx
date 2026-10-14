@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BitcoinAtlas } from '../components/atlas/BitcoinAtlas'
+import { BlockchainModule } from '../components/blockchain/BlockchainModule'
 import { InfoTip } from '../components/atlas/AtlasCard'
 
 /* ------------------------------------------------------------------ */
@@ -284,24 +285,20 @@ export const CryptoAnalysisPage: React.FC = () => {
           >
             <path d="M12 4l-6 6 6 6" />
           </svg>
-          Volver
+          Volver a Análisis
         </Link>
 
-        
+        <h1 className="text-xl font-bold tracking-tight text-[var(--text)] sm:text-2xl">
+          ¡Hola! Análisis de criptos
+        </h1>
       </div>
-      <h1 className="text-xl font-bold tracking-tight text-[var(--text)] sm:text-2xl">
-        Análisis Técnico de Criptomonedas
-        <h2 className="mt-1 text-sm font-normal text-[var(--text-muted)]">
-          Haz click en las botones de ? para obtener más información sobre cada sección.
-        </h2>
-      </h1>
 
       <MarketStatusCard />
-      <h2 className="mt-1 text-sm font-normal text-[var(--text-muted)]">
-          Como interpretar indicadores de una Criptomoneda
-      </h2>
+
       <BitcoinAtlas />
-      
+
+      {/* Blockchain y criptomonedas (tarjetas 4.1 a 4.9) */}
+      <BlockchainModule />
     </div>
   )
 }
