@@ -10,9 +10,10 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMsg('')
 
@@ -21,14 +22,24 @@ export const RegisterPage: React.FC = () => {
       return
     }
 
+    if (password.length < 6) {
+      setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
+      return
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg('Las contraseñas no coinciden.')
       return
     }
 
-    const ok = register(name.trim(), username.trim(), email.trim(), password)
-    if (ok) {
-      navigate('/onboarding')
+    setIsSubmitting(true)
+    try {
+      const ok = await register(name.trim(), username.trim(), email.trim(), password)
+      if (ok) {
+        navigate('/onboarding')
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -40,7 +51,7 @@ export const RegisterPage: React.FC = () => {
             Crear Cuenta
           </h1>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            Registra tus datos para guardar tus avances.
+            Registra tus datos en cleverkor_db para guardar tus avances.
           </p>
         </div>
 
@@ -58,6 +69,7 @@ export const RegisterPage: React.FC = () => {
             <input
               type="text"
               required
+              disabled={isSubmitting}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Tu nombre"
@@ -72,6 +84,7 @@ export const RegisterPage: React.FC = () => {
             <input
               type="text"
               required
+              disabled={isSubmitting}
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''))}
               placeholder="usuario123"
@@ -86,6 +99,7 @@ export const RegisterPage: React.FC = () => {
             <input
               type="email"
               required
+              disabled={isSubmitting}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="correo@ejemplo.com"
@@ -100,6 +114,7 @@ export const RegisterPage: React.FC = () => {
             <input
               type="password"
               required
+              disabled={isSubmitting}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -114,6 +129,7 @@ export const RegisterPage: React.FC = () => {
             <input
               type="password"
               required
+              disabled={isSubmitting}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
@@ -123,9 +139,17 @@ export const RegisterPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full platform-btn-primary py-2 text-xs font-semibold justify-center pt-2"
+            disabled={isSubmitting}
+            className="w-full platform-btn-primary py-2 text-xs font-semibold justify-center pt-2 disabled:opacity-60"
           >
-            Registrarse
+            {isSubmitting ? (
+              <>
+                <i className="fa-solid fa-circle-notch fa-spin mr-1.5"></i>
+                Registrando...
+              </>
+            ) : (
+              'Registrarse'
+            )}
           </button>
         </form>
 

@@ -1,0 +1,13 @@
+{
+  "name": "cleverkor/backend",
+  "description": "Backend API REST en PHP para Cleverkor Web",
+  "type": "project",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "CleverBackend\\": "src/"
+    }
+  }
+}
