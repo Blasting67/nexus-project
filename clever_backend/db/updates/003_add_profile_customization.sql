@@ -1,0 +1,6 @@
+USE cleverkor_db;
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS cover VARCHAR(255) NULL AFTER avatar,
+ADD COLUMN IF NOT EXISTS featured_achievement VARCHAR(64) NULL AFTER bio,
+ADD COLUMN IF NOT EXISTS accent_color VARCHAR(9) NULL AFTER theme;

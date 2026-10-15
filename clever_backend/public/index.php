@@ -68,4 +68,7 @@ $router->post('/api/users/login', [UserController::class, 'login']);
 $router->get('/api/users/{id}', [UserController::class, 'getById']);
 $router->get('/api/users', [UserController::class, 'list']);
 
+$router->put('/api/users/{id}', [UserController::class, 'update']);
+$router->post('/api/users/{id}/image', [UserController::class, 'uploadImage']);
+
 $router->dispatch();
