@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { CATEGORIES, MISSIONS_BY_CATEGORY } from '../data/catalog'
-import { CleverkorMascot3D } from '../components/CleverkorMascot3D'
+import { DraggableMascot, type MascotSide } from '../components/DraggableMascot'
 
 const ACCENTS = [
   { fg: '#2563eb', bg: 'rgba(37,99,235,0.12)', glow: 'rgba(37,99,235,0.10)' },
@@ -286,6 +286,8 @@ export const HomePage: React.FC = () => {
 
   const [areasOpen, setAreasOpen] = useState(false)
   const [showAllAreas, setShowAllAreas] = useState(false)
+  const [mascotSide, setMascotSide] = useState<MascotSide>('left')
+  const rootRef = useRef<HTMLDivElement>(null)
 
   const missionCat = user.interests.includes('trading') ? 'trading' : user.interests[0] || 'trading'
   const mission = MISSIONS_BY_CATEGORY[missionCat] || MISSIONS_BY_CATEGORY.trading
@@ -516,10 +518,11 @@ export const HomePage: React.FC = () => {
 
   if (isGuest) {
     return (
-      <div className="max-w-6xl mx-auto py-6 space-y-12">
+      <div ref={rootRef} className="max-w-6xl mx-auto py-6 space-y-12">
         <style>{HOME_STYLES}</style>
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[480px]">
-          <div className="lg:col-span-7 space-y-5">
+        <DraggableMascot side={mascotSide} onSideChange={setMascotSide} anchorRef={rootRef} />
+        <section className="flex items-center min-h-[380px]">
+          <div className="max-w-3xl space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
               <i className="fa-solid fa-sparkles text-[10px]"></i>
               <span>Cleverkor &middot; Mascota Oficial Kor</span>
@@ -551,9 +554,6 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-5 h-[480px] w-full flex items-center justify-center relative overflow-visible">
-            <CleverkorMascot3D height="100%" />
-          </div>
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 items-start">
@@ -628,57 +628,52 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-6 space-y-12">
+    <div ref={rootRef} className="max-w-6xl mx-auto py-6 space-y-12">
       <style>{HOME_STYLES}</style>
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[400px]">
-        <div className="lg:col-span-7 space-y-4 min-w-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
-            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--primary)] bg-[var(--surface-alt)] px-2.5 py-1 rounded border border-[var(--border)]">
-              <i className="fa-solid fa-robot text-[10px]"></i>
-              <span>Kor &middot; Mentor Activo</span>
-            </div>
-          </div>
-
-          <div className="platform-card relative isolate overflow-hidden p-6 sm:p-8 space-y-4">
-            <LearningBackground />
-
-            <div className="flex items-center gap-3 max-w-sm">
-              <div className="flex-1 h-2 bg-[var(--bg-alt)] rounded overflow-hidden border border-[var(--border)]">
-                <div className="h-full bg-[var(--primary)]" style={{ width: `${courseProgress}%` }}></div>
-              </div>
-              <span className="text-xs font-mono font-semibold text-[var(--text)]">{courseProgress}%</span>
-            </div>
-
-            <div>
-              <div className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Curso activo</div>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight">
-                {currentCat.name}
-              </h3>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Próxima lección: {nextLesson}</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 relative">
-              <Link to={`/aprender?cat=${missionCat}`} className="platform-btn-primary py-2.5 px-5 text-xs font-semibold">
-                Seguir nivel
-              </Link>
-              <Link
-                to={`/aprender?cat=${missionCat}&view=path`}
-                className="platform-btn-secondary py-2.5 px-5 text-xs font-semibold"
-              >
-                Ver camino completo
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-5 h-[400px] w-full flex items-center justify-center relative overflow-visible">
-          <CleverkorMascot3D height="100%" />
-        </div>
-      </section>
-
+      <DraggableMascot side={mascotSide} onSideChange={setMascotSide} anchorRef={rootRef} />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
         <div className="space-y-10 min-w-0">
+          <section className="space-y-4 min-w-0">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Continúa donde lo dejaste</h2>
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--primary)] bg-[var(--surface-alt)] px-2.5 py-1 rounded border border-[var(--border)]">
+                <i className="fa-solid fa-robot text-[10px]"></i>
+                <span>Kor &middot; Mentor Activo</span>
+              </div>
+            </div>
+
+            <div className="platform-card relative isolate overflow-hidden p-6 sm:p-8 space-y-4">
+              <LearningBackground />
+
+              <div className="flex items-center gap-3 max-w-sm">
+                <div className="flex-1 h-2 bg-[var(--bg-alt)] rounded overflow-hidden border border-[var(--border)]">
+                  <div className="h-full bg-[var(--primary)]" style={{ width: `${courseProgress}%` }}></div>
+                </div>
+                <span className="text-xs font-mono font-semibold text-[var(--text)]">{courseProgress}%</span>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">Curso activo</div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight">
+                  {currentCat.name}
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Próxima lección: {nextLesson}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 relative">
+                <Link to={`/aprender?cat=${missionCat}`} className="platform-btn-primary py-2.5 px-5 text-xs font-semibold">
+                  Seguir nivel
+                </Link>
+                <Link
+                  to={`/aprender?cat=${missionCat}&view=path`}
+                  className="platform-btn-secondary py-2.5 px-5 text-xs font-semibold"
+                >
+                  Ver camino completo
+                </Link>
+              </div>
+            </div>
+          </section>
+
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Únete a la comunidad</h2>

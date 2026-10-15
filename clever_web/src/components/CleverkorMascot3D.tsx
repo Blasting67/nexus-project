@@ -4,16 +4,29 @@ import * as THREE from 'three'
 interface CleverkorMascot3DProps {
   className?: string
   height?: string
+  /** true mientras el usuario lo tiene agarrado: deja de saludar, patalea y pone cara de susto */
+  grabbed?: boolean
+  /** Cada vez que este número aumenta, Kor saluda (útil cuando otro elemento captura el clic) */
+  waveTrigger?: number
 }
 
 export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
   className = '',
   height = '480px',
+  grabbed = false,
+  waveTrigger = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isWaving, setIsWaving] = useState(false)
   const isWavingRef = useRef(false)
   isWavingRef.current = isWaving
+  const grabbedRef = useRef(false)
+  grabbedRef.current = grabbed
+
+  // Saludo disparado desde afuera (toque sin arrastre)
+  useEffect(() => {
+    if (waveTrigger > 0 && !grabbedRef.current) setIsWaving(true)
+  }, [waveTrigger])
 
   useEffect(() => {
     const container = containerRef.current
@@ -28,12 +41,12 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
 
     const updateCamera = (w: number, h: number) => {
       const aspect = w / h
-      const fitH = 4.8
-      const fitW = 4.0
+      const fitH = 4.4
+      const fitW = 3.6
       const vFovRad = (camera.fov * Math.PI) / 180
       const distH = (fitH / 2) / Math.tan(vFovRad / 2)
       const distW = (fitW / 2) / (Math.tan(vFovRad / 2) * aspect)
-      const cameraZ = Math.max(distH, distW, 7.6)
+      const cameraZ = Math.max(distH, distW, 6.8)
       camera.position.set(0, -0.15, cameraZ)
       camera.aspect = aspect
       camera.updateProjectionMatrix()
@@ -92,7 +105,9 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
     const faceTexture = new THREE.CanvasTexture(faceCanvas)
     faceTexture.colorSpace = THREE.SRGBColorSpace
 
-    const renderFace = (blinkFactor = 1) => {
+    // blinkFactor: parpadeo normal. scared: cara de susto (ojos enormes, cejas, boca abierta).
+    // jx/jy: temblor de las pupilas cuando está asustado.
+    const renderFace = (blinkFactor = 1, scared = false, jx = 0, jy = 0) => {
       ctx.fillStyle = '#0b101d'
       ctx.fillRect(0, 0, 1024, 1024)
 
@@ -101,6 +116,56 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
       ctx.lineWidth = 32
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
+
+      if (scared) {
+        // Cejas preocupadas (extremos internos hacia arriba)
+        ctx.lineWidth = 26
+        ctx.beginPath()
+        ctx.moveTo(235, 305)
+        ctx.lineTo(410, 245)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(790, 305)
+        ctx.lineTo(615, 245)
+        ctx.stroke()
+
+        // Ojos muy abiertos con pupilas temblando
+        const eyes: [number, number][] = [
+          [335, 445],
+          [690, 445],
+        ]
+        eyes.forEach(([ex, ey]) => {
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.ellipse(ex, ey, 92, 115, 0, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = '#0b101d'
+          ctx.beginPath()
+          ctx.arc(ex + jx, ey + jy, 26, 0, Math.PI * 2)
+          ctx.fill()
+        })
+
+        // Boca abierta de susto
+        ctx.fillStyle = '#ffffff'
+        ctx.beginPath()
+        ctx.ellipse(512, 625, 62, 80, 0, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#0b101d'
+        ctx.beginPath()
+        ctx.ellipse(512, 638, 38, 55, 0, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Gota de sudor
+        ctx.fillStyle = '#38bdf8'
+        ctx.beginPath()
+        ctx.moveTo(865, 300)
+        ctx.quadraticCurveTo(905, 375, 865, 410)
+        ctx.quadraticCurveTo(825, 375, 865, 300)
+        ctx.fill()
+
+        faceTexture.needsUpdate = true
+        return
+      }
 
       const leftH = 150 * blinkFactor
       if (leftH > 16) {
@@ -373,33 +438,63 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
     let isBlinking = false
     let waveStartTime = 0
 
+    // Nivel de pánico 0..1 (sube suave al ser agarrado y baja al soltarlo)
+    let panic = 0
+    let faceScared = false
+    let lastFaceJitter = 0
+
+    const lerp = THREE.MathUtils.lerp
+
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
 
       const delta = Math.min(clock.getDelta(), 0.05)
       const time = clock.getElapsedTime()
 
+      // --- Pánico ---
+      panic = THREE.MathUtils.damp(panic, grabbedRef.current ? 1 : 0, 10, delta)
+      if (panic < 0.001) panic = 0
+      const p = panic
+      const scaredNow = p > 0.5
+
       const bobOffset = Math.sin(time * 2.2) * 0.12
       const swayOffset = Math.cos(time * 1.6) * 0.04
-      characterGroup.position.set(swayOffset, bobOffset, 0)
+      characterGroup.position.set(
+        swayOffset * (1 - p) + Math.sin(time * 26) * 0.03 * p,
+        bobOffset * (1 - p) + Math.sin(time * 31) * 0.03 * p,
+        0
+      )
 
-      shadowMesh.scale.setScalar(1 - bobOffset * 1.2)
-      shadowMesh.material.opacity = 0.12 - bobOffset * 0.3
+      shadowMesh.scale.setScalar((1 - bobOffset * 1.2) * (1 - 0.3 * p))
+      shadowMesh.material.opacity = (0.12 - bobOffset * 0.3) * (1 - 0.5 * p)
 
       currentRotation.x = THREE.MathUtils.damp(currentRotation.x, targetRotation.x, 4.0, delta)
       currentRotation.y = THREE.MathUtils.damp(currentRotation.y, targetRotation.y, 4.0, delta)
 
-      characterGroup.rotation.y = currentRotation.y * 0.5
-      characterGroup.rotation.x = currentRotation.x * 0.4
-      characterGroup.rotation.z = Math.sin(time * 1.8) * 0.03
+      // Mientras lo agarran deja de mirar al cursor y se retuerce
+      characterGroup.rotation.y = currentRotation.y * 0.5 * (1 - p)
+      characterGroup.rotation.x = currentRotation.x * 0.4 * (1 - p)
+      characterGroup.rotation.z = Math.sin(time * 1.8) * 0.03 * (1 - p) + Math.sin(time * 18) * 0.1 * p
 
-      headGroup.rotation.y = currentRotation.y * 0.9 + Math.sin(time * 1.5) * 0.02
-      headGroup.rotation.x = currentRotation.x * 0.8 + Math.cos(time * 1.2) * 0.02
+      headGroup.rotation.y =
+        (currentRotation.y * 0.9 + Math.sin(time * 1.5) * 0.02) * (1 - p) + Math.sin(time * 22) * 0.25 * p
+      headGroup.rotation.x = (currentRotation.x * 0.8 + Math.cos(time * 1.2) * 0.02) * (1 - p) + 0.08 * p
+      headGroup.rotation.z = Math.sin(time * 26) * 0.1 * p
 
-      const squash = 1 + Math.sin(time * 2.2) * 0.03
+      const squash = 1 + Math.sin(time * 2.2) * 0.03 + Math.sin(time * 20) * 0.05 * p
       torso.scale.set(0.98, 0.90 * squash, 0.82)
 
-      if (isWavingRef.current) {
+      // Antenas que se agitan
+      leftAntenna.rotation.z = 0.12 + Math.sin(time * 21) * 0.45 * p
+      rightAntenna.rotation.z = -0.12 + Math.sin(time * 21 + 1.2) * 0.45 * p
+
+      // --- Saludo (se cancela si lo agarran) ---
+      if (grabbedRef.current) {
+        waveStartTime = 0
+        if (isWavingRef.current) setIsWaving(false)
+      }
+
+      if (isWavingRef.current && !grabbedRef.current) {
         if (waveStartTime === 0) waveStartTime = time
         const waveTime = time - waveStartTime
         leftArmGroup.rotation.z = Math.sin(waveTime * 12) * 0.4 - 0.2
@@ -420,19 +515,54 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
       leftLegGroup.rotation.x = Math.sin(time * 2.0) * 0.08
       rightLegGroup.rotation.x = -Math.sin(time * 2.0) * 0.08
 
-      if (time - lastBlink > 3.6) {
-        isBlinking = true
+      // --- Forcejeo: brazos y piernas pataleando ---
+      if (p > 0) {
+        leftArmGroup.rotation.z = lerp(leftArmGroup.rotation.z, -0.4 + Math.sin(time * 19) * 0.8, p)
+        leftArmGroup.rotation.x = lerp(leftArmGroup.rotation.x, 0.3 + Math.cos(time * 15) * 0.5, p)
+        rightArmGroup.rotation.z = lerp(rightArmGroup.rotation.z, 0.7 + Math.sin(time * 18 + 1.3) * 0.8, p)
+        rightArmGroup.rotation.x = lerp(rightArmGroup.rotation.x, Math.sin(time * 14 + 0.6) * 0.6, p)
+
+        leftLegGroup.rotation.x = lerp(leftLegGroup.rotation.x, Math.sin(time * 17) * 0.9, p)
+        rightLegGroup.rotation.x = lerp(rightLegGroup.rotation.x, -Math.sin(time * 17) * 0.9, p)
+        leftLegGroup.rotation.z = lerp(leftLegGroup.rotation.z, -0.25 + Math.sin(time * 13) * 0.2, p)
+        rightLegGroup.rotation.z = lerp(rightLegGroup.rotation.z, 0.25 - Math.sin(time * 13) * 0.2, p)
+      } else {
+        leftLegGroup.rotation.z = THREE.MathUtils.damp(leftLegGroup.rotation.z, 0, 6.0, delta)
+        rightLegGroup.rotation.z = THREE.MathUtils.damp(rightLegGroup.rotation.z, 0, 6.0, delta)
+      }
+
+      // LED del micrófono: rojo cuando está asustado
+      cyanAccentMat.color.setHex(scaredNow ? 0xef4444 : 0x38bdf8)
+
+      // --- Cara ---
+      if (scaredNow) {
+        isBlinking = false
+        if (!faceScared || time - lastFaceJitter > 0.07) {
+          faceScared = true
+          lastFaceJitter = time
+          renderFace(1, true, (Math.random() - 0.5) * 26, (Math.random() - 0.5) * 20)
+        }
+      } else if (faceScared) {
+        faceScared = false
+        renderFace(1)
         lastBlink = time
       }
 
-      if (isBlinking) {
-        const blinkProgress = (time - lastBlink) / blinkDuration
-        if (blinkProgress >= 1) {
-          isBlinking = false
-          renderFace(1)
-        } else {
-          const factor = Math.abs(Math.sin(blinkProgress * Math.PI - Math.PI / 2))
-          renderFace(factor)
+      if (!scaredNow && !faceScared) {
+        if (time - lastBlink > 3.6) {
+          isBlinking = true
+          lastBlink = time
+        }
+
+        if (isBlinking) {
+          const blinkProgress = (time - lastBlink) / blinkDuration
+          if (blinkProgress >= 1) {
+            isBlinking = false
+            renderFace(1)
+          } else {
+            const factor = Math.abs(Math.sin(blinkProgress * Math.PI - Math.PI / 2))
+            renderFace(factor)
+          }
         }
       }
 
@@ -474,7 +604,9 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
   return (
     <div
       ref={containerRef}
-      onClick={() => setIsWaving(true)}
+      onClick={() => {
+        if (!grabbedRef.current) setIsWaving(true)
+      }}
       className={`w-full h-full relative cursor-pointer select-none flex items-center justify-center overflow-visible ${className}`}
       style={{ height }}
       title="Haz clic para saludar a Kor"
