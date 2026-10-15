@@ -8,7 +8,7 @@ interface CardProps {
   index?: number
 }
 
-const COLUMNS = 'grid-cols-[4rem_minmax(0,1fr)_auto]'
+const COLUMNS = 'grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]'
 
 /** 4.8 Pruebas de consenso — tabla dinámica: las filas entran en cascada y se iluminan al pasar el mouse. */
 export const ConsensusCard: React.FC<CardProps> = ({ className, index }) => {
@@ -43,6 +43,7 @@ export const ConsensusCard: React.FC<CardProps> = ({ className, index }) => {
                 />
                 <span role="cell">
                   <span className={`rounded-md px-2 py-0.5 text-xs font-bold ring-1 ${t.chip}`}>{row.name}</span>
+                  <span className="mt-1 block text-xs text-slate-500 sm:ml-1.5 sm:mt-0 sm:inline">({row.full})</span>
                 </span>
                 <span role="cell" className="leading-snug text-slate-600 transition-transform duration-300 group-hover:translate-x-0.5 motion-reduce:transition-none">
                   {row.how}

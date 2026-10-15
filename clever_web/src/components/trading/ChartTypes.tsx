@@ -19,7 +19,7 @@ const TONES: Record<'sky' | 'violet' | 'amber' | 'teal' | 'pink', ChartTone> = {
   pink: { panel: 'bg-pink-50/70', chip: 'bg-pink-50 text-pink-700 ring-pink-100' },
 }
 
-const CHARTS: Array<{
+export const CHARTS: Array<{
   name: string
   shows: string
   audience: string

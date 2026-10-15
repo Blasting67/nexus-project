@@ -44,6 +44,10 @@ export interface AnalysisOptionCardProps {
   Illustration: React.FC<{ active: boolean }>
   /** retraso de la animación de entrada, en ms */
   delay?: number
+  /** versión compacta (texto a la izquierda, ilustración a la derecha) para espacios con poca altura */
+  compact?: boolean
+  /** anima su propia entrada al aparecer; desactívalo si un contenedor ya la anima */
+  reveal?: boolean
 }
 
 /* ------------------------------------------------------------------ */
@@ -151,13 +155,16 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
   theme,
   Illustration,
   delay = 0,
+  compact = false,
+  reveal = true,
 }) => {
   const wrapRef = useRef<HTMLDivElement>(null)
   const linkRef = useRef<HTMLAnchorElement>(null)
-  const [shown, setShown] = useState(false)
+  const [shown, setShown] = useState(!reveal)
 
-  // entrada al aparecer en pantalla
+  // entrada al aparecer en pantalla (solo si la tarjeta anima su propia entrada)
   useEffect(() => {
+    if (!reveal) return
     const el = wrapRef.current
     if (!el) return
     if (prefersReducedMotion() || typeof IntersectionObserver === 'undefined') {
@@ -175,7 +182,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
     )
     io.observe(el)
     return () => io.disconnect()
-  }, [])
+  }, [reveal])
 
   const setVars = (vars: Record<string, string>) => {
     const el = linkRef.current
@@ -204,10 +211,14 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
   return (
     <div
       ref={wrapRef}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`h-full transition duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-        shown ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-6 scale-[0.97] opacity-0'
-      }`}
+      style={reveal ? { transitionDelay: `${delay}ms` } : undefined}
+      className={
+        reveal
+          ? `h-full transition duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+              shown ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-6 scale-[0.97] opacity-0'
+            }`
+          : 'h-full'
+      }
     >
       <AnalysisOptionStyles />
 
@@ -226,9 +237,11 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           transform:
             'perspective(1100px) translateY(var(--ty,0px)) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))',
         }}
-        className={`ao-root group relative flex h-full min-h-[380px] flex-col overflow-hidden rounded-[2rem] border bg-white p-7 shadow-sm shadow-slate-200/60 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none sm:p-8 ${theme.border} ${theme.glow} ${theme.ring} ${
-          selected ? theme.selected : ''
-        }`}
+        className={`ao-root group relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-white shadow-sm shadow-slate-200/60 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          compact
+            ? 'min-h-0 p-5 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] sm:items-center sm:gap-x-4'
+            : 'min-h-[380px] p-7 sm:p-8'
+        } ${theme.border} ${theme.glow} ${theme.ring} ${selected ? theme.selected : ''}`}
       >
         {/* fondo decorativo: pastel muy leve */}
         <span aria-hidden="true" className={`pointer-events-none absolute inset-0 ${theme.surface}`} />
@@ -262,7 +275,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
         <span aria-hidden="true" className="ao-shine" />
 
         {/* contenido */}
-        <span className="relative z-10 flex items-center justify-between">
+        <span className={`relative z-10 flex items-center justify-between ${compact ? 'sm:col-start-1 sm:row-start-1' : ''}`}>
           <span
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 backdrop-blur ${theme.chip}`}
           >
@@ -276,24 +289,44 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           </span>
         </span>
 
-        <span className="relative z-10 mt-5 block">
-          <span className="block text-2xl font-semibold tracking-tight text-slate-800 sm:text-[1.75rem]">{title}</span>
-          <span className="mt-2 block max-w-xs text-sm leading-relaxed text-slate-500">{description}</span>
+        <span className={`relative z-10 block ${compact ? 'mt-3 sm:col-start-1 sm:row-start-2' : 'mt-5'}`}>
+          <span
+            className={`block font-semibold tracking-tight text-slate-800 ${
+              compact ? 'text-xl' : 'text-2xl sm:text-[1.75rem]'
+            }`}
+          >
+            {title}
+          </span>
+          <span className={`mt-2 block max-w-xs leading-relaxed text-slate-500 ${compact ? 'text-xs' : 'text-sm'}`}>
+            {description}
+          </span>
         </span>
 
-        <span className="relative z-10 my-4 flex flex-1 items-center justify-center">
-          <span className="block w-full max-w-[290px] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transition-none">
+        <span
+          className={`relative z-10 flex items-center justify-center ${
+            compact ? 'my-2 sm:col-start-2 sm:row-span-3 sm:row-start-1 sm:my-0' : 'my-4 flex-1'
+          }`}
+        >
+          <span
+            className={`block w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transition-none ${
+              compact ? 'max-w-[200px]' : 'max-w-[290px]'
+            }`}
+          >
             <Illustration active={selected} />
           </span>
         </span>
 
-        <span className="relative z-10 flex items-center">
+        <span className={`relative z-10 flex items-center ${compact ? 'mt-3 sm:col-start-1 sm:row-start-3' : ''}`}>
           <span
-            className={`inline-flex items-center gap-3 rounded-full py-1.5 pl-5 pr-1.5 text-sm font-semibold ring-1 backdrop-blur transition duration-300 ${theme.cta}`}
+            className={`inline-flex items-center rounded-full font-semibold ring-1 backdrop-blur transition duration-300 ${
+              compact ? 'gap-2 py-1 pl-4 pr-1 text-xs' : 'gap-3 py-1.5 pl-5 pr-1.5 text-sm'
+            } ${theme.cta}`}
           >
             {selected ? 'Seleccionado' : 'Explorar'}
             <span
-              className={`relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full transition duration-300 ${theme.ctaIcon}`}
+              className={`relative flex items-center justify-center overflow-hidden rounded-full transition duration-300 ${
+                compact ? 'h-8 w-8' : 'h-9 w-9'
+              } ${theme.ctaIcon}`}
             >
               <ArrowIcon className="absolute transition duration-300 ease-out group-hover:translate-x-8 group-hover:opacity-0" />
               <ArrowIcon className="absolute -translate-x-8 opacity-0 transition duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100" />

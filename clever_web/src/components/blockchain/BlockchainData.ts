@@ -119,11 +119,11 @@ export const STANDARDS_EXAMPLE = {
 
 /* 4.8 Pruebas de consenso */
 export const CONSENSUS = [
-  { id: 'pow', name: 'PoW', how: 'Mineros compiten resolviendo problemas', example: 'Bitcoin', tone: 'amber' as BlockchainToneKey },
-  { id: 'pos', name: 'PoS', how: 'Validadores apuestan sus monedas', example: 'Ethereum', tone: 'violet' as BlockchainToneKey },
-  { id: 'dpos', name: 'DPoS', how: 'Votación de validadores', example: 'TRON', tone: 'rose' as BlockchainToneKey },
-  { id: 'poa', name: 'PoA', how: 'Nodos autorizados', example: 'VeChain', tone: 'sky' as BlockchainToneKey },
-  { id: 'poh', name: 'PoH', how: 'Secuencia de tiempo verificable', example: 'Solana', tone: 'emerald' as BlockchainToneKey },
+  { id: 'pow', name: 'PoW', full: 'Prueba de Trabajo', how: 'Mineros compiten resolviendo problemas', example: 'Bitcoin', tone: 'amber' as BlockchainToneKey },
+  { id: 'pos', name: 'PoS', full: 'Prueba de Participación', how: 'Validadores apuestan sus monedas', example: 'Ethereum', tone: 'violet' as BlockchainToneKey },
+  { id: 'dpos', name: 'DPoS', full: 'Prueba de Participación Delegada', how: 'Votación de validadores', example: 'TRON', tone: 'rose' as BlockchainToneKey },
+  { id: 'poa', name: 'PoA', full: 'Prueba de Autoridad', how: 'Nodos autorizados', example: 'VeChain', tone: 'sky' as BlockchainToneKey },
+  { id: 'poh', name: 'PoH', full: 'Prueba de Historia', how: 'Secuencia de tiempo verificable', example: 'Solana', tone: 'emerald' as BlockchainToneKey },
 ]
 
 /* 4.9 Bitcoin: el oro digital */
