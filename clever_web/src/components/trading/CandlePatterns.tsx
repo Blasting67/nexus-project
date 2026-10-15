@@ -6,7 +6,7 @@ import { PatternIllustration } from './PatternIllustration'
 import { SectionHeading } from './SectionHeading'
 import { useReveal } from './useReveal'
 
-const GROUP_STYLES: Record<PatternCategory, { dot: string; panel: string; chip: string }> = {
+export const GROUP_STYLES: Record<PatternCategory, { dot: string; panel: string; chip: string }> = {
   bullish: {
     dot: 'bg-emerald-300 ring-emerald-100',
     panel: 'bg-emerald-50/60',

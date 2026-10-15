@@ -29,7 +29,7 @@ interface AverageLook {
   label: string
 }
 
-const LOOK: Record<'sma' | 'ema', AverageLook> = {
+export const LOOK: Record<'sma' | 'ema', AverageLook> = {
   sma: {
     surface: 'border-sky-100 from-sky-50/60',
     icon: 'bg-sky-50 text-sky-500 ring-sky-100',
@@ -48,7 +48,7 @@ const LOOK: Record<'sma' | 'ema', AverageLook> = {
   },
 }
 
-const AverageCard: React.FC<{ indicator: Indicator; look: AverageLook }> = ({ indicator, look }) => {
+export const AverageCard: React.FC<{ indicator: Indicator; look: AverageLook }> = ({ indicator, look }) => {
   const Icon = INDICATOR_ICONS[indicator.icon]
   return (
     <article
@@ -89,8 +89,8 @@ const AverageCard: React.FC<{ indicator: Indicator; look: AverageLook }> = ({ in
 /* SMMA, LWMA, DEMA y TEMA: subsección secundaria expandible           */
 /* ------------------------------------------------------------------ */
 
-const OtherAverages: React.FC = () => {
-  const [open, setOpen] = useState(false)
+export const OtherAverages: React.FC<{ defaultOpen?: boolean }> = ({ defaultOpen = false }) => {
+  const [open, setOpen] = useState(defaultOpen)
 
   return (
     <section className="rounded-2xl border border-slate-200/70 bg-white shadow-sm shadow-slate-200/50">
@@ -158,7 +158,7 @@ const OtherAverages: React.FC = () => {
 /* Ichimoku                                                            */
 /* ------------------------------------------------------------------ */
 
-const IchimokuCard: React.FC = () => {
+export const IchimokuCard: React.FC = () => {
   const Icon = INDICATOR_ICONS[ICHIMOKU.icon]
   return (
     <article className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50/50 via-white to-white p-5 shadow-sm shadow-slate-200/50">
