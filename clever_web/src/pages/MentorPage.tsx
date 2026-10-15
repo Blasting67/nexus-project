@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
 import { usePlatform } from '../context/PlatformContext'
-import { MENTOR_SUGGESTIONS } from '../data/catalog'
+import { CATEGORIES, MENTOR_SUGGESTIONS, MODULES_BY_CATEGORY } from '../data/catalog'
+import { useSearchParams } from 'react-router-dom'
 
 export const MentorPage: React.FC = () => {
   const { user, mentorMessages, sendMentorMessage } = usePlatform()
   const [inputText, setInputText] = useState('')
+  const [searchParams] = useSearchParams()
+  const category = CATEGORIES.find((item) => item.id === searchParams.get('cat'))
+  const suggestions = category
+    ? (MODULES_BY_CATEGORY[category.id] || []).slice(0, 3).map((title) => `En ${category.name}, explícame ${title}`)
+    : MENTOR_SUGGESTIONS
 
   const handleSend = () => {
     if (!inputText.trim()) return
@@ -20,10 +26,10 @@ export const MentorPage: React.FC = () => {
     <div className="max-w-3xl mx-auto py-4 space-y-6">
       <div className="border-b border-[var(--border)] pb-4">
         <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] tracking-tight">
-          Mentor IA
+          Mentor IA{category ? ` · ${category.name}` : ''}
         </h1>
         <p className="text-xs text-[var(--text-muted)] mt-1">
-          Asistente pedagógico para resolver dudas de análisis técnico, finanzas y estrategia.
+          {category ? `Repasa las lecciones y consulta tus dudas sobre ${category.name}.` : 'Asistente para consultar tus dudas sobre los caminos de aprendizaje.'}
         </p>
       </div>
 
@@ -54,7 +60,7 @@ export const MentorPage: React.FC = () => {
 
         <div className="p-4 border-t border-[var(--border)] bg-[var(--bg-alt)] space-y-3">
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {MENTOR_SUGGESTIONS.map((sugg, idx) => (
+            {suggestions.map((sugg, idx) => (
               <button
                 key={idx}
                 onClick={() => sendMentorMessage(sugg)}
