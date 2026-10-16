@@ -38,9 +38,9 @@ export const DEFAULT_DATA: AtlasData = {
 export type PresetKey = 'bull' | 'bear' | 'neutral'
 
 export const PRESETS: Record<PresetKey, Partial<AtlasData>> = {
-  bull: { sentiment: 88, volatility: 45, momentum: 90, buySell: 82, risk: 22, trend: 92, fearGreed: 84, uncertainty: 15 },
-  bear: { sentiment: 14, volatility: 82, momentum: 12, buySell: 18, risk: 86, trend: 8, fearGreed: 12, uncertainty: 88 },
-  neutral: { sentiment: 50, volatility: 34, momentum: 50, buySell: 50, risk: 44, trend: 50, fearGreed: 50, uncertainty: 48 },
+  bull: { sentiment: 88, volatility: 45, momentum: 90, liquidity: 90, buySell: 82, risk: 22, trend: 92, fearGreed: 84, uncertainty: 15 },
+  bear: { sentiment: 14, volatility: 82, momentum: 12, liquidity: 22, buySell: 18, risk: 86, trend: 8, fearGreed: 12, uncertainty: 88 },
+  neutral: { sentiment: 50, volatility: 34, momentum: 50, liquidity: 52, buySell: 50, risk: 44, trend: 50, fearGreed: 50, uncertainty: 48 },
 }
 
 /* ------------------------------------------------------------------ */

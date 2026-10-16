@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { AtlasHeader } from './AtlasHeader'
 import { AtlasStyles } from './AtlasStyles'
+import { SceneStyles } from './SceneStyles'
 import { SimulatorPanel } from './SimulatorPanel'
 import { useSmoothNumber } from './useSmoothNumber'
 import { DEFAULT_DATA, PRESETS } from './atlasData'
@@ -37,8 +38,9 @@ export const BitcoinAtlas: React.FC = () => {
   const mood = useSmoothNumber((data.sentiment + data.fearGreed + (100 - data.risk)) / 3, 0.06)
 
   return (
-    <div className="relative isolate overflow-hidden rounded-3xl bg-white p-4 text-slate-900 shadow-xl shadow-slate-200/70 ring-1 ring-slate-200 sm:p-6">
+    <div className="relative isolate overflow-hidden rounded-3xl bg-white p-3 text-slate-900 lg:min-w-[1232px] shadow-xl shadow-slate-200/70 ring-1 ring-slate-200">
       <AtlasStyles />
+      <SceneStyles />
 
       <div
         aria-hidden="true"
@@ -53,31 +55,29 @@ export const BitcoinAtlas: React.FC = () => {
 
       <AtlasHeader price={data.price} onOpenSimulator={() => setSimOpen(true)} />
 
-      {/* Fila principal: columna izquierda · gráfico · columna derecha */}
-      <div className="relative z-10 grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)_250px]">
-        <div className="order-2 flex flex-col gap-4 lg:order-1">
+      {/* Cuatro tarjetas a cada lado y el gráfico de precio ocupando todo el centro */}
+      <div className="relative z-10 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.38fr)_minmax(0,1fr)]">
+        <div className="order-2 grid grid-cols-2 gap-3 lg:order-1 lg:grid-rows-2">
           <TrendCard value={data.trend} />
           <VolatilityCard value={data.volatility} />
           <SentimentCard value={data.sentiment} />
+          <UncertaintyCard value={data.uncertainty} />
         </div>
 
         <div className="order-1 min-h-[380px] lg:order-2">
           <PriceChartCard price={data.price} volatility={data.volatility} trend={data.trend} />
         </div>
 
-        <div className="order-3 flex flex-col gap-4">
-          <SupplyCard value={data.supply} className="flex-1" />
-          <div className="grid grid-cols-2 gap-4">
-            <MomentumCard value={data.momentum} />
-            <LiquidityCard value={data.liquidity} />
-          </div>
+        <div className="order-3 grid grid-cols-2 gap-3 lg:grid-rows-2">
+          <MomentumCard value={data.momentum} />
+          <LiquidityCard value={data.liquidity} />
+          <SupplyCard value={data.supply} />
+          <FearGreedCard value={data.fearGreed} />
         </div>
       </div>
 
-      {/* Fila inferior */}
-      <div className="relative z-10 mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_1.5fr]">
-        <UncertaintyCard value={data.uncertainty} />
-        <FearGreedCard value={data.fearGreed} />
+      {/* Franja inferior: presión del mercado (oso contra toro) y riesgo */}
+      <div className="relative z-10 mt-3">
         <PressureCard buySell={data.buySell} risk={data.risk} />
       </div>
 

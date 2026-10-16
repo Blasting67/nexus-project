@@ -6,7 +6,7 @@ export const COMMANDMENTS: string[] = [
   'Utilizarás Stop-Loss.',
   'Dejarás de cavar tu tumba.',
   'No entrarás en FOMO.',
-  'Seguirás el viento.',
+  'Seguirás la corriente.',
   'Confiarás en tu análisis.',
   'No sobreoperarás.',
   'Mantendrás tu trading simple.',
