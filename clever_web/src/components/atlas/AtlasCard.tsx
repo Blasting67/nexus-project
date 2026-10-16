@@ -1,6 +1,16 @@
 import React, { useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+/** Comentario extra opcional para el botón "?": etiquetas (p. ej. indicadores) y/o una nota breve. */
+export interface TipMore {
+  /** título pequeño sobre las etiquetas */
+  title?: string
+  /** etiquetas, p. ej. indicadores que se pueden usar */
+  chips?: string[]
+  /** nota breve */
+  note?: React.ReactNode
+}
+
 /**
  * Botón "?" con explicación sencilla (hover o clic).
  * El cuadro se dibuja en <body> con position: fixed y un z-index muy alto, así que
@@ -9,9 +19,10 @@ import { createPortal } from 'react-dom'
  */
 export const InfoTip: React.FC<{
   text: string
+  more?: TipMore
   /** Ya no se usa (la posición es automática); se conserva para no romper llamadas existentes. */
   align?: 'left' | 'right'
-}> = ({ text }) => {
+}> = ({ text, more }) => {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -78,7 +89,9 @@ export const InfoTip: React.FC<{
           <span
             ref={tipRef}
             role="tooltip"
-            className="pointer-events-none fixed z-[9999] w-60 rounded-xl border border-amber-300 bg-white p-3.5 text-left text-[13px] font-normal leading-relaxed text-slate-700 shadow-2xl shadow-slate-900/20 ring-4 ring-amber-100/70"
+            className={`pointer-events-none fixed z-[9999] rounded-xl border border-amber-300 bg-white p-3.5 text-left text-[13px] font-normal leading-relaxed text-slate-700 shadow-2xl shadow-slate-900/20 ring-4 ring-amber-100/70 ${
+              more ? 'w-64' : 'w-60'
+            }`}
             style={{
               top: pos?.top ?? 0,
               left: pos?.left ?? 0,
@@ -86,6 +99,25 @@ export const InfoTip: React.FC<{
             }}
           >
             {text}
+            {more && (
+              <span className="mt-2.5 block border-t border-amber-100 pt-2.5">
+                {more.title && (
+                  <span className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-wider text-amber-700">
+                    {more.title}
+                  </span>
+                )}
+                {more.chips && (
+                  <span className="flex flex-wrap gap-1.5">
+                    {more.chips.map((c) => (
+                      <span key={c} className="rounded-full bg-amber-50 px-2 py-0.5 text-[11.5px] font-medium text-amber-800 ring-1 ring-amber-200">
+                        {c}
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {more.note && <span className="mt-1.5 block text-[12px] leading-snug text-slate-600">{more.note}</span>}
+              </span>
+            )}
           </span>,
           document.body,
         )}
@@ -101,6 +133,8 @@ interface AtlasCardProps {
   className?: string
   /** contenido extra a la derecha del título (ej. pestañas) */
   actions?: React.ReactNode
+  /** comentario extra del botón "?" */
+  tipMore?: TipMore
   children: React.ReactNode
 }
 
@@ -110,6 +144,7 @@ export const AtlasCard: React.FC<AtlasCardProps> = ({
   tint = 'rgba(251,191,36,0.08)',
   className = '',
   actions,
+  tipMore,
   children,
 }) => (
   <section
@@ -124,7 +159,7 @@ export const AtlasCard: React.FC<AtlasCardProps> = ({
       <h3 className="text-sm font-medium text-slate-700">{title}</h3>
       <div className="flex items-center gap-2">
         {actions}
-        <InfoTip text={tip} />
+        <InfoTip text={tip} more={tipMore} />
       </div>
     </header>
     <div className="relative z-10 flex flex-1 flex-col">{children}</div>
