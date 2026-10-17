@@ -16,6 +16,9 @@ const SlideContext = createContext<SlideState>('active')
 export const useSlideState = () => useContext(SlideContext)
 
 /** true cuando la sección ya se vio (con un pequeño retraso para que se aprecie su animación de entrada). */
+/** Retraso de entrada: 140 ms por elemento los primeros tres y 60 ms después, para que 6 o 7 tarjetas no tarden en llegar. */
+const stagger = (order: number) => (order <= 3 ? order * 140 : 420 + (order - 3) * 60)
+
 export function useSlideShown(delayMs = 300): boolean {
   const active = useSlideState() === 'active'
   const [shown, setShown] = useState(false)
@@ -109,7 +112,7 @@ export const HudItem: React.FC<HudItemProps> = ({ order = 0, lazy = false, class
         transitionProperty: 'transform, opacity',
         transitionDuration: '950ms, 650ms',
         transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-        transitionDelay: active ? `${140 + order * 140}ms` : `${order * 60}ms`,
+        transitionDelay: active ? `${140 + stagger(order)}ms` : `${order * 60}ms`,
       }}
       className={`min-h-0 will-change-transform motion-reduce:!transition-none ${ITEM_POSE[state]} ${className}`}
     >

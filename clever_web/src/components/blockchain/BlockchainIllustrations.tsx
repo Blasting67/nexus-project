@@ -27,7 +27,7 @@ type LaptopState = 'idle' | 'write' | 'ok' | 'bad'
 const Laptop: React.FC<{ x: number; y: number; state: LaptopState; demoId: number }> = ({ x, y, state, demoId }) => (
   <g transform={`translate(${x - 24} ${y - 20})`}>
     <g className={state === 'bad' ? 'bc-shake' : ''} key={state === 'bad' ? `bad-${demoId}` : 'still'}>
-      <rect x="0" y="0" width="48" height="31" rx="4" fill="#fff" stroke={state === 'bad' ? '#fda4af' : '#c4b5fd'} strokeWidth="1.6" />
+      <rect x="0" y="0" width="48" height="31" rx="4" fill="#fff" stroke={state === 'bad' ? '#fda4af' : '#94a3b8'} strokeWidth="1.6" />
       <rect x="6" y="6" width="28" height="3" rx="1.5" fill={state === 'bad' ? '#fecdd3' : '#e2e8f0'} />
       <rect x="6" y="12" width="21" height="3" rx="1.5" fill={state === 'bad' ? '#fecdd3' : '#e2e8f0'} />
       <rect x="6" y="18" width="32" height="3" rx="1.5" fill={state === 'bad' ? '#fecdd3' : '#e2e8f0'} />
@@ -40,10 +40,10 @@ const Laptop: React.FC<{ x: number; y: number; state: LaptopState; demoId: numbe
           width="26"
           height="3"
           rx="1.5"
-          fill="#34d399"
+          fill="#10b981"
         />
       )}
-      <rect x="-5" y="33" width="58" height="4" rx="2" fill={state === 'bad' ? '#fecdd3' : '#ddd6fe'} />
+      <rect x="-5" y="33" width="58" height="4" rx="2" fill={state === 'bad' ? '#fecdd3' : '#cbd5e1'} />
     </g>
 
     {state === 'ok' && (
@@ -92,7 +92,7 @@ export const NetworkIllustration: React.FC<{ demo: NetworkDemo | null }> = ({ de
               y1={CENTER.y}
               x2={l.x}
               y2={l.y + (i < 2 ? 12 : -8)}
-              stroke={bad ? '#fda4af' : good ? '#6ee7b7' : '#c4b5fd'}
+              stroke={bad ? '#f43f5e' : good ? '#10b981' : '#94a3b8'}
             />
           )
         })}
@@ -109,21 +109,21 @@ export const NetworkIllustration: React.FC<{ demo: NetworkDemo | null }> = ({ de
             cy={CENTER.y}
             r="46"
             fill="none"
-            stroke="#34d399"
+            stroke="#10b981"
             strokeWidth="1.6"
           />
         ))}
 
       {/* cuaderno central */}
       <g className="bc-pulse bc-origin-c">
-        <rect x="106" y="76" width="48" height="58" rx="7" fill="#fff" stroke="#a78bfa" strokeWidth="1.8" />
-        <path d="M106 90h-4M106 104h-4M106 118h-4" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round" />
-        <rect x="116" y="88" width="28" height="3" rx="1.5" fill="#ddd6fe" />
-        <rect x="116" y="97" width="20" height="3" rx="1.5" fill="#ddd6fe" />
-        <rect x="116" y="106" width="28" height="3" rx="1.5" fill="#ddd6fe" />
-        <rect x="116" y="115" width="14" height="3" rx="1.5" fill="#ddd6fe" />
+        <rect x="106" y="76" width="48" height="58" rx="7" fill="#fff" stroke="#4f46e5" strokeWidth="1.8" />
+        <path d="M106 90h-4M106 104h-4M106 118h-4" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" />
+        <rect x="116" y="88" width="28" height="3" rx="1.5" fill="#c7d2fe" />
+        <rect x="116" y="97" width="20" height="3" rx="1.5" fill="#c7d2fe" />
+        <rect x="116" y="106" width="28" height="3" rx="1.5" fill="#c7d2fe" />
+        <rect x="116" y="115" width="14" height="3" rx="1.5" fill="#c7d2fe" />
         {kind === 'write' && (
-          <rect key={`nb-${id}`} className="bc-grow bc-origin-l" x="116" y="123" width="22" height="3" rx="1.5" fill="#34d399" />
+          <rect key={`nb-${id}`} className="bc-grow bc-origin-l" x="116" y="123" width="22" height="3" rx="1.5" fill="#10b981" />
         )}
       </g>
 
@@ -138,13 +138,10 @@ export const NetworkIllustration: React.FC<{ demo: NetworkDemo | null }> = ({ de
 /* 4.6 Pila de capas                                                   */
 /* ------------------------------------------------------------------ */
 
-const SLAB: Record<Layer['tone'], { top: string; left: string; right: string }> = {
-  emerald: { top: '#d1fae5', left: '#a7f3d0', right: '#6ee7b7' },
-  sky: { top: '#e0f2fe', left: '#bae6fd', right: '#7dd3fc' },
-  amber: { top: '#fef3c7', left: '#fde68a', right: '#fcd34d' },
-  rose: { top: '#ffe4e6', left: '#fecdd3', right: '#fda4af' },
-  violet: { top: '#ede9fe', left: '#ddd6fe', right: '#c4b5fd' },
-  teal: { top: '#ccfbf1', left: '#99f6e4', right: '#5eead4' },
+// losas sobrias: grises, y la capa elegida en índigo
+const SLAB = {
+  idle: { top: '#f1f5f9', left: '#cbd5e1', right: '#94a3b8' },
+  on: { top: '#e0e7ff', left: '#a5b4fc', right: '#6366f1' },
 }
 
 /** Cinco losas en perspectiva; la capa elegida se desplaza hacia afuera. */
@@ -155,8 +152,8 @@ export const LayersIllustration: React.FC<{ layers: Layer[]; selected: number }>
       .reverse()
       .map(({ layer, i }) => {
         const cy = 26 + i * 25
-        const c = SLAB[layer.tone]
         const on = i === selected
+        const c = on ? SLAB.on : SLAB.idle
         return (
           <g
             key={layer.id}
@@ -170,7 +167,7 @@ export const LayersIllustration: React.FC<{ layers: Layer[]; selected: number }>
               fill={c.top}
               stroke={on ? c.right : '#ffffff'}
               strokeWidth={on ? 1.6 : 1}
-              style={{ filter: on ? `drop-shadow(0 4px 6px ${c.right}99)` : 'none' }}
+              style={{ filter: on ? `drop-shadow(0 3px 4px ${c.right}66)` : 'none' }}
             />
           </g>
         )
@@ -183,16 +180,17 @@ export const LayersIllustration: React.FC<{ layers: Layer[]; selected: number }>
 /* ------------------------------------------------------------------ */
 
 const ROADS = [
-  { id: 'erc20', label: 'ERC-20', seconds: 3.2 },
-  { id: 'trc20', label: 'TRC-20', seconds: 2.2 }, // "rápido"
-  { id: 'bep20', label: 'BEP-20', seconds: 3.2 },
+  { id: 'erc20', label: 'ERC20', seconds: 4.6 },
+  { id: 'trc20', label: 'TRC20', seconds: 3.2 }, // "rápido"
+  { id: 'bep20', label: 'BEP20', seconds: 4.6 },
 ]
 
+/** Un mismo USDT viajando por tres redes. La red elegida se resalta; con BTC (que no usa estándares de token) ninguna. */
 export const RoadsIllustration: React.FC<{ selected: NetworkStandard['id'] }> = ({ selected }) => (
   <svg
     viewBox="0 0 240 92"
     role="img"
-    aria-label="Un mismo dólar digital viajando por tres redes distintas, como carreteras paralelas"
+    aria-label="Un mismo USDT viajando por tres redes distintas, como carreteras paralelas: ERC20, TRC20 y BEP20"
     className="h-auto w-full"
   >
     {ROADS.map((r, i) => {
@@ -200,7 +198,7 @@ export const RoadsIllustration: React.FC<{ selected: NetworkStandard['id'] }> = 
       const on = selected === r.id
       return (
         <g key={r.id}>
-          <text x="2" y={y + 14} fontSize="8.5" fontWeight="700" fill={on ? '#0369a1' : '#94a3b8'} style={FONT}>
+          <text x="2" y={y + 14} fontSize="8.5" fontWeight="700" fill={on ? '#4338ca' : '#94a3b8'} style={FONT}>
             {r.label}
           </text>
           <rect
@@ -209,14 +207,14 @@ export const RoadsIllustration: React.FC<{ selected: NetworkStandard['id'] }> = 
             width="190"
             height="20"
             rx="10"
-            fill={on ? '#e0f2fe' : '#f1f5f9'}
-            stroke={on ? '#7dd3fc' : '#e2e8f0'}
+            fill={on ? '#e0e7ff' : '#f1f5f9'}
+            stroke={on ? '#a5b4fc' : '#e2e8f0'}
             className="transition-colors duration-500 motion-reduce:transition-none"
           />
           <line x1="54" x2="224" y1={y + 10} y2={y + 10} stroke="#fff" strokeWidth="1.6" strokeDasharray="5 6" />
           <g className="bc-travel" style={vars({ '--bc-dist': '166px', '--bc-t': `${r.seconds}s` })}>
-            <circle cx="56" cy={y + 10} r="7.5" fill="#5eead4" stroke="#2dd4bf" />
-            <text x="56" y={y + 13} textAnchor="middle" fontSize="9" fontWeight="700" fill="#0f766e" style={FONT}>
+            <circle cx="56" cy={y + 10} r="7.5" fill={on ? '#c7d2fe' : '#e2e8f0'} stroke={on ? '#818cf8' : '#cbd5e1'} />
+            <text x="56" y={y + 13} textAnchor="middle" fontSize="9" fontWeight="700" fill={on ? '#3730a3' : '#64748b'} style={FONT}>
               $
             </text>
           </g>

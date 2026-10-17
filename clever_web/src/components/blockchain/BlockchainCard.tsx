@@ -82,9 +82,15 @@ export const BLOCKCHAIN_TONES: Record<BlockchainToneKey, BlockchainTone> = {
 }
 
 interface BlockchainCardProps {
-  number: string // "4.1", "4.2"…
+  number: string // "1", "2"…
   title: string
   tone: BlockchainToneKey
+  /** 'formal': tarjeta sobria (borde fino, sin manchas de color, acento índigo). Por defecto, la pastel de siempre. */
+  variant?: 'default' | 'formal'
+  /** solo variante formal: clases del fondo de la tarjeta (por defecto, blanco), p. ej. un degradado pastel suave */
+  surface?: string
+  /** solo variante formal: valor CSS de `background` con manchas pastel difuminadas que se desvanecen solas (no son un marco) */
+  glow?: string
   /** posición en la cuadrícula (col-span, etc.) */
   className?: string
   /** orden dentro de su fila, para la entrada escalonada */
@@ -96,7 +102,7 @@ interface BlockchainCardProps {
  * Contenedor común: etiqueta con el número, título y una mancha pastel decorativa.
  * Entra con un fundido al aparecer en pantalla y se eleva ligeramente al pasar el mouse.
  */
-export const BlockchainCard: React.FC<BlockchainCardProps> = ({ number, title, tone, className = '', index = 0, children }) => {
+export const BlockchainCard: React.FC<BlockchainCardProps> = ({ number, title, tone, variant = 'default', surface, glow, className = '', index = 0, children }) => {
   const { ref, shown } = useReveal<HTMLElement>(0.12)
   const t = BLOCKCHAIN_TONES[tone]
   const titleId = `bc-title-${number.replace('.', '-')}`
@@ -110,6 +116,20 @@ export const BlockchainCard: React.FC<BlockchainCardProps> = ({ number, title, t
         shown ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       } ${className}`}
     >
+      {variant === 'formal' ? (
+        <div className={`relative h-full ${glow ? 'overflow-hidden' : ''} rounded-2xl border border-slate-200 ${surface ?? 'bg-white'} p-6 shadow-sm shadow-slate-200/60`}>
+          {glow && <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: glow }} />}
+          <header className="relative mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+            <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-md bg-slate-900 px-1.5 text-xs font-semibold tabular-nums text-white">
+              {number}
+            </span>
+            <h3 id={titleId} className="text-lg font-semibold tracking-tight text-slate-900">
+              {title}
+            </h3>
+          </header>
+          <div className="relative">{children}</div>
+        </div>
+      ) : (
       <div className="relative h-full overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-200/50 transition duration-300 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-200/70 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
         <span
           aria-hidden="true"
@@ -123,6 +143,7 @@ export const BlockchainCard: React.FC<BlockchainCardProps> = ({ number, title, t
         </header>
         <div className="relative">{children}</div>
       </div>
+      )}
     </section>
   )
 }

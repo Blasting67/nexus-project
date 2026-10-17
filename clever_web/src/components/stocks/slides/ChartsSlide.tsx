@@ -21,7 +21,7 @@ export const ChartsSlide: React.FC<ChartsSlideProps> = ({ names, single = false 
       <HudItem lazy order={0} className="sm:col-span-2">
         <SectionHeading
           title="Gráficos: el electrocardiograma del precio"
-          subtitle="Los cinco gráficos usan los mismos precios, vistos de formas distintas."
+          subtitle="Los seis gráficos usan los mismos precios, vistos de formas distintas."
         />
       </HudItem>
 
@@ -33,7 +33,7 @@ export const ChartsSlide: React.FC<ChartsSlideProps> = ({ names, single = false 
           className={single ? 'mx-auto w-full sm:col-span-2 sm:max-w-[29rem]' : ''}
         >
           {/* la posición en la cuadrícula original (layout) no se usa: aquí la decide el subtema */}
-          <ChartCard {...chart} shown={shown} index={i} className="h-full">
+          <ChartCard {...chart} number={CHARTS.findIndex((c) => c.name === chart.name) + 1} shown={shown} index={i} className="h-full">
             <Preview shown={shown} />
           </ChartCard>
         </HudItem>
