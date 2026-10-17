@@ -16,6 +16,7 @@ export type BcIconKey =
   | 'bank'
   | 'check'
   | 'lock'
+  | 'bridge'
 
 const Svg: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = 'h-5 w-5' }) => (
   <svg
@@ -142,6 +143,15 @@ export const BC_ICONS: Record<BcIconKey, React.FC<{ className?: string }>> = {
     <Svg {...p}>
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </Svg>
+  ),
+  // dos redes unidas por un puente
+  bridge: (p) => (
+    <Svg {...p}>
+      <circle cx="5" cy="15" r="2.2" />
+      <circle cx="19" cy="15" r="2.2" />
+      <path d="M5 12.8C5 6 19 6 19 12.8" />
+      <path d="M9 17.5h6" />
     </Svg>
   ),
 }

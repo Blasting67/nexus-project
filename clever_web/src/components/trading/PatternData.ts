@@ -49,6 +49,19 @@ export const PATTERN_GROUPS: PatternGroup[] = [
         ],
       },
       {
+        id: 'inverted-hammer',
+        name: 'Martillo inverso',
+        meaning: 'Cuerpo pequeño abajo y mecha superior larga: los compradores intentaron subir el precio',
+        description:
+          'Tras tres velas rojas descendentes, una vela de cuerpo pequeño abajo y una mecha superior larga',
+        candles: [
+          { o: 80, h: 82, l: 70, c: 72, context: true },
+          { o: 72, h: 74, l: 62, c: 64, context: true },
+          { o: 64, h: 66, l: 54, c: 56, context: true },
+          { o: 51, h: 76, l: 49, c: 55 },
+        ],
+      },
+      {
         id: 'bullish-engulfing',
         name: 'Envolvente alcista',
         meaning: 'Una vela verde grande se come a la roja anterior',
@@ -59,6 +72,33 @@ export const PATTERN_GROUPS: PatternGroup[] = [
           { o: 66, h: 68, l: 58, c: 60, context: true },
           { o: 60, h: 61, l: 52, c: 54 },
           { o: 51, h: 68, l: 49, c: 66 },
+        ],
+      },
+      {
+        id: 'piercing',
+        name: 'Penetrante',
+        meaning: 'Dos velas: una vela roja larga, seguida por una vela verde de tamaño similar',
+        description:
+          'Una vela roja larga seguida de una vela verde de tamaño parecido que abre más abajo y cierra pasada la mitad de la roja',
+        candles: [
+          { o: 88, h: 90, l: 78, c: 80, context: true },
+          { o: 80, h: 82, l: 70, c: 72, context: true },
+          { o: 72, h: 73, l: 52, c: 54 },
+          { o: 49, h: 67, l: 48, c: 65 },
+        ],
+      },
+      {
+        id: 'morning-star',
+        name: 'Estrella de la mañana',
+        meaning: 'Tres velas: roja grande, una vela roja de cuerpo pequeño (la «estrella») y verde grande',
+        description:
+          'Una vela roja grande, una vela roja de cuerpo pequeño que es la estrella y finalmente una vela verde grande',
+        candles: [
+          { o: 90, h: 92, l: 80, c: 82, context: true },
+          { o: 82, h: 84, l: 72, c: 74, context: true },
+          { o: 74, h: 75, l: 54, c: 56 },
+          { o: 51, h: 53, l: 46, c: 48 },
+          { o: 50, h: 70, l: 49, c: 68 },
         ],
       },
       {
@@ -94,6 +134,19 @@ export const PATTERN_GROUPS: PatternGroup[] = [
         ],
       },
       {
+        id: 'hanging-man',
+        name: 'Hombre colgado',
+        meaning: 'Vela roja en forma de martillo: la contraparte bajista del martillo, al final de una tendencia alcista',
+        description:
+          'Tras tres velas verdes ascendentes, una vela roja con forma de martillo: cuerpo pequeño arriba y mecha inferior larga',
+        candles: [
+          { o: 30, h: 40, l: 28, c: 38, context: true },
+          { o: 38, h: 48, l: 36, c: 46, context: true },
+          { o: 46, h: 56, l: 44, c: 54, context: true },
+          { o: 60, h: 62, l: 38, c: 58 },
+        ],
+      },
+      {
         id: 'bearish-engulfing',
         name: 'Envolvente bajista',
         meaning: 'Una vela roja grande se come a la verde anterior',
@@ -104,6 +157,32 @@ export const PATTERN_GROUPS: PatternGroup[] = [
           { o: 36, h: 46, l: 34, c: 44, context: true },
           { o: 44, h: 52, l: 43, c: 50 },
           { o: 53, h: 55, l: 36, c: 38 },
+        ],
+      },
+      {
+        id: 'dark-cloud-cover',
+        name: 'Cubierta de nube oscura',
+        meaning: 'Dos velas: la segunda es roja, abre por encima del cuerpo verde anterior y cierra bajo su punto medio',
+        description:
+          'Una vela verde larga seguida de una vela roja que abre por encima del cuerpo verde y cierra por debajo de su punto medio',
+        candles: [
+          { o: 26, h: 36, l: 24, c: 34, context: true },
+          { o: 34, h: 44, l: 32, c: 42, context: true },
+          { o: 42, h: 62, l: 41, c: 60 },
+          { o: 65, h: 66, l: 45, c: 47 },
+        ],
+      },
+      {
+        id: 'evening-star',
+        name: 'Estrella del atardecer',
+        meaning: 'Tres velas: verde amplia, verde pequeña y roja amplia',
+        description: 'Una vela verde amplia, una vela verde pequeña en lo alto y una vela roja amplia que cierra bajo la mitad de la primera',
+        candles: [
+          { o: 28, h: 38, l: 26, c: 36, context: true },
+          { o: 36, h: 46, l: 34, c: 44, context: true },
+          { o: 44, h: 66, l: 43, c: 64 },
+          { o: 67, h: 71, l: 66, c: 70 },
+          { o: 68, h: 69, l: 48, c: 50 },
         ],
       },
       {
@@ -146,6 +225,36 @@ export const PATTERN_GROUPS: PatternGroup[] = [
           { o: 46, h: 56, l: 44, c: 54, context: true },
           { o: 53, h: 68, l: 40, c: 57, neutral: true },
           { o: 57, h: 67, l: 42, c: 54, neutral: true },
+        ],
+      },
+      {
+        id: 'falling-three-methods',
+        name: 'Triple formación bajista',
+        meaning: 'Una vela roja larga, seguida por tres velas verdes pequeñas y finalmente otra vela roja',
+        description:
+          'Una vela roja larga, tres velas verdes pequeñas dentro de su rango y otra vela roja larga que cierra más abajo',
+        candles: [
+          { o: 96, h: 98, l: 88, c: 90, context: true },
+          { o: 88, h: 89, l: 62, c: 64 },
+          { o: 66, h: 72, l: 65, c: 70 },
+          { o: 69, h: 75, l: 68, c: 73 },
+          { o: 72, h: 78, l: 71, c: 76 },
+          { o: 75, h: 76, l: 50, c: 52 },
+        ],
+      },
+      {
+        id: 'rising-three-methods',
+        name: 'Triple formación alcista',
+        meaning: 'Tres velas rojas pequeñas situadas entre dos velas verdes grandes',
+        description:
+          'Una vela verde grande, tres velas rojas pequeñas dentro de su rango y otra vela verde grande que cierra más arriba',
+        candles: [
+          { o: 30, h: 34, l: 24, c: 26, context: true },
+          { o: 28, h: 55, l: 27, c: 53 },
+          { o: 51, h: 52, l: 44, c: 46 },
+          { o: 48, h: 49, l: 41, c: 43 },
+          { o: 45, h: 46, l: 38, c: 40 },
+          { o: 42, h: 68, l: 41, c: 66 },
         ],
       },
     ],

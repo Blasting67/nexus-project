@@ -8,7 +8,7 @@ import { useReveal } from './useReveal'
 /* ------------------------------------------------------------------ */
 const P = 300 // ancho de una página
 const H = 414 // alto de una página (misma proporción que la portada)
-const CARD_H = 540 // alto de la tarjeta (igual abierta o cerrada)
+const CARD_H = 600 // alto del escenario del libro (igual abierto o cerrado)
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
 
 /** Portada + 4 hojas que se ojean. Índice 0 = portada. */
@@ -22,7 +22,7 @@ const CLOSE_TOTAL = 2300
 
 const EASE = 'cubic-bezier(0.45, 0.05, 0.25, 1)'
 const SOFT = 'cubic-bezier(0.22, 1, 0.36, 1)'
-const PAPER = 'linear-gradient(135deg, #fffdf6 0%, #fbf5e4 100%)'
+const PAPER = 'linear-gradient(135deg, #fffcf0 0%, #f9f0d9 100%)' // pergamino
 
 /** La firma de la portada, en dos líneas: "Los mandamientos de" / "Cristian Hdz. Estrella". */
 const SIGNATURE_LINES: [string, string] = (() => {
@@ -74,35 +74,51 @@ const usePrefersReducedMotion = () => {
 /* ------------------------------------------------------------------ */
 /* Portada: la misma del libro de siempre + la firma pequeña debajo   */
 /* ------------------------------------------------------------------ */
+const GOLD = '#e6c36e'
+const GOLD_LIGHT = '#f4e2ae'
+
 const CoverFace: React.FC = () => (
   <svg viewBox="18 6 142 196" className="h-full w-full" aria-hidden="true">
     <defs>
       <linearGradient id="book-cover" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#c7d2fe" />
-        <stop offset="55%" stopColor="#ddd6fe" />
-        <stop offset="100%" stopColor="#fbcfe8" />
+        <stop offset="0%" stopColor="#3b3790" />
+        <stop offset="55%" stopColor="#2b2872" />
+        <stop offset="100%" stopColor="#1c1952" />
       </linearGradient>
       <linearGradient id="book-spine" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stopColor="#a5b4fc" stopOpacity="0.9" />
-        <stop offset="100%" stopColor="#a5b4fc" stopOpacity="0" />
+        <stop offset="0%" stopColor="#0f0d3a" stopOpacity="0.85" />
+        <stop offset="100%" stopColor="#0f0d3a" stopOpacity="0" />
       </linearGradient>
+      <radialGradient id="book-sheen" cx="0.3" cy="0.18" r="0.8">
+        <stop offset="0%" stopColor="#fff" stopOpacity="0.16" />
+        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+      </radialGradient>
     </defs>
 
-    <rect x="18" y="6" width="142" height="196" rx="6" fill="url(#book-cover)" stroke="#fff" strokeOpacity="0.7" />
+    <rect x="18" y="6" width="142" height="196" rx="6" fill="url(#book-cover)" stroke={GOLD} strokeOpacity="0.8" />
+    <rect x="18" y="6" width="142" height="196" rx="6" fill="url(#book-sheen)" />
     <rect x="18" y="6" width="16" height="196" rx="6" fill="url(#book-spine)" />
-    <path d="M34 6v196" stroke="#fff" strokeOpacity="0.55" />
+    <path d="M34 6v196" stroke={GOLD} strokeOpacity="0.4" />
 
-    {/* marcos */}
-    <rect x="44" y="24" width="102" height="160" rx="4" fill="none" stroke="#fff" strokeOpacity="0.85" />
-    <rect x="49" y="29" width="92" height="150" rx="3" fill="none" stroke="#fff" strokeOpacity="0.45" />
+    {/* marcos dorados */}
+    <rect x="44" y="24" width="102" height="160" rx="4" fill="none" stroke={GOLD} strokeOpacity="0.9" />
+    <rect x="49" y="29" width="92" height="150" rx="3" fill="none" stroke={GOLD} strokeOpacity="0.45" />
+    {[
+      [44, 24],
+      [146, 24],
+      [44, 184],
+      [146, 184],
+    ].map(([x, y]) => (
+      <path key={x + '-' + y} d={`M${x} ${y - 3.2}l3.2 3.2-3.2 3.2-3.2-3.2z`} fill={GOLD} opacity="0.9" />
+    ))}
 
     {/* emblema */}
-    <path d="M95 58l5 6-5 6-5-6z" fill="#6366f1" opacity="0.4" />
-    <text x="95" y="116" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="38" fill="#4338ca" fillOpacity="0.55">
+    <path d="M95 58l5 6-5 6-5-6z" fill={GOLD} opacity="0.9" />
+    <text x="95" y="116" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="38" fill={GOLD_LIGHT} fillOpacity="0.95">
       XII
     </text>
-    <path d="M75 128h40" stroke="#4338ca" strokeOpacity="0.25" />
-    <text x="95" y="146" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="8.5" letterSpacing="2.4" fill="#4338ca" fillOpacity="0.5">
+    <path d="M75 128h40" stroke={GOLD} strokeOpacity="0.55" />
+    <text x="95" y="146" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontSize="8.5" letterSpacing="2.4" fill={GOLD} fillOpacity="0.95">
       MANDAMIENTOS
     </text>
 
@@ -113,8 +129,8 @@ const CoverFace: React.FC = () => (
       fontStyle="italic"
       fontSize="6.8"
       letterSpacing="0.15"
-      fill="#4338ca"
-      fillOpacity="0.78"
+      fill={GOLD_LIGHT}
+      fillOpacity="0.92"
     >
       <tspan x="95" y="161.5">
         {SIGNATURE_LINES[0]}
@@ -128,10 +144,10 @@ const CoverFace: React.FC = () => (
 
 /** Reverso de la portada (se ve un instante al abrir). */
 const EndPaper: React.FC = () => (
-  <div className="relative h-full w-full overflow-hidden" style={{ background: 'linear-gradient(135deg,#e0e7ff 0%,#ede9fe 55%,#fce7f3 100%)', borderRadius: '10px 2px 2px 10px' }}>
-    <span className="absolute inset-5 rounded-md border border-white/80" />
-    <span className="absolute inset-8 rounded border border-white/50" />
-    <span className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-sm bg-indigo-300/25" />
+  <div className="relative h-full w-full overflow-hidden" style={{ background: 'linear-gradient(135deg,#34308a 0%,#1c1952 100%)', borderRadius: '10px 2px 2px 10px' }}>
+    <span className="absolute inset-5 rounded-md border border-amber-200/60" />
+    <span className="absolute inset-8 rounded border border-amber-200/30" />
+    <span className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-sm bg-amber-200/25" />
   </div>
 )
 
@@ -177,7 +193,7 @@ const BlankLines: React.FC = () => (
   <div
     aria-hidden="true"
     className="absolute inset-x-8 inset-y-10"
-    style={{ backgroundImage: 'repeating-linear-gradient(transparent 0 27px, rgba(148,163,184,0.15) 27px 28px)' }}
+    style={{ backgroundImage: 'repeating-linear-gradient(transparent 0 27px, rgba(150,120,60,0.16) 27px 28px)' }}
   />
 )
 
@@ -187,11 +203,11 @@ const CommandmentsPage: React.FC<{ from: number; page: number }> = ({ from, page
   return (
     <div className="relative flex h-full flex-col px-7 pb-5 pt-7 text-left">
       <header className="text-center">
-        <p className="font-serif text-[10.5px] uppercase tracking-[0.3em] text-indigo-500/70">Mandamientos</p>
-        <p className="mt-0.5 font-serif text-[16px] text-indigo-700/80">
+        <p className="font-serif text-[10.5px] uppercase tracking-[0.3em] text-amber-700/80">Mandamientos</p>
+        <p className="mt-0.5 font-serif text-[16px] text-[#5b4214]">
           {ROMAN[from]} – {ROMAN[from + 5]}
         </p>
-        <span className="mx-auto mt-2 block h-px w-24 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+        <span className="mx-auto mt-2 block h-px w-24 bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
       </header>
 
       <ol role="list" className="mt-3 flex flex-1 flex-col justify-between gap-2.5">
@@ -199,11 +215,11 @@ const CommandmentsPage: React.FC<{ from: number; page: number }> = ({ from, page
           <li key={text} className="flex items-center gap-3">
             <span
               aria-hidden="true"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 font-serif text-[12px] font-semibold text-indigo-700 ring-1 ring-indigo-200"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 font-serif text-[12px] font-semibold text-amber-800 ring-1 ring-amber-300/80"
             >
               {ROMAN[from + i]}
             </span>
-            <span className="font-serif text-[15px] leading-snug text-slate-700">
+            <span className="font-serif text-[15px] leading-snug text-[#3f3320]">
               <span className="sr-only">{from + i + 1}. </span>
               {text}
             </span>
@@ -211,7 +227,7 @@ const CommandmentsPage: React.FC<{ from: number; page: number }> = ({ from, page
         ))}
       </ol>
 
-      <footer className="pt-2 text-center font-serif text-[11px] text-slate-400" aria-hidden="true">
+      <footer className="pt-2 text-center font-serif text-[11px] text-amber-700/60" aria-hidden="true">
         — {page} —
       </footer>
     </div>
@@ -250,8 +266,8 @@ export const CommandmentsBook: React.FC = () => {
     return () => ro.disconnect()
   }, [ref])
 
-  const s1 = Math.min(1.2, (width - 48) / (2 * P), (CARD_H - 132) / H) // libro abierto
-  const s0 = width < 520 ? 0.44 : 0.65 // libro cerrado (el tamaño de siempre)
+  const s1 = Math.min(1.35, (width - 48) / (2 * P), (CARD_H - 130) / H) // libro abierto
+  const s0 = width < 520 ? 0.64 : 0.78 // libro cerrado
   const compact = s1 < 0.7 // pantalla angosta: las dos páginas van una sobre otra, sin libro 3D
   const backDelay = compact ? 450 : 1700 // espera para que reaparezcan títulos y botón tras cerrar
   const closeBtnDelay = compact ? 500 : 1900 // espera para que aparezca "Cerrar el libro" tras abrir
@@ -301,11 +317,18 @@ export const CommandmentsBook: React.FC = () => {
       ref={ref}
       aria-label="Los 12 mandamientos del trader"
       style={{ minHeight: CARD_H }}
-      className={`relative overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-b from-violet-50/60 via-white to-amber-50/50 text-center shadow-sm shadow-slate-200/50 transition duration-700 ease-out motion-reduce:transition-none ${
+      className={`relative overflow-hidden text-center transition duration-700 ease-out motion-reduce:transition-none ${
         shown ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
       }`}
     >
       <style>{CSS}</style>
+
+      {/* ---------- luz de fondo: se desvanece por completo antes de llegar a los bordes (no hay marco) ---------- */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(ellipse closest-side at 50% 50%, rgba(255,238,184,0.6) 0%, rgba(255,243,208,0.3) 45%, rgba(255,250,235,0.1) 78%, rgba(255,255,255,0) 100%)' }}
+      />
 
       {/* ---------- escenario del libro ---------- */}
       <div
@@ -315,14 +338,14 @@ export const CommandmentsBook: React.FC = () => {
       >
         {/* resplandor por detrás: halo, rayos lentos y destellos */}
         <div className="pointer-events-none absolute left-1/2 top-1/2" style={{ transform: `translate(-50%, -50%) scale(${open ? 1.7 : 1})`, transition: t(1100) }}>
-          <div className="bk-rays absolute -left-[280px] -top-[280px] h-[560px] w-[560px] rounded-full" style={{ opacity: open ? 0.4 : 0.7, transition: reduced ? 'none' : 'opacity 900ms ease', background: 'repeating-conic-gradient(from 0deg, rgba(253,224,138,0.55) 0deg 5deg, transparent 5deg 16deg)', WebkitMaskImage: 'radial-gradient(circle, #000 14%, transparent 66%)', maskImage: 'radial-gradient(circle, #000 14%, transparent 66%)' }} />
-          <div className="bk-halo absolute -left-[230px] -top-[230px] h-[460px] w-[460px] rounded-full" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(253,230,138,0.78) 0%, rgba(196,181,253,0.55) 38%, rgba(125,211,252,0.28) 62%, rgba(125,211,252,0) 72%)' }} />
+          <div className="bk-rays absolute -left-[280px] -top-[280px] h-[560px] w-[560px] rounded-full" style={{ opacity: open ? 0.4 : 0.7, transition: reduced ? 'none' : 'opacity 900ms ease', background: 'repeating-conic-gradient(from 0deg, rgba(251,211,110,0.6) 0deg 4deg, transparent 4deg 15deg)', WebkitMaskImage: 'radial-gradient(circle, #000 14%, transparent 66%)', maskImage: 'radial-gradient(circle, #000 14%, transparent 66%)' }} />
+          <div className="bk-halo absolute -left-[230px] -top-[230px] h-[460px] w-[460px] rounded-full" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(255,243,196,0.95) 0%, rgba(253,224,138,0.7) 34%, rgba(251,191,36,0.24) 60%, rgba(251,191,36,0) 72%)' }} />
         </div>
         <div className="pointer-events-none absolute left-1/2 top-1/2" style={{ opacity: open ? 0.35 : 1, transition: reduced ? 'none' : 'opacity 900ms ease' }}>
           {SPARKS.map((s) => (
             <span
               key={s.x + '-' + s.y}
-              className="bk-twinkle absolute block bg-gradient-to-br from-amber-300 to-violet-300"
+              className="bk-twinkle absolute block bg-gradient-to-br from-amber-200 to-amber-400"
               style={{ left: s.x, top: s.y, width: s.s, height: s.s, animationDelay: `${s.d}s`, clipPath: 'polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)' }}
             />
           ))}
@@ -336,7 +359,7 @@ export const CommandmentsBook: React.FC = () => {
             height: H,
             marginLeft: -P,
             marginTop: -H / 2,
-            transform: open ? `scale(${s1}) translateX(0px)` : `scale(${s0}) translateX(${-P / 2}px)`,
+            transform: open ? `scale(${s1}) translateX(0px) translateY(0px)` : `scale(${s0}) translateX(${-P / 2}px) translateY(${Math.round(16 / s0)}px)`, // cerrado: baja unos 16 px para dar aire al subtítulo
             transition: t(open ? 1000 : 900, open ? 0 : 1250),
           }}
         >
@@ -348,7 +371,7 @@ export const CommandmentsBook: React.FC = () => {
               width: 520,
               height: 30,
               marginLeft: -260,
-              background: 'radial-gradient(ellipse at center, rgba(15,23,42,0.22), rgba(15,23,42,0) 70%)',
+              background: 'radial-gradient(ellipse at center, rgba(70,48,12,0.26), rgba(70,48,12,0) 70%)',
               transform: open ? 'translateX(0px)' : `translateX(${P / 2}px)`,
             }}
           />
@@ -360,7 +383,7 @@ export const CommandmentsBook: React.FC = () => {
                 key={'r' + i}
                 aria-hidden="true"
                 className="absolute"
-                style={{ left: P + 17 + i * 6.3, top: 8 + i * 6.3, width: 291, height: 401, background: ['#fffbeb', '#fffdf6', '#ffffff'][i], border: '1px solid #e7dfc6', borderRadius: 6 }}
+                style={{ left: P + 17 + i * 6.3, top: 8 + i * 6.3, width: 291, height: 401, background: ['#f6ecd0', '#faf2dc', '#fffcf0'][i], border: '1px solid #e2d5ac', borderRadius: 6 }}
               />
             ))}
             {/* y por la izquierda cuando está abierto */}
@@ -369,7 +392,7 @@ export const CommandmentsBook: React.FC = () => {
                 key={'l' + i}
                 aria-hidden="true"
                 className="absolute"
-                style={{ left: P - 17 - i * 6.3 - 291, top: 8 + i * 6.3, width: 291, height: 401, background: ['#fffbeb', '#fffdf6', '#ffffff'][i], border: '1px solid #e7dfc6', borderRadius: 6, opacity: open ? 1 : 0, transition: reduced ? 'none' : `opacity 500ms ease ${open ? 1600 : 0}ms` }}
+                style={{ left: P - 17 - i * 6.3 - 291, top: 8 + i * 6.3, width: 291, height: 401, background: ['#f6ecd0', '#faf2dc', '#fffcf0'][i], border: '1px solid #e2d5ac', borderRadius: 6, opacity: open ? 1 : 0, transition: reduced ? 'none' : `opacity 500ms ease ${open ? 1600 : 0}ms` }}
               />
             ))}
 
@@ -377,7 +400,7 @@ export const CommandmentsBook: React.FC = () => {
             <span
               aria-hidden="true"
               className="absolute"
-              style={{ left: P + P * 0.7 - 14, top: H - 6, width: 28, height: 42, background: '#fda4af', opacity: 0.85, clipPath: 'polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)' }}
+              style={{ left: P + P * 0.7 - 14, top: H - 6, width: 28, height: 42, background: '#be123c', opacity: 0.9, clipPath: 'polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)' }}
             />
 
             {/* página derecha fija: mandamientos VII – XII */}
@@ -453,10 +476,14 @@ export const CommandmentsBook: React.FC = () => {
       </div>
 
       {/* ---------- títulos de la tarjeta (se van al abrir el libro) ---------- */}
-      <div className={`z-10 px-6 pt-10 ${open ? 'absolute inset-x-0 top-0' : 'relative'}`} style={fade(!open, backDelay, 0)}>
-        <span className="mx-auto mb-3 block h-1 w-8 rounded-full bg-gradient-to-r from-violet-200 to-amber-200" />
-        <h2 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">Los 12 mandamientos del trader</h2>
-        <p className="mt-1 text-sm text-slate-500">Ábrelo para leer los doce mandamientos.</p>
+      <div className={`z-10 px-6 pt-8 ${open ? 'absolute inset-x-0 top-0' : 'relative'}`} style={fade(!open, backDelay, 0)}>
+        <span aria-hidden="true" className="mx-auto mb-3 flex items-center justify-center gap-2">
+          <span className="h-px w-12 bg-gradient-to-r from-transparent to-amber-500/70" />
+          <span className="h-1.5 w-1.5 rotate-45 bg-amber-500" />
+          <span className="h-px w-12 bg-gradient-to-l from-transparent to-amber-500/70" />
+        </span>
+        <h2 className="font-serif text-2xl font-semibold tracking-wide text-[#3f2d12] sm:text-[28px]">Los 12 mandamientos del trader</h2>
+        <p className="mt-1.5 font-serif text-[15px] italic text-[#7a6a4f]">Ábrelo para leer los doce mandamientos.</p>
       </div>
 
       <button
@@ -471,7 +498,7 @@ export const CommandmentsBook: React.FC = () => {
         aria-label="Abrir Los 12 mandamientos del trader"
         tabIndex={open ? -1 : 0}
         style={fade(!open, backDelay, 0)}
-        className="group absolute bottom-8 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-5 py-2 text-sm font-medium text-violet-700 shadow-sm transition-[border-color,background-color,box-shadow] duration-300 hover:border-violet-300 hover:bg-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
+        className="group absolute bottom-7 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-400/70 bg-white/70 px-5 py-2 text-sm font-medium text-amber-900 transition-[border-color,background-color] duration-300 hover:border-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
       >
         Abrir el libro
         <svg viewBox="0 0 20 20" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -504,7 +531,7 @@ export const CommandmentsBook: React.FC = () => {
         aria-label="Cerrar el libro"
         tabIndex={open ? 0 : -1}
         style={fade(open, closeBtnDelay, 0)}
-        className="group absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-200 bg-white/90 px-5 py-2 text-sm font-medium text-violet-700 shadow-sm transition-[border-color,background-color,box-shadow] duration-300 hover:border-violet-300 hover:bg-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
+        className="group absolute bottom-2 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-400/70 bg-white/70 px-5 py-2 text-sm font-medium text-amber-900 transition-[border-color,background-color] duration-300 hover:border-amber-500 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
       >
         <svg viewBox="0 0 20 20" className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M16 10H4M9 5l-5 5 5 5" />

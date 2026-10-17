@@ -34,6 +34,13 @@ interface TopicHudProps {
   header: React.ReactNode
   /** nombre accesible del conjunto */
   label: string
+  /** botón destacado arriba de los temas de la barra lateral */
+  sidebarAction?: React.ReactNode
+  /**
+   * ancho mínimo del contenido (p. ej. '77rem') para pantallas con un tablero grande, como el Atlas.
+   * Si la ventana no alcanza, se reduce sola. Sin esto, el contenido mide lo mismo que en acciones.
+   */
+  contentWidth?: string
 }
 
 /** Espacio bajo el HUD: separación (16) + barra de puntos (48). */
@@ -44,7 +51,7 @@ const DOTS_BLOCK = 64
  *  - Temas: barra lateral. Cambian con los botones, la rueda del mouse o ↑ ↓ (las tarjetas suben o bajan).
  *  - Subtemas: barra de puntos. Cambian con los puntos, deslizando de lado o con ← → (las tarjetas se deslizan).
  */
-export const TopicHud: React.FC<TopicHudProps> = ({ topics, header, label }) => {
+export const TopicHud: React.FC<TopicHudProps> = ({ topics, header, label, sidebarAction, contentWidth }) => {
   const rootRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -83,7 +90,13 @@ export const TopicHud: React.FC<TopicHudProps> = ({ topics, header, label }) => 
       ref={rootRef}
       role="region"
       aria-label={label}
-      style={naturalWidth ? ({ '--hud-w': `calc(${naturalWidth}px - 16.5rem)` } as React.CSSProperties) : undefined}
+      style={
+        naturalWidth
+          ? ({ '--hud-w': contentWidth ? `max(calc(${naturalWidth}px - 16.5rem), ${contentWidth})` : `calc(${naturalWidth}px - 16.5rem)` } as React.CSSProperties)
+          : contentWidth
+            ? ({ '--hud-w': contentWidth } as React.CSSProperties)
+            : undefined
+      }
       className="relative isolate mx-auto w-full max-w-7xl py-4"
     >
       <HudStyles />
@@ -106,6 +119,7 @@ export const TopicHud: React.FC<TopicHudProps> = ({ topics, header, label }) => 
           hintTitle="Scrollea para cambiar de tema"
           hintText="o usa las flechas ↑ ↓"
           mobileGrid="grid-cols-2 sm:grid-cols-3"
+          topAction={sidebarAction}
         />
 
         <div className="lg:col-start-2 lg:row-start-2">

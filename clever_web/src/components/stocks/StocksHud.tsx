@@ -1,4 +1,5 @@
 import React from 'react'
+import { BackToAnalysisButton } from '../analysis/BackToAnalysisButton'
 import { CandlestickStructure } from '../analysis/CandlestickStructure'
 import { HudItem } from '../hud/HudSlide'
 import { TopicHud } from '../hud/TopicHud'
@@ -17,7 +18,7 @@ import { MistakesSlide } from './slides/MistakesSlide'
 import { PatternsSlide } from './slides/PatternsSlide'
 
 /* Disposición de las tarjetas dentro de un subtema (las tarjetas en sí no cambian). */
-const CHARTS_LAYOUT = 'mx-auto grid w-full max-w-[58rem] gap-5 sm:grid-cols-2'
+const CHARTS_LAYOUT = 'grid w-full gap-5 sm:grid-cols-2'
 const STACK = 'grid gap-4'
 
 /**
@@ -43,10 +44,10 @@ const TOPICS: Topic[] = [
         children: <ChartsSlide names={['Velas japonesas', 'Heikin Ashi']} />,
       },
       {
-        id: 'renko',
-        label: 'Renko',
+        id: 'renko-areas',
+        label: 'Renko y gráfico de áreas',
         layout: CHARTS_LAYOUT,
-        children: <ChartsSlide names={['Renko']} single />,
+        children: <ChartsSlide names={['Renko', 'Áreas']} />,
       },
     ],
   },
@@ -58,7 +59,7 @@ const TOPICS: Topic[] = [
       {
         id: 'structure',
         label: 'Estructura de una vela japonesa',
-        layout: 'mx-auto grid w-full max-w-4xl',
+        layout: 'grid w-full',
         children: (
           <HudItem lazy>
             <CandlestickStructure />
@@ -68,19 +69,19 @@ const TOPICS: Topic[] = [
       {
         id: 'bullish',
         label: 'Patrones que anuncian subida',
-        layout: 'grid gap-5 sm:grid-cols-3',
+        layout: 'grid w-full gap-4 sm:grid-cols-3',
         children: <PatternsSlide category="bullish" />,
       },
       {
         id: 'bearish',
         label: 'Patrones que anuncian bajada',
-        layout: 'grid gap-5 sm:grid-cols-3',
+        layout: 'grid w-full gap-4 sm:grid-cols-3',
         children: <PatternsSlide category="bearish" />,
       },
       {
         id: 'indecision',
         label: 'Patrones que anuncian indecisión',
-        layout: 'mx-auto grid w-full max-w-3xl gap-5 sm:grid-cols-2',
+        layout: 'grid w-full gap-4 sm:grid-cols-2',
         children: <PatternsSlide category="indecision" />,
       },
     ],
@@ -139,7 +140,7 @@ const TOPICS: Topic[] = [
       {
         id: 'book',
         label: 'Los 12 mandamientos del trader',
-        layout: 'mx-auto grid w-full max-w-3xl',
+        layout: 'grid w-full',
         children: (
           <HudItem lazy>
             <CommandmentsBook />
@@ -151,5 +152,5 @@ const TOPICS: Topic[] = [
 ]
 
 export const StocksHud: React.FC<{ header: React.ReactNode }> = ({ header }) => (
-  <TopicHud header={header} topics={TOPICS} label="Temas del análisis de acciones" />
+  <TopicHud header={header} topics={TOPICS} label="Temas del análisis de acciones" sidebarAction={<BackToAnalysisButton />} />
 )

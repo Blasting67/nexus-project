@@ -9,17 +9,17 @@ import { useReveal } from './useReveal'
 export const GROUP_STYLES: Record<PatternCategory, { dot: string; panel: string; chip: string }> = {
   bullish: {
     dot: 'bg-emerald-300 ring-emerald-100',
-    panel: 'bg-emerald-50/60',
+    panel: 'bg-gradient-to-br from-emerald-50 via-white to-emerald-100/70',
     chip: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
   },
   bearish: {
     dot: 'bg-rose-300 ring-rose-100',
-    panel: 'bg-rose-50/60',
+    panel: 'bg-gradient-to-br from-rose-50 via-white to-rose-100/70',
     chip: 'bg-rose-50 text-rose-700 ring-rose-100',
   },
   indecision: {
     dot: 'bg-amber-300 ring-amber-100',
-    panel: 'bg-amber-50/60',
+    panel: 'bg-gradient-to-br from-amber-50 via-white to-amber-100/70',
     chip: 'bg-amber-50 text-amber-700 ring-amber-100',
   },
 }
