@@ -467,7 +467,7 @@ export const HomePage: React.FC = () => {
   )
 
   const RankingWidget = (
-    <div className="platform-card p-5 space-y-3">
+    <div data-tour="home-ranking" className="platform-card p-5 space-y-3">
       <div className="flex items-center justify-between text-xs">
         <span className="font-bold text-[var(--text)] flex items-center gap-1.5">
           <i className="fa-solid fa-trophy text-amber-500 text-[11px]"></i>
@@ -603,7 +603,7 @@ export const HomePage: React.FC = () => {
               )}
             </section>
 
-            <section className="space-y-4">
+            <section data-tour="home-tools" className="space-y-4">
               <div>
                 <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -719,7 +719,7 @@ export const HomePage: React.FC = () => {
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section data-tour="home-tools" className="space-y-4">
             <div>
               <h2 className="text-base font-bold text-[var(--text)] tracking-tight">Herramientas Prácticas</h2>
               <p className="text-xs text-[var(--text-muted)]">

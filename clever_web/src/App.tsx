@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { EventSimulatorModal } from './components/EventSimulatorModal'
 import { MentorWidget } from './components/MentorWidget'
 import { Navbar } from './components/Navbar'
+import { PageTutorial } from './components/PageTutorial'
 import { SyncModal } from './components/SyncModal'
 import { ToastContainer, type ToastData } from './components/Toast'
 import { PlatformProvider, usePlatform } from './context/PlatformContext'
@@ -195,6 +196,8 @@ const MainAppContent: React.FC = () => {
           />
         </Routes>
       </main>
+
+      <PageTutorial />
 
       <footer className="border-t border-[var(--border)] bg-[var(--bg-alt)] px-6 py-4 text-xs text-[var(--text-muted)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
