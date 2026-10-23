@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { ACHIEVEMENTS, CATEGORIES } from '../data/catalog'
+import { resolveAvatarSrc } from '../data/avatarPresets'
 import {
   DEFAULT_BANNER_A,
   DEFAULT_BANNER_B,
   DEFAULT_CUSTOMIZATION,
   MAX_PINNED_ACHIEVEMENTS,
+  MAX_STATUS_LENGTH,
   STAT_OPTIONS,
+  STATUS_ICONS,
 } from '../data/profileCustomizationOptions'
 import { ProfileStudio, STUDIO_TAB_IDS } from '../components/profile/ProfileStudio'
 import type { StudioTabId } from '../components/profile/ProfileStudio'
@@ -73,12 +76,22 @@ export const ProfilePage: React.FC = () => {
   const [filter, setFilter] = useState<AchievementFilter>('all')
   const [isExporting, setIsExporting] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [editingStatus, setEditingStatus] = useState(false)
+  const [statusDraft, setStatusDraft] = useState('')
+  const [statusIconDraft, setStatusIconDraft] = useState(DEFAULT_CUSTOMIZATION.statusIcon)
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [])
 
   useEffect(() => {
     const loaded = loadProfileCustomization(user.username)
     setSaved(loaded)
     setDraft(loaded)
   }, [user.username])
+
+  const isDirty = JSON.stringify(draft) !== JSON.stringify(saved)
 
   useEffect(() => {
     const requested = searchParams.get('studio')
@@ -92,16 +105,18 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!studioOpen) return
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setStudioOpen(false)
+      if (event.key !== 'Escape') return
+      if (isDirty) setConfirmDiscard(true)
+      else setStudioOpen(false)
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [studioOpen])
+  }, [studioOpen, isDirty])
 
   const active = studioOpen ? draft : saved
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(saved)
 
   const displayName = user.name || user.username
+  const avatarSrc = resolveAvatarSrc(user.avatar, user.username)
   const initials = (displayName || 'U').slice(0, 2).toUpperCase()
 
   const allAchievements = ACHIEVEMENTS as unknown as AchievementItem[]
@@ -148,6 +163,7 @@ export const ProfilePage: React.FC = () => {
 
   const openStudio = (tab: StudioTabId) => {
     setDraft(saved)
+    setConfirmDiscard(false)
     setStudioTab(tab)
     setStudioOpen(true)
   }
@@ -161,6 +177,7 @@ export const ProfilePage: React.FC = () => {
     if (ok) {
       setSaved(draft)
       setStudioOpen(false)
+      setConfirmDiscard(false)
       showToast?.('Personalización guardada', 'success')
     } else {
       showToast?.('No se pudo guardar la personalización', 'error')
@@ -169,6 +186,40 @@ export const ProfilePage: React.FC = () => {
 
   const handleReset = () => {
     setDraft(DEFAULT_CUSTOMIZATION)
+  }
+
+  const handleRequestClose = () => {
+    if (isDirty) setConfirmDiscard(true)
+    else setStudioOpen(false)
+  }
+
+  const handleDiscard = () => {
+    setDraft(saved)
+    setConfirmDiscard(false)
+    setStudioOpen(false)
+  }
+
+  const startStatusEdit = () => {
+    setStatusDraft(saved.status)
+    setStatusIconDraft(saved.statusIcon)
+    setEditingStatus(true)
+  }
+
+  const cancelStatusEdit = () => {
+    setEditingStatus(false)
+  }
+
+  const commitStatus = () => {
+    const next = { ...saved, status: statusDraft.trim(), statusIcon: statusIconDraft }
+    const ok = saveProfileCustomization(user.username, next)
+    if (!ok) {
+      showToast?.('No se pudo guardar el estado', 'error')
+      return
+    }
+    setSaved(next)
+    setDraft((current) => ({ ...current, status: next.status, statusIcon: next.statusIcon }))
+    setEditingStatus(false)
+    showToast?.(next.status ? 'Estado actualizado' : 'Estado eliminado', 'success')
   }
 
   const handleTogglePin = (id: string) => {
@@ -201,7 +252,8 @@ export const ProfilePage: React.FC = () => {
         streak: user.streak,
         achievementsUnlocked: unlockedAchievements.length,
         achievementsTotal: allAchievements.length,
-        avatar: user.avatar || undefined,
+        avatar: avatarSrc,
+        shape: active.avatarShape,
         initials,
         colorA: active.bannerColorA,
         colorB: active.bannerColorB,
@@ -236,10 +288,10 @@ export const ProfilePage: React.FC = () => {
         />
 
         <div className="px-5 sm:px-8 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-20">
             <div className="mx-auto sm:mx-0 flex-shrink-0">
               <AvatarFrame
-                src={user.avatar || undefined}
+                src={avatarSrc}
                 initials={initials}
                 alt={`Avatar de ${displayName}`}
                 shape={active.avatarShape}
@@ -299,20 +351,79 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            {active.status ? (
+            {editingStatus ? (
+              <div className="flex w-full flex-col gap-2 rounded-xl border border-[var(--primary)] bg-[var(--bg-alt)] p-2.5 sm:w-auto sm:min-w-[22rem]">
+                <div className="flex items-center gap-2">
+                  <i className={`${statusIconDraft} w-5 text-center text-[var(--primary)]`}></i>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={statusDraft}
+                    maxLength={MAX_STATUS_LENGTH}
+                    onChange={(event) => setStatusDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') commitStatus()
+                      if (event.key === 'Escape') cancelStatusEdit()
+                    }}
+                    placeholder="Qué estás haciendo ahora"
+                    aria-label="Tu estado"
+                    className="flex-1 bg-transparent text-xs text-[var(--text)] outline-none"
+                  />
+                  <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                    {statusDraft.length}/{MAX_STATUS_LENGTH}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={commitStatus}
+                    aria-label="Guardar estado"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-text)] cursor-pointer"
+                  >
+                    <i className="fa-solid fa-check text-xs"></i>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelStatusEdit}
+                    aria-label="Cancelar"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-muted)] cursor-pointer"
+                  >
+                    <i className="fa-solid fa-xmark text-xs"></i>
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {STATUS_ICONS.map((item) => (
+                    <button
+                      key={item.icon}
+                      type="button"
+                      title={item.label}
+                      aria-label={item.label}
+                      onClick={() => setStatusIconDraft(item.icon)}
+                      className={`flex h-7 w-7 items-center justify-center rounded-lg border text-xs transition-colors cursor-pointer ${
+                        statusIconDraft === item.icon
+                          ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-text)]'
+                          : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)]'
+                      }`}
+                    >
+                      <i className={item.icon}></i>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : active.status ? (
               <button
                 type="button"
-                onClick={() => openStudio('status')}
-                className="inline-flex items-center gap-2 self-center sm:self-auto rounded-full border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-1.5 text-xs text-[var(--text)] hover:border-[var(--primary)] transition-colors cursor-pointer"
+                onClick={startStatusEdit}
+                title="Editar estado"
+                className="group inline-flex items-center gap-2 self-center rounded-full border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-1.5 text-xs text-[var(--text)] transition-colors hover:border-[var(--primary)] sm:self-auto cursor-pointer"
               >
                 <i className={`${active.statusIcon} text-[var(--primary)]`}></i>
                 {active.status}
+                <i className="fa-solid fa-pen text-[9px] text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100"></i>
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => openStudio('status')}
-                className="inline-flex items-center gap-2 self-center sm:self-auto rounded-full border border-dashed border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors cursor-pointer"
+                onClick={startStatusEdit}
+                className="inline-flex items-center gap-2 self-center rounded-full border border-dashed border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] sm:self-auto cursor-pointer"
               >
                 <i className="fa-solid fa-plus text-[10px]"></i>
                 Agregar un estado
@@ -711,8 +822,11 @@ export const ProfilePage: React.FC = () => {
         onChange={handleDraftChange}
         onSave={handleSave}
         onReset={handleReset}
-        onClose={() => setStudioOpen(false)}
+        onClose={handleRequestClose}
         isDirty={isDirty}
+        confirmDiscard={confirmDiscard}
+        onDiscard={handleDiscard}
+        onKeepEditing={() => setConfirmDiscard(false)}
         unlockedAchievements={unlockedAchievements.map((a) => ({ id: a.id, name: a.name }))}
         hasCover={Boolean(user.cover)}
       />

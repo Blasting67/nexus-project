@@ -1,4 +1,5 @@
 import React from 'react'
+import { AnalysisThemeScope } from '../analysis/AnalysisThemeScope'
 import { BackToAnalysisButton } from '../analysis/BackToAnalysisButton'
 import { CandlestickStructure } from '../analysis/CandlestickStructure'
 import { HudItem } from '../hud/HudSlide'
@@ -17,14 +18,9 @@ import {
 import { MistakesSlide } from './slides/MistakesSlide'
 import { PatternsSlide } from './slides/PatternsSlide'
 
-/* Disposición de las tarjetas dentro de un subtema (las tarjetas en sí no cambian). */
 const CHARTS_LAYOUT = 'grid w-full gap-5 sm:grid-cols-2'
 const STACK = 'grid gap-4'
 
-/**
- * Temas (barra lateral, ↑ ↓) y subtemas (barra de puntos, ← →) del análisis de acciones.
- * Aquí solo se decide qué tarjeta va en cada pantalla.
- */
 const TOPICS: Topic[] = [
   {
     id: 'charts',
@@ -90,7 +86,6 @@ const TOPICS: Topic[] = [
     id: 'indicators',
     label: 'Indicadores',
     icon: 'sliders',
-    // `group` agrupa los puntos por familia: tendencias móviles (4), impulso (3), volatilidad (2) y estructura (2)
     slides: [
       { id: 'sma-ema', label: 'SMA y EMA', group: 0, layout: 'grid gap-4 md:grid-cols-2', children: <SmaEmaSlide /> },
       { id: 'other-averages', label: 'Otras medias móviles', group: 0, layout: STACK, children: <OtherAveragesSlide /> },
@@ -152,5 +147,7 @@ const TOPICS: Topic[] = [
 ]
 
 export const StocksHud: React.FC<{ header: React.ReactNode }> = ({ header }) => (
-  <TopicHud header={header} topics={TOPICS} label="Temas del análisis de acciones" sidebarAction={<BackToAnalysisButton />} />
-)
+  <AnalysisThemeScope>
+    <TopicHud header={header} topics={TOPICS} label="Temas del análisis de acciones" sidebarAction={<BackToAnalysisButton />} />
+  </AnalysisThemeScope>
+)

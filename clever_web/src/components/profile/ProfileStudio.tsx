@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import {
   AVATAR_SHAPES,
   BANNER_PRESETS,
@@ -87,6 +88,9 @@ interface ProfileStudioProps {
   onReset: () => void
   onClose: () => void
   isDirty: boolean
+  confirmDiscard: boolean
+  onDiscard: () => void
+  onKeepEditing: () => void
   unlockedAchievements: UnlockedAchievement[]
   hasCover: boolean
 }
@@ -101,6 +105,9 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({
   onReset,
   onClose,
   isDirty,
+  confirmDiscard,
+  onDiscard,
+  onKeepEditing,
   unlockedAchievements,
   hasCover,
 }) => {
@@ -151,6 +158,26 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({
             <i className="fa-solid fa-xmark"></i>
           </button>
         </div>
+
+        {confirmDiscard && (
+          <div className="mx-4 mt-4 rounded-lg border border-[var(--warning)] bg-[var(--warning-bg)] p-3 space-y-2.5">
+            <p className="text-xs font-semibold text-[var(--text)] flex items-center gap-2">
+              <i className="fa-solid fa-triangle-exclamation text-[var(--warning)]"></i>
+              Tienes cambios sin guardar
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={onSave} className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
+                Guardar
+              </button>
+              <button type="button" onClick={onDiscard} className="platform-btn-secondary py-1.5 px-3 text-xs cursor-pointer">
+                Descartar
+              </button>
+              <button type="button" onClick={onKeepEditing} className="platform-btn-secondary py-1.5 px-3 text-xs cursor-pointer">
+                Seguir editando
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-5 gap-1 px-3 pt-3">
           {STUDIO_TABS.map((item) => (
@@ -322,6 +349,17 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({
                   />
                 </div>
               </div>
+
+              <Link
+                to="/personalizacion?seccion=avatar"
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] px-3 py-2.5 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--primary)]"
+              >
+                <span className="flex items-center gap-2">
+                  <i className="fa-solid fa-user-astronaut text-[var(--primary)]"></i>
+                  Elegir otro avatar o subir mi foto
+                </span>
+                <i className="fa-solid fa-arrow-right text-[10px] text-[var(--text-muted)]"></i>
+              </Link>
 
               <Toggle
                 checked={draft.showLevelRing}

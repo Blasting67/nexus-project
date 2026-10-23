@@ -3,10 +3,6 @@ import type { HudRowItem } from './HudData'
 import { HUD_ICONS, HUD_TONES } from './HudIcons'
 import { useSlideState } from './HudSlide'
 
-/**
- * Lista dinámica de filas (conceptos o mercados).
- * Las filas entran en cascada cuando su sección aparece, reaccionan al hover y, al tocarlas, se enfocan y atenúan a las demás.
- */
 export const HudRows: React.FC<{ items: HudRowItem[]; label: string }> = ({ items, label }) => {
   const active = useSlideState() === 'active'
   const [selected, setSelected] = useState<string | null>(null)
@@ -26,7 +22,7 @@ export const HudRows: React.FC<{ items: HudRowItem[]; label: string }> = ({ item
           <li
             key={item.id}
             style={{ transitionDelay: active ? `${420 + i * 80}ms` : '0ms' }}
-            className={`border-b border-slate-200/60 transition duration-700 ease-out last:border-b-0 motion-reduce:transition-none ${
+            className={`border-b border-[var(--border)] transition duration-700 ease-out last:border-b-0 motion-reduce:transition-none ${
               active ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
             }`}
           >
@@ -34,8 +30,8 @@ export const HudRows: React.FC<{ items: HudRowItem[]; label: string }> = ({ item
               type="button"
               aria-pressed={on}
               onClick={() => setSelected(on ? null : item.id)}
-              className={`group flex w-full items-center gap-[clamp(0.6rem,1.4vh,1rem)] rounded-2xl px-2 py-[clamp(0.3rem,0.9vh,0.7rem)] text-left transition duration-300 hover:translate-x-1 hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 motion-reduce:transition-none ${
-                on ? 'bg-white shadow-md ring-1 ring-violet-200' : ''
+              className={`group flex w-full items-center gap-[clamp(0.6rem,1.4vh,1rem)] rounded-2xl px-2 py-[clamp(0.3rem,0.9vh,0.7rem)] text-left transition duration-300 hover:translate-x-1 hover:bg-[var(--surface-alt)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 motion-reduce:transition-none ${
+                on ? 'hud-panel-active shadow-md ring-1' : ''
               } ${dim ? 'opacity-55' : ''}`}
             >
               <span
@@ -47,8 +43,8 @@ export const HudRows: React.FC<{ items: HudRowItem[]; label: string }> = ({ item
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block text-[clamp(0.85rem,1.9vh,1rem)] font-semibold leading-tight text-slate-800">{item.name}</span>
-                <span className="block text-[clamp(0.75rem,1.6vh,0.875rem)] leading-snug text-slate-500">{item.text}</span>
+                <span className="hud-ink block text-[clamp(0.85rem,1.9vh,1rem)] font-semibold leading-tight">{item.name}</span>
+                <span className="hud-ink-soft block text-[clamp(0.75rem,1.6vh,0.875rem)] leading-snug">{item.text}</span>
               </span>
 
               {item.tag && (

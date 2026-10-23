@@ -9,7 +9,6 @@ const DOWN_POINTS: Array<[number, number]> = [[4, 12], [24, 18], [44, 16], [66, 
 
 const toPoints = (pts: Array<[number, number]>) => pts.map(([x, y]) => `${x},${y}`).join(' ')
 
-/** Gráfica de área que se "dibuja" de izquierda a derecha cuando la sección aparece. */
 const Trend: React.FC<{ points: Array<[number, number]>; up: boolean; active: boolean }> = ({ points, up, active }) => {
   const color = up ? '#34d399' : '#fb7185'
   const id = up ? 'hud-buy' : 'hud-sell'
@@ -41,7 +40,7 @@ const Trend: React.FC<{ points: Array<[number, number]>; up: boolean; active: bo
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
-      <circle cx={last[0]} cy={last[1]} r="3.4" fill="#fff" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <circle cx={last[0]} cy={last[1]} r="3.4" style={{ fill: 'var(--surface)' }} stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
@@ -60,29 +59,29 @@ const Panel: React.FC<PanelProps> = ({ up, name, chip, text, active }) => {
     <article
       className={`group grid min-h-0 flex-1 grid-cols-2 items-center gap-3 rounded-3xl p-[clamp(0.75rem,1.8vh,1.25rem)] ring-1 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         up
-          ? 'bg-gradient-to-br from-emerald-50 to-teal-50/60 ring-emerald-100 hover:shadow-emerald-200/50'
-          : 'bg-gradient-to-br from-rose-50 to-pink-50/60 ring-rose-100 hover:shadow-rose-200/50'
+          ? 'hud-tint-emerald hover:shadow-emerald-500/20'
+          : 'hud-tint-rose hover:shadow-rose-500/20'
       }`}
     >
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2.5">
           <span
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition duration-300 group-hover:scale-110 motion-reduce:transition-none ${
-              up ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+              up ? 'hud-chip-emerald' : 'hud-chip-rose'
             }`}
           >
             <Arrow className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </span>
-          <h3 className={`text-[clamp(0.85rem,1.9vh,1rem)] font-bold leading-tight ${up ? 'text-emerald-800' : 'text-rose-800'}`}>{name}</h3>
+          <h3 className={`text-[clamp(0.85rem,1.9vh,1rem)] font-bold leading-tight ${up ? 'hud-ink-emerald' : 'hud-ink-rose'}`}>{name}</h3>
         </div>
         <span
           className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            up ? 'bg-emerald-100/80 text-emerald-700' : 'bg-rose-100/80 text-rose-700'
+            up ? 'hud-chip-emerald' : 'hud-chip-rose'
           }`}
         >
           {chip}
         </span>
-        <p className="mt-2 text-[clamp(0.75rem,1.7vh,0.9rem)] leading-snug text-slate-600">{text}</p>
+        <p className="mt-2 text-[clamp(0.75rem,1.7vh,0.9rem)] leading-snug hud-ink-soft">{text}</p>
       </div>
       <div className="h-full min-h-[4rem]">
         <Trend points={up ? UP_POINTS : DOWN_POINTS} up={up} active={active} />
@@ -91,7 +90,6 @@ const Panel: React.FC<PanelProps> = ({ up, name, chip, text, active }) => {
   )
 }
 
-/** Introducción: Tipos de operación (BUY y SELL), con su gráfica y la aclaración sobre vender en corto. */
 export const OperationTypesCard: React.FC = () => {
   const active = useSlideState() === 'active'
   const Info = HUD_ICONS.info
@@ -102,8 +100,8 @@ export const OperationTypesCard: React.FC = () => {
         <Panel up name={OPERATIONS.buy.name} chip={OPERATIONS.buy.chip} text={OPERATIONS.buy.text} active={active} />
         <Panel up={false} name={OPERATIONS.sell.name} chip={OPERATIONS.sell.chip} text={OPERATIONS.sell.text} active={active} />
       </div>
-      <p className="mt-3 flex items-start gap-2 rounded-2xl bg-violet-50/70 px-4 py-2.5 text-xs leading-snug text-slate-600 ring-1 ring-violet-100">
-        <Info className="mt-px h-4 w-4 shrink-0 text-violet-400" />
+      <p className="mt-3 flex items-start gap-2 rounded-2xl hud-tint-violet px-4 py-2.5 text-xs leading-snug hud-ink-soft ring-1">
+        <Info className="mt-px h-4 w-4 shrink-0 hud-ink-violet" />
         {OPERATIONS.note}
       </p>
     </HudCard>

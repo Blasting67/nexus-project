@@ -1,4 +1,7 @@
+export type CardAvatarShape = 'circle' | 'rounded' | 'hexagon'
+
 export interface ProfileCardData {
+  shape?: CardAvatarShape
   displayName: string
   username: string
   level: number
@@ -74,9 +77,34 @@ const drawCard = (
   const avatarX = 120
   const avatarY = 130
 
+  const traceAvatarShape = () => {
+    ctx.beginPath()
+    const shape = data.shape || 'rounded'
+    if (shape === 'circle') {
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2)
+    } else if (shape === 'hexagon') {
+      const points: [number, number][] = [
+        [0.25, 0.05],
+        [0.75, 0.05],
+        [1, 0.5],
+        [0.75, 0.95],
+        [0.25, 0.95],
+        [0, 0.5],
+      ]
+      points.forEach(([px, py], index) => {
+        const x = avatarX + px * avatarSize
+        const y = avatarY + py * avatarSize
+        if (index === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      })
+      ctx.closePath()
+    } else {
+      ctx.roundRect(avatarX, avatarY, avatarSize, avatarSize, avatarSize * 0.26)
+    }
+  }
+
   ctx.save()
-  ctx.beginPath()
-  ctx.roundRect(avatarX, avatarY, avatarSize, avatarSize, 48)
+  traceAvatarShape()
   ctx.clip()
   if (avatarImage) {
     ctx.drawImage(avatarImage, avatarX, avatarY, avatarSize, avatarSize)
@@ -92,9 +120,9 @@ const drawCard = (
   ctx.restore()
 
   ctx.lineWidth = 8
+  ctx.lineJoin = 'round'
   ctx.strokeStyle = colorA
-  ctx.beginPath()
-  ctx.roundRect(avatarX, avatarY, avatarSize, avatarSize, 48)
+  traceAvatarShape()
   ctx.stroke()
 
   ctx.textAlign = 'left'

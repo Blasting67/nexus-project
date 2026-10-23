@@ -25,7 +25,7 @@ export const PressureCard: React.FC<{ buySell: number; risk: number }> = ({ buyS
     <section
       className="relative isolate overflow-hidden rounded-2xl border border-white/80 shadow-md shadow-slate-300/60 ring-1 ring-slate-200/80"
       style={{
-        background: `linear-gradient(90deg, rgba(254,202,202,${0.2 + 0.5 * sellPower}) 0%, #ffffff 36%, #ffffff 64%, rgba(187,247,208,${0.2 + 0.5 * buyPower}) 100%)`,
+        background: `linear-gradient(90deg, rgba(254,202,202,${0.2 + 0.5 * sellPower}) 0%, var(--color-white) 36%, var(--color-white) 64%, rgba(187,247,208,${0.2 + 0.5 * buyPower}) 100%)`,
       }}
     >
       <div className="grid grid-cols-2 items-center gap-x-3 gap-y-2 px-3 py-1.5 sm:grid-cols-[auto_1fr_1fr_auto] lg:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto_auto]">
@@ -123,4 +123,4 @@ export const PressureCard: React.FC<{ buySell: number; risk: number }> = ({ buyS
       </div>
     </section>
   )
-}
+}
