@@ -183,10 +183,11 @@ export const CleverkorMascot3D: React.FC<CleverkorMascot3DProps> = ({
         ctx.stroke()
       }
 
+      // OJO IZQUIERDO el que tiene el mayor que - Fernando Flores 22/10/26
       ctx.beginPath()
-      ctx.moveTo(615, 395)
-      ctx.lineTo(720, 455)
-      ctx.lineTo(615, 515)
+      ctx.moveTo(720, 395)
+      ctx.lineTo(615, 455)
+      ctx.lineTo(720, 515)
       ctx.stroke()
 
       ctx.beginPath()
