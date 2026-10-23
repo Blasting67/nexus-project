@@ -90,7 +90,7 @@ const axisLabel = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$$
 
 const PLOT_BG =
   'radial-gradient(80% 60% at 50% 115%, rgba(245,158,11,.12), transparent 60%),' +
-  'linear-gradient(180deg, #ffffff, #f8fafc)'
+  'linear-gradient(180deg, var(--color-white), var(--color-slate-50))'
 
 /** Precio → velas japonesas con periodos y detalle (apertura, máximo, mínimo, cierre) al pasar el mouse */
 export const PriceChartCard: React.FC<{ price: number; volatility: number; trend: number }> = ({
@@ -318,4 +318,4 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
       </div>
     </AtlasCard>
   )
-}
+}

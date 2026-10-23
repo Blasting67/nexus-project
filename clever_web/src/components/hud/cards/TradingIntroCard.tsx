@@ -8,18 +8,15 @@ const Arrow = HUD_ICONS.arrowRight
 const reduced = () =>
   typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/** Introducción: ¿Qué es hacer Trading? — la analogía del tianguis en tres pasos que se iluminan en secuencia. */
 export const TradingIntroCard: React.FC = () => {
   const visible = useSlideState() === 'active'
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)
 
-  // cada vez que la sección aparece, la historia empieza de nuevo en "Hoy"
   useEffect(() => {
     if (visible) setCurrent(0)
   }, [visible])
 
-  // recorre los pasos por sí solo mientras la sección está a la vista
   useEffect(() => {
     if (!visible || paused || reduced()) return
     const id = window.setInterval(() => setCurrent((c) => (c + 1) % TRADING_INTRO.steps.length), 2400)
@@ -29,11 +26,11 @@ export const TradingIntroCard: React.FC = () => {
   return (
     <HudCard title="¿Qué es hacer Trading?" icon="book">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-        <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 ring-1 ring-violet-100">
+        <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full hud-chip-violet px-3 py-1.5 text-xs font-semibold ring-1">
           <HUD_ICONS.bulb className="h-3.5 w-3.5" />
           Analogía
         </span>
-        <p className="text-[clamp(0.8rem,1.8vh,1rem)] leading-relaxed text-slate-600">{TRADING_INTRO.analogy}</p>
+        <p className="text-[clamp(0.8rem,1.8vh,1rem)] leading-relaxed hud-ink-soft">{TRADING_INTRO.analogy}</p>
       </div>
 
       <ol
@@ -51,8 +48,8 @@ export const TradingIntroCard: React.FC = () => {
                 setPaused(true)
                 setCurrent(i)
               }}
-              className={`flex min-h-0 flex-col justify-center rounded-3xl bg-white/80 p-[clamp(0.75rem,1.8vh,1.25rem)] ring-1 transition duration-500 md:flex-row md:items-center md:gap-4 motion-reduce:transition-none ${
-                on ? '-translate-y-1 shadow-xl shadow-violet-200/50 ring-violet-200' : 'shadow-sm ring-slate-200/60'
+              className={`flex min-h-0 flex-col justify-center rounded-3xl p-[clamp(0.75rem,1.8vh,1.25rem)] ring-1 transition duration-500 md:flex-row md:items-center md:gap-4 motion-reduce:transition-none ${
+                on ? '-translate-y-1 hud-panel-active shadow-xl shadow-violet-500/20' : 'hud-panel shadow-sm'
               }`}
             >
               <span
@@ -64,7 +61,7 @@ export const TradingIntroCard: React.FC = () => {
               </span>
               <div className="min-w-0">
                 <p className={`text-[11px] font-bold uppercase tracking-wider ${tone.text}`}>{step.when}</p>
-                <p className="mt-1 text-[clamp(0.75rem,1.7vh,0.9rem)] leading-snug text-slate-600">{step.text}</p>
+                <p className="mt-1 text-[clamp(0.75rem,1.7vh,0.9rem)] leading-snug hud-ink-soft">{step.text}</p>
               </div>
             </li>
           )
@@ -72,7 +69,7 @@ export const TradingIntroCard: React.FC = () => {
           return [
             card,
             <li key={`arrow-${i}`} aria-hidden="true" className="hidden items-center justify-center sm:flex">
-              <Arrow className={`h-5 w-5 transition-colors duration-500 ${on ? 'hud-nudge text-violet-500' : 'text-violet-200'}`} />
+              <Arrow className={`h-5 w-5 transition-colors duration-500 ${on ? 'hud-nudge hud-ink-violet' : 'hud-ink-dim'}`} />
             </li>,
           ]
         })}

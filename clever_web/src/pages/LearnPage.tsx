@@ -5,6 +5,7 @@ import { CATEGORIES, COURSE_STAGES, MODULES_BY_CATEGORY } from '../data/catalog'
 import { LearningScenery, LearningFinale, LearningParticles } from '../components/LearningScenery'
 import { LearningSidebar } from '../components/LearningSidebar'
 import './LearnPage.css'
+import './LearnPage.theme.css'
 
 const UNITS = COURSE_STAGES.trading
   .map((title, unitIndex) => ({

@@ -482,8 +482,8 @@ export const CommandmentsBook: React.FC = () => {
           <span className="h-1.5 w-1.5 rotate-45 bg-amber-500" />
           <span className="h-px w-12 bg-gradient-to-l from-transparent to-amber-500/70" />
         </span>
-        <h2 className="font-serif text-2xl font-semibold tracking-wide text-[#3f2d12] sm:text-[28px]">Los 12 mandamientos del trader</h2>
-        <p className="mt-1.5 font-serif text-[15px] italic text-[#7a6a4f]">Ábrelo para leer los doce mandamientos.</p>
+        <h2 className="font-serif text-2xl font-semibold tracking-wide text-amber-950 sm:text-[28px]">Los 12 mandamientos del trader</h2>
+        <p className="mt-1.5 font-serif text-[15px] italic text-stone-500">Ábrelo para leer los doce mandamientos.</p>
       </div>
 
       <button

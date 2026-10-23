@@ -1,33 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-/* ------------------------------------------------------------------ */
-/* Tema de color de cada tarjeta (clases completas para Tailwind)      */
-/* ------------------------------------------------------------------ */
-
 export interface AnalysisOptionTheme {
-  /** degradado pastel muy leve del fondo decorativo */
+
   surface: string
-  /** manchas de color difuminadas que flotan despacio */
+
   blobA: string
   blobB: string
-  /** color de la trama de puntos */
+
   dots: string
-  /** color (rgba) del foco de luz que sigue al mouse */
+
   spotlight: string
-  /** borde normal y al pasar el mouse */
+
   border: string
-  /** sombra de color al pasar el mouse */
+
   glow: string
-  /** etiqueta superior */
+
   chip: string
   chipDot: string
-  /** botón "Explorar" y su círculo con flecha */
+
   cta: string
   ctaIcon: string
-  /** anillo de foco (teclado) */
+
   ring: string
-  /** anillo cuando la tarjeta está marcada como seleccionada */
+
   selected: string
 }
 
@@ -35,33 +31,28 @@ export interface AnalysisOptionCardProps {
   eyebrow: string
   title: string
   description: string
-  /** ruta a la que navega al hacer clic (ej. '/analisis/acciones') */
+
   to: string
-  /** resalta la tarjeta (ej. si es la sección actual) */
+
   selected?: boolean
   theme: AnalysisOptionTheme
-  /** ilustración animada; reacciona al hover/foco de la tarjeta mediante las clases `ao-*` */
+
   Illustration: React.FC<{ active: boolean }>
-  /** retraso de la animación de entrada, en ms */
+
   delay?: number
-  /** versión compacta (texto a la izquierda, ilustración a la derecha) para espacios con poca altura */
+
   compact?: boolean
-  /** anima su propia entrada al aparecer; desactívalo si un contenedor ya la anima */
+
   reveal?: boolean
 }
 
-/* ------------------------------------------------------------------ */
-/* Animaciones (keyframes). Tailwind no las trae, así que van aquí:    */
-/* el componente es autocontenido y no hay que tocar tailwind.config.  */
-/* ------------------------------------------------------------------ */
-
 const ON = '.ao-root:is(:hover,:focus-visible,[data-active="true"])'
+const DARK = ':root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"])'
 
 const CSS = `
 .ao-origin-b{transform-box:fill-box;transform-origin:50% 100%}
 .ao-origin-c{transform-box:fill-box;transform-origin:50% 50%}
 
-/* fondo decorativo */
 .ao-blob-a{animation:ao-drift-a 14s ease-in-out infinite}
 .ao-blob-b{animation:ao-drift-b 18s ease-in-out infinite}
 @keyframes ao-drift-a{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(18px,14px) scale(1.12)}}
@@ -72,7 +63,6 @@ const CSS = `
 ${ON} .ao-shine{animation:ao-shine 1s ease-out}
 @keyframes ao-shine{0%{opacity:0;transform:translateX(-130%) skewX(-18deg)}20%{opacity:1}100%{opacity:0;transform:translateX(330%) skewX(-18deg)}}
 
-/* acciones: barras que se reconstruyen, línea que se dibuja y punto que la recorre */
 .ao-bar{animation:ao-breathe 4.5s ease-in-out infinite;animation-delay:calc(var(--i,0)*.35s)}
 ${ON} .ao-bar{animation:ao-rise .9s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i,0)*70ms)}
 @keyframes ao-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.94)}}
@@ -90,7 +80,6 @@ ${ON} .ao-pop{animation:ao-pop .6s cubic-bezier(.34,1.56,.64,1) .85s both}
 .ao-twinkle{animation:ao-twinkle 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.8s)}
 @keyframes ao-twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
 
-/* criptos: moneda que flota y gira, red que se enciende y chispas */
 .ao-float{animation:ao-float 5.5s ease-in-out infinite}
 @keyframes ao-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 ${ON} .ao-flip{animation:ao-flip .9s cubic-bezier(.45,0,.25,1) .05s both}
@@ -111,6 +100,12 @@ ${ON} .ao-node{animation:ao-node-in .6s cubic-bezier(.34,1.56,.64,1) both;animat
 .ao-spark{opacity:0}
 ${ON} .ao-spark{animation:ao-spark 1.6s ease-out infinite;animation-delay:calc(var(--i,0)*.22s)}
 @keyframes ao-spark{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0px),var(--dy,0px)) scale(1)}}
+
+
+${DARK} .ao-surface{opacity:.16}
+${DARK} .ao-blob-a,${DARK} .ao-blob-b{opacity:.32}
+${DARK} .ao-root .ao-chip{background-color:color-mix(in srgb,var(--surface) 72%,transparent);color:var(--text);--tw-ring-color:var(--border)}
+${DARK} .ao-root .ao-cta{background-color:color-mix(in srgb,var(--surface-alt) 70%,transparent);color:var(--text);--tw-ring-color:var(--border)}
 
 @media (prefers-reduced-motion:reduce){
   .ao-root *{animation:none!important;transition:none!important}
@@ -140,12 +135,6 @@ const prefersReducedMotion = () =>
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/**
- * Botón-tarjeta de cada tipo de análisis.
- * - Entrada suave y escalonada al aparecer en pantalla.
- * - Con el mouse: ligera inclinación 3D, foco de luz que lo sigue y destello que cruza la tarjeta.
- * - La ilustración se "reproduce" al pasar el mouse o enfocar con teclado.
- */
 export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
   eyebrow,
   title,
@@ -162,7 +151,6 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
   const linkRef = useRef<HTMLAnchorElement>(null)
   const [shown, setShown] = useState(!reveal)
 
-  // entrada al aparecer en pantalla (solo si la tarjeta anima su propia entrada)
   useEffect(() => {
     if (!reveal) return
     const el = wrapRef.current
@@ -237,14 +225,14 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           transform:
             'perspective(1100px) translateY(var(--ty,0px)) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))',
         }}
-        className={`ao-root group relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-white shadow-sm shadow-slate-200/60 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+        className={`ao-root group relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-[var(--surface)] shadow-sm shadow-black/10 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none ${
           compact
             ? 'min-h-0 p-5 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] sm:items-center sm:gap-x-4'
             : 'min-h-[380px] p-7 sm:p-8'
         } ${theme.border} ${theme.glow} ${theme.ring} ${selected ? theme.selected : ''}`}
       >
-        {/* fondo decorativo: pastel muy leve */}
-        <span aria-hidden="true" className={`pointer-events-none absolute inset-0 ${theme.surface}`} />
+
+        <span aria-hidden="true" className={`ao-surface pointer-events-none absolute inset-0 ${theme.surface}`} />
         <span
           aria-hidden="true"
           className={`pointer-events-none absolute inset-0 ${theme.dots}`}
@@ -264,7 +252,6 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           className={`ao-blob-b pointer-events-none absolute -bottom-16 -left-10 h-56 w-56 rounded-full blur-3xl ${theme.blobB}`}
         />
 
-        {/* foco de luz que sigue al mouse y destello */}
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -274,10 +261,9 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
         />
         <span aria-hidden="true" className="ao-shine" />
 
-        {/* contenido */}
         <span className={`relative z-10 flex items-center justify-between ${compact ? 'sm:col-start-1 sm:row-start-1' : ''}`}>
           <span
-            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 backdrop-blur ${theme.chip}`}
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 backdrop-blur ao-chip ${theme.chip}`}
           >
             <span className="relative flex h-2 w-2">
               <span
@@ -291,13 +277,13 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
 
         <span className={`relative z-10 block ${compact ? 'mt-3 sm:col-start-1 sm:row-start-2' : 'mt-5'}`}>
           <span
-            className={`block font-semibold tracking-tight text-slate-800 ${
+            className={`block font-semibold tracking-tight text-[var(--text)] ${
               compact ? 'text-xl' : 'text-2xl sm:text-[1.75rem]'
             }`}
           >
             {title}
           </span>
-          <span className={`mt-2 block max-w-xs leading-relaxed text-slate-500 ${compact ? 'text-xs' : 'text-sm'}`}>
+          <span className={`mt-2 block max-w-xs leading-relaxed text-[var(--text-muted)] ${compact ? 'text-xs' : 'text-sm'}`}>
             {description}
           </span>
         </span>
@@ -320,7 +306,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           <span
             className={`inline-flex items-center rounded-full font-semibold ring-1 backdrop-blur transition duration-300 ${
               compact ? 'gap-2 py-1 pl-4 pr-1 text-xs' : 'gap-3 py-1.5 pl-5 pr-1.5 text-sm'
-            } ${theme.cta}`}
+            } ao-cta ${theme.cta}`}
           >
             {selected ? 'Seleccionado' : 'Explorar'}
             <span

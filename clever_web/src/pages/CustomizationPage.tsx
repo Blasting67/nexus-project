@@ -1,16 +1,35 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { ACHIEVEMENTS, CATEGORIES } from '../data/catalog'
-import { DEFAULT_BANNER_A, DEFAULT_BANNER_B, DEFAULT_CUSTOMIZATION } from '../data/profileCustomizationOptions'
+import { AVATAR_PRESETS, getDefaultAvatarPreset, resolveAvatarSrc } from '../data/avatarPresets'
+import {
+  DEFAULT_BANNER_A,
+  DEFAULT_BANNER_B,
+  DEFAULT_CUSTOMIZATION,
+  MAX_STATUS_LENGTH,
+  STATUS_ICONS,
+  STATUS_SUGGESTIONS,
+} from '../data/profileCustomizationOptions'
 import { ACCENT_COLORS, DEFAULT_ACCENT, THEME_OPTIONS } from '../data/themeOptions'
 import type { ThemeOption } from '../data/themeOptions'
-import { AvatarFrame, PROFILE_STYLES, ProfileBanner } from '../components/profile/ProfileVisuals'
+import { AvatarFrame, PROFILE_STYLES, ProfileBanner, getShapeStyle } from '../components/profile/ProfileVisuals'
 import {
   loadProfileCustomization,
   resetProfileCustomization,
+  saveProfileCustomization,
 } from '../services/profileCustomizationService'
 import type { ProfileCustomization } from '../types/profileCustomization'
+
+type SectionId = 'profile' | 'avatar' | 'banner' | 'appearance' | 'account'
+
+const SECTIONS: { id: SectionId; label: string; description: string; icon: string }[] = [
+  { id: 'profile', label: 'Perfil', description: 'Nombre, bio, estado y metas', icon: 'fa-solid fa-id-card' },
+  { id: 'avatar', label: 'Avatar', description: 'Elige o sube tu foto', icon: 'fa-solid fa-user-astronaut' },
+  { id: 'banner', label: 'Banner', description: 'Imagen y estilo animado', icon: 'fa-solid fa-panorama' },
+  { id: 'appearance', label: 'Apariencia', description: 'Temas y color de acento', icon: 'fa-solid fa-palette' },
+  { id: 'account', label: 'Cuenta y datos', description: 'Tu cuenta y tu información', icon: 'fa-solid fa-shield-halved' },
+]
 
 const BIO_MAX = 160
 const GOAL_MAX = 120
@@ -84,22 +103,39 @@ const ThemePreviewCard: React.FC<{
 
 export const CustomizationPage: React.FC = () => {
   const { user, updateUserProfile, showToast } = usePlatform()
+  const [searchParams, setSearchParams] = useSearchParams()
 
+  const [customization, setCustomization] = useState<ProfileCustomization>(() =>
+    loadProfileCustomization(user.username)
+  )
   const [name, setName] = useState(user.name || '')
   const [bio, setBio] = useState(user.bio || '')
   const [featured, setFeatured] = useState(user.featuredAchievement || '')
   const [goal, setGoal] = useState(user.goal || '')
   const [interests, setInterests] = useState<string[]>(user.interests || [])
+  const [status, setStatus] = useState(customization.status)
+  const [statusIcon, setStatusIcon] = useState(customization.statusIcon)
   const [isAvatarProcessing, setIsAvatarProcessing] = useState(false)
   const [isCoverProcessing, setIsCoverProcessing] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
-  const [customization, setCustomization] = useState<ProfileCustomization>(() =>
-    loadProfileCustomization(user.username)
-  )
+
+  const requestedSection = searchParams.get('seccion')
+  const section: SectionId = SECTIONS.some((item) => item.id === requestedSection)
+    ? (requestedSection as SectionId)
+    : 'profile'
+
+  const goToSection = (id: SectionId) => setSearchParams({ seccion: id })
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [section])
 
   const unlockedAchievements = ACHIEVEMENTS.filter((a) => user.achievements.includes(a.id))
   const displayName = user.name || user.username
   const initials = (displayName || 'U').slice(0, 2).toUpperCase()
+  const avatarSrc = resolveAvatarSrc(user.avatar, user.username)
+  const defaultPreset = getDefaultAvatarPreset(user.username)
+  const isCustomPhoto = Boolean(user.avatar) && !AVATAR_PRESETS.some((preset) => preset.url === user.avatar)
   const hasXp = typeof user.xp === 'number' && user.xpToNext > 0
   const xpPercent = hasXp ? Math.min(100, Math.round((user.xp / user.xpToNext) * 100)) : 0
 
@@ -112,6 +148,8 @@ export const CustomizationPage: React.FC = () => {
     bio.trim() !== (user.bio || '') ||
     featured !== (user.featuredAchievement || '') ||
     goal.trim() !== (user.goal || '') ||
+    status.trim() !== customization.status ||
+    statusIcon !== customization.statusIcon ||
     !sameInterests
 
   const currentTheme = THEME_OPTIONS.find((theme) => theme.id === user.theme)
@@ -138,6 +176,13 @@ export const CustomizationPage: React.FC = () => {
       showToast('Elige al menos un tema de interés', 'error')
       return
     }
+    const nextCustomization = { ...customization, status: status.trim(), statusIcon }
+    const saved = saveProfileCustomization(user.username, nextCustomization)
+    if (!saved) {
+      showToast('No se pudo guardar el estado', 'error')
+      return
+    }
+    setCustomization(nextCustomization)
     updateUserProfile({
       name: cleanName,
       bio: bio.trim(),
@@ -154,6 +199,8 @@ export const CustomizationPage: React.FC = () => {
     setFeatured(user.featuredAchievement || '')
     setGoal(user.goal || '')
     setInterests(user.interests || [])
+    setStatus(customization.status)
+    setStatusIcon(customization.statusIcon)
   }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,7 +211,7 @@ export const CustomizationPage: React.FC = () => {
     try {
       const dataUrl = await resizeImage(file, 512)
       updateUserProfile({ avatar: dataUrl })
-      showToast('Avatar actualizado', 'success')
+      showToast('Foto actualizada', 'success')
     } catch {
       showToast('No se pudo procesar la imagen', 'error')
     } finally {
@@ -172,9 +219,16 @@ export const CustomizationPage: React.FC = () => {
     }
   }
 
-  const handleRemoveAvatar = () => {
+  const handleSelectPreset = (presetId: string) => {
+    const preset = AVATAR_PRESETS.find((item) => item.id === presetId)
+    if (!preset) return
+    updateUserProfile({ avatar: preset.url })
+    showToast(`Avatar ${preset.name} aplicado`, 'success')
+  }
+
+  const handleUseDefaultAvatar = () => {
     updateUserProfile({ avatar: null })
-    showToast('Avatar eliminado', 'info')
+    showToast('Avatar predeterminado restablecido', 'info')
   }
 
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,6 +296,8 @@ export const CustomizationPage: React.FC = () => {
     }
     resetProfileCustomization(user.username)
     setCustomization(DEFAULT_CUSTOMIZATION)
+    setStatus(DEFAULT_CUSTOMIZATION.status)
+    setStatusIcon(DEFAULT_CUSTOMIZATION.statusIcon)
     setConfirmReset(false)
     showToast('Personalización del perfil restablecida', 'success')
   }
@@ -254,22 +310,103 @@ export const CustomizationPage: React.FC = () => {
   const bannerColorA = customization.bannerColorA || DEFAULT_BANNER_A
   const bannerColorB = customization.bannerColorB || DEFAULT_BANNER_B
   const frameColor = customization.frameColor || 'var(--primary)'
+  const shapeStyle = getShapeStyle(customization.avatarShape)
+
+  const renderNavItem = (item: (typeof SECTIONS)[number], compact: boolean) => {
+    const active = section === item.id
+    const showDirty = item.id === 'profile' && isDirty
+
+    if (compact) {
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => goToSection(item.id)}
+          aria-current={active ? 'page' : undefined}
+          style={active ? { backgroundImage: 'var(--btn-gradient)' } : undefined}
+          className={`relative flex flex-shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
+            active
+              ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-text)]'
+              : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+          }`}
+        >
+          <i className={item.icon}></i>
+          {item.label}
+          {showDirty && <span className="h-2 w-2 rounded-full bg-amber-400"></span>}
+        </button>
+      )
+    }
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => goToSection(item.id)}
+        aria-current={active ? 'page' : undefined}
+        style={active ? { backgroundImage: 'var(--btn-gradient)' } : undefined}
+        className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all cursor-pointer ${
+          active
+            ? 'bg-[var(--primary)] text-[var(--primary-text)] shadow-md'
+            : 'text-[var(--text-muted)] hover:bg-[var(--surface-alt)] hover:text-[var(--text)] hover:translate-x-0.5'
+        }`}
+      >
+        <span
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm transition-transform group-hover:scale-110 ${
+            active ? 'bg-white/20' : 'bg-[var(--bg-alt)] border border-[var(--border)] text-[var(--primary)]'
+          }`}
+        >
+          <i className={item.icon}></i>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-bold leading-tight">{item.label}</span>
+          <span className={`block truncate text-[10px] leading-tight mt-0.5 ${active ? 'opacity-80' : 'text-[var(--text-dim)]'}`}>
+            {item.description}
+          </span>
+        </span>
+        {showDirty && (
+          <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-amber-400" title="Cambios sin guardar"></span>
+        )}
+      </button>
+    )
+  }
 
   return (
-    <div className="max-w-3xl mx-auto py-4 space-y-6">
+    <div className="relative max-w-3xl mx-auto py-4 space-y-5">
       <style>{PROFILE_STYLES}</style>
 
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[var(--border)] pb-6">
+      <aside className="hidden min-[1320px]:block absolute top-0 bottom-0 right-full mr-6 w-56">
+        <nav className="sticky top-24 platform-card p-2 space-y-1" aria-label="Secciones de personalización">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-dim)]">
+            Ajustes
+          </div>
+          {SECTIONS.map((item) => renderNavItem(item, false))}
+          <div className="border-t border-[var(--border)] mt-2 pt-2">
+            <Link
+              to="/perfil"
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-alt)] hover:text-[var(--primary)]"
+            >
+              <i className="fa-solid fa-arrow-up-right-from-square w-9 text-center"></i>
+              Ver mi perfil
+            </Link>
+          </div>
+        </nav>
+      </aside>
+
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[var(--border)] pb-5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[var(--text)] tracking-tight">Personalización</h1>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            Datos de perfil, tema visual, color de acento y avatar de cuenta.
+            {SECTIONS.find((item) => item.id === section)?.description}.
           </p>
         </div>
-        <Link to="/perfil" className="platform-btn-secondary py-1.5 px-3 text-xs self-start sm:self-auto">
+        <Link to="/perfil" className="min-[1320px]:hidden platform-btn-secondary py-1.5 px-3 text-xs self-start sm:self-auto">
           <i className="fa-solid fa-user"></i>
           Ver mi perfil
         </Link>
+      </div>
+
+      <div className="min-[1320px]:hidden -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {SECTIONS.map((item) => renderNavItem(item, true))}
       </div>
 
       <div className="platform-card overflow-hidden">
@@ -279,13 +416,13 @@ export const CustomizationPage: React.FC = () => {
           colorB={bannerColorB}
           speed={customization.bannerSpeed}
           cover={user.cover || undefined}
-          className="h-24 sm:h-28"
+          className="h-20 sm:h-24"
         />
-        <div className="px-5 pb-5">
-          <div className="flex items-end gap-4 -mt-12">
+        <div className="px-5 pb-4">
+          <div className="flex items-start gap-3 -mt-14">
             <div className="flex-shrink-0">
               <AvatarFrame
-                src={user.avatar || undefined}
+                src={avatarSrc}
                 initials={initials}
                 alt={`Avatar de ${displayName}`}
                 shape={customization.avatarShape}
@@ -294,408 +431,527 @@ export const CustomizationPage: React.FC = () => {
                 showLevelRing={customization.showLevelRing && hasXp}
                 progress={xpPercent}
                 level={user.level}
-                size={76}
+                size={64}
               />
             </div>
-            <div className="min-w-0 pb-2">
-              <div className="text-lg font-extrabold text-[var(--text)] leading-tight truncate">{displayName}</div>
-              <div className="text-xs font-mono text-[var(--text-muted)]">@{user.username}</div>
+            <div className="min-w-0 pt-16">
+              <div className="text-base font-extrabold text-[var(--text)] leading-tight truncate">
+                {name.trim() || displayName}
+              </div>
+              <div className="text-[11px] font-mono text-[var(--text-muted)]">@{user.username}</div>
+              {(status.trim() || customization.status) && (
+                <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
+                  <i className={`${statusIcon} text-[var(--primary)]`}></i>
+                  <span className="truncate">{status.trim() || customization.status}</span>
+                </div>
+              )}
             </div>
           </div>
-          <p className="mt-3 text-[11px] text-[var(--text-muted)]">
-            Vista previa en vivo: así se verá tu perfil con el tema, el acento y las imágenes que elijas aquí.
-          </p>
         </div>
       </div>
 
-      <div className="platform-card p-6 space-y-5">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-id-card text-[var(--primary)]"></i>
-          Datos del perfil
-        </h2>
+      <div key={section} className="pf-rise space-y-6">
+        {section === 'profile' && (
+          <div className="platform-card p-6 space-y-5">
+            <h2 className={sectionTitle}>
+              <i className="fa-solid fa-id-card text-[var(--primary)]"></i>
+              Datos del perfil
+            </h2>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="profile-name" className="text-xs text-[var(--text-muted)]">
-              Nombre visible
-            </label>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              {name.length}/{NAME_MAX}
-            </span>
-          </div>
-          <input
-            id="profile-name"
-            type="text"
-            value={name}
-            maxLength={NAME_MAX}
-            onChange={(e) => setName(e.target.value)}
-            className={inputClass}
-          />
-        </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="profile-name" className="text-xs text-[var(--text-muted)]">
+                  Nombre visible
+                </label>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  {name.length}/{NAME_MAX}
+                </span>
+              </div>
+              <input
+                id="profile-name"
+                type="text"
+                value={name}
+                maxLength={NAME_MAX}
+                onChange={(e) => setName(e.target.value)}
+                className={inputClass}
+              />
+            </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="profile-bio" className="text-xs text-[var(--text-muted)]">
-              Bio
-            </label>
-            <span
-              className={`text-[10px] font-mono ${
-                bio.length >= BIO_MAX ? 'text-rose-500' : 'text-[var(--text-muted)]'
-              }`}
-            >
-              {bio.length}/{BIO_MAX}
-            </span>
-          </div>
-          <textarea
-            id="profile-bio"
-            value={bio}
-            maxLength={BIO_MAX}
-            rows={3}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Cuéntale a la comunidad qué estás aprendiendo."
-            className={`${inputClass} resize-none`}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="profile-goal" className="text-xs text-[var(--text-muted)]">
-              Meta de aprendizaje
-            </label>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              {goal.length}/{GOAL_MAX}
-            </span>
-          </div>
-          <input
-            id="profile-goal"
-            type="text"
-            value={goal}
-            maxLength={GOAL_MAX}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="Qué quieres lograr en la plataforma"
-            className={inputClass}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="profile-featured" className="text-xs text-[var(--text-muted)]">
-            Título destacado
-          </label>
-          {unlockedAchievements.length > 0 ? (
-            <select
-              id="profile-featured"
-              value={featured}
-              onChange={(e) => setFeatured(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Automático (último logro desbloqueado)</option>
-              {unlockedAchievements.map((ach) => (
-                <option key={ach.id} value={ach.id}>
-                  {ach.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <p className="text-xs text-[var(--text-muted)]">
-              Desbloquea tu primer logro para mostrarlo junto a tu nombre.
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-xs text-[var(--text-muted)]">Temas de interés</div>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((category) => {
-              const active = interests.includes(category.id)
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => toggleInterest(category.id)}
-                  aria-pressed={active}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                    active
-                      ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-text)]'
-                      : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="profile-bio" className="text-xs text-[var(--text-muted)]">
+                  Bio
+                </label>
+                <span
+                  className={`text-[10px] font-mono ${
+                    bio.length >= BIO_MAX ? 'text-rose-500' : 'text-[var(--text-muted)]'
                   }`}
                 >
-                  <i className={category.icon}></i>
-                  {category.name}
+                  {bio.length}/{BIO_MAX}
+                </span>
+              </div>
+              <textarea
+                id="profile-bio"
+                value={bio}
+                maxLength={BIO_MAX}
+                rows={3}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Cuéntale a la comunidad qué estás aprendiendo."
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+
+            <div className="space-y-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-alt)] p-4">
+              <div className="flex items-center justify-between">
+                <label htmlFor="profile-status" className="text-xs font-semibold text-[var(--text)] flex items-center gap-2">
+                  <i className={`${statusIcon} text-[var(--primary)]`}></i>
+                  Estado
+                </label>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  {status.length}/{MAX_STATUS_LENGTH}
+                </span>
+              </div>
+              <input
+                id="profile-status"
+                type="text"
+                value={status}
+                maxLength={MAX_STATUS_LENGTH}
+                onChange={(e) => setStatus(e.target.value)}
+                placeholder="Qué estás haciendo ahora"
+                className={inputClass}
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {STATUS_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setStatus(suggestion)}
+                    className="rounded-full border border-[var(--border)] px-2.5 py-1 text-[11px] text-[var(--text-muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] cursor-pointer"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {STATUS_ICONS.map((item) => (
+                  <button
+                    key={item.icon}
+                    type="button"
+                    title={item.label}
+                    aria-label={item.label}
+                    onClick={() => setStatusIcon(item.icon)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg border text-sm transition-all cursor-pointer hover:scale-110 ${
+                      statusIcon === item.icon
+                        ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-text)]'
+                        : 'border-[var(--border)] text-[var(--text-muted)]'
+                    }`}
+                  >
+                    <i className={item.icon}></i>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="profile-goal" className="text-xs text-[var(--text-muted)]">
+                  Meta de aprendizaje
+                </label>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                  {goal.length}/{GOAL_MAX}
+                </span>
+              </div>
+              <input
+                id="profile-goal"
+                type="text"
+                value={goal}
+                maxLength={GOAL_MAX}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="Qué quieres lograr en la plataforma"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="profile-featured" className="text-xs text-[var(--text-muted)]">
+                Título destacado
+              </label>
+              {unlockedAchievements.length > 0 ? (
+                <select
+                  id="profile-featured"
+                  value={featured}
+                  onChange={(e) => setFeatured(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Automático (último logro desbloqueado)</option>
+                  {unlockedAchievements.map((ach) => (
+                    <option key={ach.id} value={ach.id}>
+                      {ach.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-xs text-[var(--text-muted)]">
+                  Desbloquea tu primer logro para mostrarlo junto a tu nombre.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs text-[var(--text-muted)]">Temas de interés</div>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((category) => {
+                  const active = interests.includes(category.id)
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => toggleInterest(category.id)}
+                      aria-pressed={active}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer hover:-translate-y-0.5 ${
+                        active
+                          ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-text)]'
+                          : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                      }`}
+                    >
+                      <i className={category.icon}></i>
+                      {category.name}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                Tu misión diaria y tu ruta de estudio se adaptan a estos temas. Debes mantener al menos uno.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              {isDirty && (
+                <button
+                  type="button"
+                  onClick={handleDiscardChanges}
+                  className="platform-btn-secondary py-1.5 px-4 text-xs"
+                >
+                  Descartar
                 </button>
-              )
-            })}
-          </div>
-          <p className="text-[10px] text-[var(--text-muted)]">
-            Tu misión diaria y tu ruta de estudio se adaptan a estos temas. Debes mantener al menos uno.
-          </p>
-        </div>
-
-        <div className="flex items-center justify-end gap-2">
-          {isDirty && (
-            <button
-              type="button"
-              onClick={handleDiscardChanges}
-              className="platform-btn-secondary py-1.5 px-4 text-xs"
-            >
-              Descartar
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleSaveProfile}
-            disabled={!isDirty}
-            className="platform-btn-primary py-1.5 px-4 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <i className="fa-solid fa-floppy-disk"></i>
-            Guardar cambios
-          </button>
-        </div>
-      </div>
-
-      <div className="platform-card p-6 space-y-4">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-shield-halved text-[var(--primary)]"></i>
-          Cuenta
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Usuario</div>
-            <div className="text-sm font-semibold text-[var(--text)] font-mono">@{user.username}</div>
-          </div>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Correo</div>
-            <div className="text-sm font-semibold text-[var(--text)] truncate">{user.email}</div>
-          </div>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5 sm:col-span-2">
-            <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Miembro desde</div>
-            <div className="text-sm font-semibold text-[var(--text)]">
-              {new Date(user.createdAt).toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              )}
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={!isDirty}
+                className="platform-btn-primary py-1.5 px-4 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <i className="fa-solid fa-floppy-disk"></i>
+                Guardar cambios
+              </button>
             </div>
           </div>
-        </div>
-        <p className="text-[10px] text-[var(--text-muted)]">
-          El usuario y el correo están vinculados a tu cuenta y no se pueden cambiar desde aquí por ahora.
-        </p>
-      </div>
+        )}
 
-      <div className="platform-card p-6 space-y-4">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-camera text-[var(--primary)]"></i>
-          Foto de perfil
-        </h2>
+        {section === 'avatar' && (
+          <div className="platform-card p-6 space-y-6">
+            <h2 className={sectionTitle}>
+              <i className="fa-solid fa-user-astronaut text-[var(--primary)]"></i>
+              Avatar
+            </h2>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-shrink-0">
-            <AvatarFrame
-              src={user.avatar || undefined}
-              initials={initials}
-              alt="Avatar"
-              shape={customization.avatarShape}
-              frame={customization.frameStyle}
-              frameColor={frameColor}
-              showLevelRing={false}
-              progress={0}
-              level={user.level}
-              size={64}
-            />
+            <div className="flex flex-wrap items-center gap-5">
+              <div className="flex-shrink-0">
+                <AvatarFrame
+                  src={avatarSrc}
+                  initials={initials}
+                  alt="Avatar actual"
+                  shape={customization.avatarShape}
+                  frame={customization.frameStyle}
+                  frameColor={frameColor}
+                  showLevelRing={customization.showLevelRing && hasXp}
+                  progress={xpPercent}
+                  level={user.level}
+                  size={96}
+                />
+              </div>
+              <div className="space-y-2.5">
+                <div className="text-xs text-[var(--text-muted)]">
+                  {isCustomPhoto
+                    ? 'Estás usando tu propia foto.'
+                    : user.avatar
+                      ? 'Estás usando un avatar de la galería.'
+                      : `Estás usando el avatar predeterminado (${defaultPreset.name}).`}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <label className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
+                    {isAvatarProcessing ? (
+                      <i className="fa-solid fa-circle-notch fa-spin"></i>
+                    ) : (
+                      <i className="fa-solid fa-upload"></i>
+                    )}
+                    <span>Subir mi foto</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      disabled={isAvatarProcessing}
+                      className="hidden"
+                    />
+                  </label>
+                  {user.avatar && (
+                    <button onClick={handleUseDefaultAvatar} className="platform-btn-secondary py-1.5 px-3 text-xs">
+                      <i className="fa-solid fa-rotate-left"></i>
+                      Usar el predeterminado
+                    </button>
+                  )}
+                  <Link to="/perfil?studio=avatar" className="platform-btn-secondary py-1.5 px-3 text-xs">
+                    <i className="fa-solid fa-wand-magic-sparkles"></i>
+                    Forma y marco
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Galería de avatares
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {AVATAR_PRESETS.map((preset) => {
+                  const selected = user.avatar === preset.url
+                  const isDefault = !user.avatar && preset.id === defaultPreset.id
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectPreset(preset.id)}
+                      aria-pressed={selected}
+                      className={`group flex flex-col items-center gap-2 rounded-xl border p-3 transition-all cursor-pointer hover:-translate-y-1 ${
+                        selected || isDefault
+                          ? 'border-[var(--primary)] bg-[var(--surface-alt)]'
+                          : 'border-[var(--border)] bg-[var(--bg-alt)] hover:border-[var(--primary)]'
+                      }`}
+                    >
+                      <span
+                        className="block h-16 w-16 overflow-hidden transition-transform group-hover:scale-110"
+                        style={shapeStyle}
+                      >
+                        <img src={preset.url} alt={preset.name} className="h-full w-full object-cover" />
+                      </span>
+                      <span className="text-[11px] font-semibold text-[var(--text)]">{preset.name}</span>
+                      {(selected || isDefault) && (
+                        <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--primary)]">
+                          {selected ? 'En uso' : 'Predeterminado'}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="flex flex-wrap gap-2">
-            <label className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
-              {isAvatarProcessing ? (
-                <i className="fa-solid fa-circle-notch fa-spin"></i>
-              ) : (
-                <i className="fa-solid fa-upload"></i>
+        {section === 'banner' && (
+          <div className="platform-card p-6 space-y-4">
+            <h2 className={sectionTitle}>
+              <i className="fa-solid fa-panorama text-[var(--primary)]"></i>
+              Banner del perfil
+            </h2>
+
+            <ProfileBanner
+              style={customization.bannerStyle}
+              colorA={bannerColorA}
+              colorB={bannerColorB}
+              speed={customization.bannerSpeed}
+              cover={user.cover || undefined}
+              className="h-28 sm:h-36 w-full rounded-lg border border-[var(--border)]"
+            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
+                {isCoverProcessing ? (
+                  <i className="fa-solid fa-circle-notch fa-spin"></i>
+                ) : (
+                  <i className="fa-solid fa-image"></i>
+                )}
+                <span>{user.cover ? 'Cambiar imagen' : 'Subir imagen'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverChange}
+                  disabled={isCoverProcessing}
+                  className="hidden"
+                />
+              </label>
+
+              {user.cover && (
+                <button onClick={handleRemoveCover} className="platform-btn-secondary py-1.5 px-3 text-xs text-rose-500">
+                  Eliminar
+                </button>
               )}
-              <span>Cambiar imagen</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                disabled={isAvatarProcessing}
-                className="hidden"
-              />
-            </label>
 
-            {user.avatar && (
-              <button onClick={handleRemoveAvatar} className="platform-btn-secondary py-1.5 px-3 text-xs text-rose-500">
-                Eliminar
-              </button>
-            )}
+              <Link to="/perfil?studio=banner" className="platform-btn-secondary py-1.5 px-3 text-xs">
+                <i className="fa-solid fa-wand-magic-sparkles"></i>
+                Estilo animado y colores
+              </Link>
+            </div>
 
-            <Link to="/perfil?studio=avatar" className="platform-btn-secondary py-1.5 px-3 text-xs">
-              <i className="fa-solid fa-wand-magic-sparkles"></i>
-              Forma y marco
-            </Link>
+            <p className="text-[10px] text-[var(--text-muted)]">
+              Tu imagen se muestra cuando eliges el estilo Mi imagen. Los demás estilos son animados y toman los
+              colores del tema. Se recomienda una imagen horizontal (3:1).
+            </p>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="platform-card p-6 space-y-4">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-panorama text-[var(--primary)]"></i>
-          Banner del perfil
-        </h2>
+        {section === 'appearance' && (
+          <>
+            <div className="platform-card p-6 space-y-5">
+              <h2 className={sectionTitle}>
+                <i className="fa-solid fa-palette text-[var(--primary)]"></i>
+                Tema visual
+              </h2>
 
-        <ProfileBanner
-          style={customization.bannerStyle}
-          colorA={bannerColorA}
-          colorB={bannerColorB}
-          speed={customization.bannerSpeed}
-          cover={user.cover || undefined}
-          className="h-24 sm:h-28 w-full rounded-lg border border-[var(--border)]"
-        />
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                  Colecciones con degradados
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {vibrantThemes.map((theme) => (
+                    <ThemePreviewCard
+                      key={theme.id}
+                      theme={theme}
+                      selected={user.theme === theme.id}
+                      onSelect={() => handleThemeSelect(theme)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
-            {isCoverProcessing ? (
-              <i className="fa-solid fa-circle-notch fa-spin"></i>
-            ) : (
-              <i className="fa-solid fa-image"></i>
-            )}
-            <span>{user.cover ? 'Cambiar imagen' : 'Subir imagen'}</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleCoverChange}
-              disabled={isCoverProcessing}
-              className="hidden"
-            />
-          </label>
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Clásicos</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {classicThemes.map((theme) => (
+                    <ThemePreviewCard
+                      key={theme.id}
+                      theme={theme}
+                      selected={user.theme === theme.id}
+                      onSelect={() => handleThemeSelect(theme)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
 
-          {user.cover && (
-            <button onClick={handleRemoveCover} className="platform-btn-secondary py-1.5 px-3 text-xs text-rose-500">
-              Eliminar
-            </button>
-          )}
+            <div className="platform-card p-6 space-y-4">
+              <h2 className={sectionTitle}>
+                <i className="fa-solid fa-droplet text-[var(--primary)]"></i>
+                Color de acento
+              </h2>
 
-          <Link to="/perfil?studio=banner" className="platform-btn-secondary py-1.5 px-3 text-xs">
-            <i className="fa-solid fa-wand-magic-sparkles"></i>
-            Estilo animado y colores
-          </Link>
-        </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {ACCENT_COLORS.map((color) => {
+                  const isSelected = user.accentColor === color
 
-        <p className="text-[10px] text-[var(--text-muted)]">
-          Tu imagen se muestra cuando eliges el estilo Mi imagen. Los demás estilos son animados y toman los colores
-          del tema. Se recomienda una imagen horizontal (3:1).
-        </p>
-      </div>
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => handleAccentSelect(color)}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Color de acento ${color}`}
+                      className={`w-8 h-8 rounded-lg transition-transform cursor-pointer flex items-center justify-center hover:scale-110 ${
+                        isSelected ? 'scale-110 ring-2 ring-offset-2 ring-offset-[var(--surface)] ring-[var(--text)]' : ''
+                      }`}
+                    >
+                      {isSelected && <i className="fa-solid fa-check text-white text-[10px]"></i>}
+                    </button>
+                  )
+                })}
 
-      <div className="platform-card p-6 space-y-5">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-palette text-[var(--primary)]"></i>
-          Tema visual
-        </h2>
+                <label
+                  className="relative w-8 h-8 rounded-lg border border-dashed border-[var(--text-dim)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)]"
+                  title="Color personalizado"
+                >
+                  <i className="fa-solid fa-eye-dropper text-xs"></i>
+                  <input
+                    type="color"
+                    value={/^#[0-9a-fA-F]{6}$/.test(user.accentColor || '') ? (user.accentColor as string) : DEFAULT_ACCENT}
+                    onChange={(e) => handleAccentSelect(e.target.value)}
+                    aria-label="Color de acento personalizado"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </label>
+              </div>
 
-        <div className="space-y-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Colecciones con degradados</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {vibrantThemes.map((theme) => (
-              <ThemePreviewCard
-                key={theme.id}
-                theme={theme}
-                selected={user.theme === theme.id}
-                onSelect={() => handleThemeSelect(theme)}
-              />
-            ))}
-          </div>
-        </div>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button type="button" className="platform-btn-primary py-1.5 px-3 text-xs">
+                  <i className="fa-solid fa-bolt"></i>
+                  Así se ve un botón
+                </button>
+                <button type="button" onClick={handleResetAccent} className="platform-btn-secondary py-1.5 px-3 text-xs">
+                  <i className="fa-solid fa-rotate-left"></i>
+                  Usar el acento del tema
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
-        <div className="space-y-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Clásicos</div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {classicThemes.map((theme) => (
-              <ThemePreviewCard
-                key={theme.id}
-                theme={theme}
-                selected={user.theme === theme.id}
-                onSelect={() => handleThemeSelect(theme)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+        {section === 'account' && (
+          <>
+            <div className="platform-card p-6 space-y-4">
+              <h2 className={sectionTitle}>
+                <i className="fa-solid fa-shield-halved text-[var(--primary)]"></i>
+                Cuenta
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5">
+                  <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Usuario</div>
+                  <div className="text-sm font-semibold text-[var(--text)] font-mono">@{user.username}</div>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5">
+                  <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Correo</div>
+                  <div className="text-sm font-semibold text-[var(--text)] truncate">{user.email}</div>
+                </div>
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-alt)] px-3 py-2.5 sm:col-span-2">
+                  <div className="text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Miembro desde</div>
+                  <div className="text-sm font-semibold text-[var(--text)]">
+                    {new Date(user.createdAt).toLocaleDateString('es-MX', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                El usuario y el correo están vinculados a tu cuenta y no se pueden cambiar desde aquí por ahora.
+              </p>
+            </div>
 
-      <div className="platform-card p-6 space-y-4">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-droplet text-[var(--primary)]"></i>
-          Color de acento
-        </h2>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {ACCENT_COLORS.map((color) => {
-            const isSelected = user.accentColor === color
-
-            return (
-              <button
-                key={color}
-                onClick={() => handleAccentSelect(color)}
-                style={{ backgroundColor: color }}
-                aria-label={`Color de acento ${color}`}
-                className={`w-8 h-8 rounded-lg transition-transform cursor-pointer flex items-center justify-center hover:scale-110 ${
-                  isSelected ? 'scale-110 ring-2 ring-offset-2 ring-offset-[var(--surface)] ring-[var(--text)]' : ''
-                }`}
-              >
-                {isSelected && <i className="fa-solid fa-check text-white text-[10px]"></i>}
-              </button>
-            )
-          })}
-
-          <label
-            className="relative w-8 h-8 rounded-lg border border-dashed border-[var(--text-dim)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)]"
-            title="Color personalizado"
-          >
-            <i className="fa-solid fa-eye-dropper text-xs"></i>
-            <input
-              type="color"
-              value={/^#[0-9a-fA-F]{6}$/.test(user.accentColor || '') ? (user.accentColor as string) : DEFAULT_ACCENT}
-              onChange={(e) => handleAccentSelect(e.target.value)}
-              aria-label="Color de acento personalizado"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-          </label>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <button type="button" className="platform-btn-primary py-1.5 px-3 text-xs">
-            <i className="fa-solid fa-bolt"></i>
-            Así se ve un botón
-          </button>
-          <button type="button" onClick={handleResetAccent} className="platform-btn-secondary py-1.5 px-3 text-xs">
-            <i className="fa-solid fa-rotate-left"></i>
-            Usar el acento del tema
-          </button>
-        </div>
-      </div>
-
-      <div className="platform-card p-6 space-y-4">
-        <h2 className={sectionTitle}>
-          <i className="fa-solid fa-database text-[var(--primary)]"></i>
-          Tus datos
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={handleDownloadData} className="platform-btn-secondary py-1.5 px-3 text-xs">
-            <i className="fa-solid fa-download"></i>
-            Descargar mis datos
-          </button>
-          <button
-            type="button"
-            onClick={handleResetCustomization}
-            onBlur={() => setConfirmReset(false)}
-            className={`platform-btn-secondary py-1.5 px-3 text-xs ${confirmReset ? 'text-rose-500 border-rose-500' : ''}`}
-          >
-            <i className="fa-solid fa-rotate-left"></i>
-            {confirmReset ? 'Confirmar restablecer' : 'Restablecer estilo del perfil'}
-          </button>
-        </div>
-        <p className="text-[10px] text-[var(--text-muted)]">
-          Restablecer solo borra el banner animado, el marco, el estado y la vitrina de tu perfil. Tu progreso y tus
-          datos de cuenta no se tocan.
-        </p>
+            <div className="platform-card p-6 space-y-4">
+              <h2 className={sectionTitle}>
+                <i className="fa-solid fa-database text-[var(--primary)]"></i>
+                Tus datos
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={handleDownloadData} className="platform-btn-secondary py-1.5 px-3 text-xs">
+                  <i className="fa-solid fa-download"></i>
+                  Descargar mis datos
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetCustomization}
+                  onBlur={() => setConfirmReset(false)}
+                  className={`platform-btn-secondary py-1.5 px-3 text-xs ${confirmReset ? 'text-rose-500 border-rose-500' : ''}`}
+                >
+                  <i className="fa-solid fa-rotate-left"></i>
+                  {confirmReset ? 'Confirmar restablecer' : 'Restablecer estilo del perfil'}
+                </button>
+              </div>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                Restablecer solo borra el banner animado, el marco, el estado y la vitrina de tu perfil. Tu progreso
+                y tus datos de cuenta no se tocan.
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

@@ -198,7 +198,7 @@ export const RoadsIllustration: React.FC<{ selected: NetworkStandard['id'] }> = 
       const on = selected === r.id
       return (
         <g key={r.id}>
-          <text x="2" y={y + 14} fontSize="8.5" fontWeight="700" fill={on ? '#4338ca' : '#94a3b8'} style={FONT}>
+          <text x="2" y={y + 14} fontSize="8.5" fontWeight="700" className={on ? 'fill-indigo-700' : 'fill-slate-400'} style={FONT}>
             {r.label}
           </text>
           <rect
@@ -207,14 +207,12 @@ export const RoadsIllustration: React.FC<{ selected: NetworkStandard['id'] }> = 
             width="190"
             height="20"
             rx="10"
-            fill={on ? '#e0e7ff' : '#f1f5f9'}
-            stroke={on ? '#a5b4fc' : '#e2e8f0'}
-            className="transition-colors duration-500 motion-reduce:transition-none"
+            className={`transition-colors duration-500 motion-reduce:transition-none ${on ? 'fill-indigo-100 stroke-indigo-300' : 'fill-slate-100 stroke-slate-200'}`}
           />
-          <line x1="54" x2="224" y1={y + 10} y2={y + 10} stroke="#fff" strokeWidth="1.6" strokeDasharray="5 6" />
+          <line x1="54" x2="224" y1={y + 10} y2={y + 10} className="stroke-white" strokeWidth="1.6" strokeDasharray="5 6" />
           <g className="bc-travel" style={vars({ '--bc-dist': '166px', '--bc-t': `${r.seconds}s` })}>
-            <circle cx="56" cy={y + 10} r="7.5" fill={on ? '#c7d2fe' : '#e2e8f0'} stroke={on ? '#818cf8' : '#cbd5e1'} />
-            <text x="56" y={y + 13} textAnchor="middle" fontSize="9" fontWeight="700" fill={on ? '#3730a3' : '#64748b'} style={FONT}>
+            <circle cx="56" cy={y + 10} r="7.5" className={on ? 'fill-indigo-200 stroke-indigo-400' : 'fill-slate-200 stroke-slate-300'} />
+            <text x="56" y={y + 13} textAnchor="middle" fontSize="9" fontWeight="700" className={on ? 'fill-indigo-800' : 'fill-slate-500'} style={FONT}>
               $
             </text>
           </g>
@@ -254,4 +252,4 @@ export const BitcoinCoin: React.FC = () => (
       </text>
     </g>
   </svg>
-)
+)

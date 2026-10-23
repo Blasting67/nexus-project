@@ -1,0 +1,61 @@
+:root .lm-page{--lm-green:#168664;--lm-gold:#a97713;--lm-orange:#c2410c}
+:root[data-theme="dark"] .lm-page,
+:root[data-theme="aurora"] .lm-page,
+:root[data-theme="neon"] .lm-page,
+:root[data-theme="sunset"] .lm-page,
+:root[data-theme="ocean"] .lm-page{--lm-green:#5fe0b4;--lm-gold:#f6c85f;--lm-orange:#fdba74}
+
+:root[data-theme="dark"] .lm-learning-page[data-theme],
+:root[data-theme="aurora"] .lm-learning-page[data-theme],
+:root[data-theme="neon"] .lm-learning-page[data-theme],
+:root[data-theme="sunset"] .lm-learning-page[data-theme],
+:root[data-theme="ocean"] .lm-learning-page[data-theme]{--theme-glow:color-mix(in srgb,var(--theme-accent) 40%,var(--surface))}
+
+:root[data-theme="dark"] .lm-unit,
+:root[data-theme="aurora"] .lm-unit,
+:root[data-theme="neon"] .lm-unit,
+:root[data-theme="sunset"] .lm-unit,
+:root[data-theme="ocean"] .lm-unit{--wave-light:color-mix(in srgb,var(--wave-color) 26%,var(--surface))}
+
+:root .lm-page .lm-streak{border-color:color-mix(in srgb,var(--lm-orange) 38%,var(--border));color:var(--lm-orange)}
+
+:root .lm-feature:after{border-color:color-mix(in srgb,#39ad8a 32%,transparent);box-shadow:0 0 0 25px color-mix(in srgb,#39ad8a 9%,transparent),0 0 0 55px color-mix(in srgb,#39ad8a 5%,transparent)}
+
+:root .lm-page .lm-feature-title>span,
+:root .lm-page .lm-feature-stats>div:first-child strong,
+:root .lm-page .lm-progress-line strong,
+:root .lm-page .lm-hero-stats>strong,
+:root .lm-page .lm-xp-total,
+:root .lm-page .lm-lesson-footer>span strong,
+:root .lm-page .lm-simple-card header button,
+:root .lm-page .lm-secondary-module small,
+:root .lm-page .lm-recommendation>span,
+:root .lm-page .lm-survey-options button.selected,
+:root .lm-page .lm-survey-next button.selected,
+:root .lm-page .lm-style-chip:hover,
+:root .lm-page .lm-change-style:hover,
+:root .lm-page .lm-return-home:hover{color:var(--lm-green)}
+
+:root .lm-page .lm-lesson-footer small{color:var(--lm-gold)}
+:root .lm-page .lm-practice-prompt{color:color-mix(in srgb,var(--lm-green) 78%,var(--text))}
+:root .lm-page .lm-answer>span{color:color-mix(in srgb,#52829a 60%,var(--text))}
+
+:root .lm-category-card,
+:root .lm-category-card[data-theme]{--card-tint:color-mix(in srgb,var(--card-accent,#8aa7c8) 14%,var(--surface))}
+:root .lm-category-card:hover{border-color:color-mix(in srgb,var(--card-accent,var(--primary)) 45%,var(--border))}
+
+:root .lm-page .lm-route-tip{border-color:color-mix(in srgb,var(--theme-accent,#39ad8a) 22%,var(--border))}
+:root .lm-learning-page .lm-route-tip{border-color:color-mix(in srgb,var(--theme-accent,#39ad8a) 22%,var(--border));background:color-mix(in srgb,var(--theme-glow,#a8efd4) 14%,var(--surface))}
+
+:root .lm-page .lm-survey-card{border-color:var(--border)}
+:root .lm-page .lm-survey-options button,
+:root .lm-page .lm-survey-next button{border-color:var(--border)}
+:root .lm-page .lm-survey-options button.selected,
+:root .lm-page .lm-survey-next button.selected{border-color:var(--lm-green)}
+
+:root .lm-page .lm-step .lm-node{border-color:color-mix(in srgb,var(--surface) 55%,#ffffff)}
+:root .lm-page .lm-step.completed .lm-node{border-color:color-mix(in srgb,#fff2b8 55%,var(--surface))}
+:root .lm-trail-svg .lm-road-center{stroke:color-mix(in srgb,var(--surface) 30%,#ffffff)}
+
+:root .lm-reward-modal{border-color:color-mix(in srgb,#f2c349 45%,var(--border));background:radial-gradient(ellipse at 50% 0,color-mix(in srgb,#f2c349 24%,transparent),transparent 52%),var(--surface)}
+:root .lm-reward-chest{border-color:color-mix(in srgb,#f2c349 40%,var(--border));background:color-mix(in srgb,#f2c349 10%,var(--surface));color:var(--lm-gold)}
