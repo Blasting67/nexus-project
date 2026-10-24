@@ -17,10 +17,10 @@ const TUTORIALS: Record<TutorialPage, { label: string; steps: TutorialStep[] }> 
     { title: 'Top Ranking de Usuarios', text: 'Escala a lo largo de tu jornada en el Top Ranking de Usuarios.', target: '[data-tour="home-ranking"]' },
   ] },
   learn: { label: 'Aprender', steps: [
-    { title: 'Elige tu camino', text: 'Explora tu camino recomendado según tus intereses.', target: '.lm-feature' },
-    { title: 'Elige tu camino', text: 'Explora mundos bastos de información sobre temas interesantes.', target: '.lm-more-paths' },
-    { title: 'Personaliza la experiencia', text: 'Ajusta tu experiencia de aprendizaje cuando quieras.', target: 'main .lm-style-chip' },
-    { title: 'Desbloquea funciones', text: 'A lo largo de avanzar en tus caminos desbloquearás funciones en la página, revísalos!', target: null },
+    { title: 'Tu camino de Trading y Finanzas', text: 'Aquí ves tu avance, tu nivel y el botón para continuar donde te quedaste.', target: '[data-tour="learn-hero"]' },
+    { title: 'Tu mapa de lecciones', text: 'Avanza lección por lección. La siguiente siempre está resaltada.', target: '[data-tour="learn-map"]' },
+    { title: 'Personaliza la experiencia', text: 'Ajusta tu forma de aprender cuando quieras.', target: '[data-tour="learn-style"]' },
+    { title: 'Desbloquea recursos', text: 'Al completar lecciones desbloqueas recursos para practicar. Revisa la columna de la derecha.', target: null },
   ] },
   challenges: { label: 'Desafíos', steps: [
     { title: 'Filtra los desafíos', text: 'Elige una categoría para encontrar ejercicios de tu interés.', target: 'main .no-scrollbar' },
