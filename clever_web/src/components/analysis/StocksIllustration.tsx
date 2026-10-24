@@ -1,7 +1,6 @@
 import React from 'react'
 
 interface IllustrationProps {
-  /** true cuando la tarjeta está seleccionada (la animación la controla el CSS de la tarjeta) */
   active: boolean
 }
 
@@ -9,7 +8,6 @@ const BASE = 128
 const HEIGHTS = [34, 52, 44, 70, 58, 84, 98]
 const CX = HEIGHTS.map((_, i) => 35 + i * 26)
 
-/** Curva suave (Catmull-Rom → Bézier) que pasa por todos los puntos. */
 function curve(pts: Array<[number, number]>): string {
   let d = `M${pts[0][0]},${pts[0][1]}`
   for (let i = 0; i < pts.length - 1; i++) {
@@ -26,7 +24,6 @@ function curve(pts: Array<[number, number]>): string {
   return d
 }
 
-// la línea de tendencia pasa un poco por encima de cada barra
 const POINTS: Array<[number, number]> = CX.map((x, i) => [x, BASE - HEIGHTS[i] - 12])
 const LINE = curve(POINTS)
 const END = POINTS[POINTS.length - 1]
@@ -34,11 +31,6 @@ const AREA = `${LINE} L${END[0]},${BASE} L${POINTS[0][0]},${BASE} Z`
 
 const vars = (v: Record<string, string | number>) => v as unknown as React.CSSProperties
 
-/**
- * Gráfico de acciones: barras con "respiración" suave. Al pasar el mouse la gráfica se reconstruye:
- * las barras suben en cascada, la línea se dibuja, un punto luminoso la recorre y aparece la insignia de alza.
- * (Las animaciones viven en el CSS de AnalysisOptionCard, bajo la clase `.ao-root`.)
- */
 export const StocksIllustration: React.FC<IllustrationProps> = () => (
   <svg viewBox="0 0 240 160" className="h-auto w-full" aria-hidden="true">
     <defs>
@@ -60,10 +52,8 @@ export const StocksIllustration: React.FC<IllustrationProps> = () => (
       </linearGradient>
     </defs>
 
-    {/* panel */}
-    <rect x="6" y="6" width="228" height="148" rx="20" fill="#fff" fillOpacity="0.6" stroke="#e0f2fe" />
+    <rect className="ao-panel" x="6" y="6" width="228" height="148" rx="20" fill="#fff" fillOpacity="0.6" stroke="#e0f2fe" />
 
-    {/* cuadrícula */}
     <g stroke="#bae6fd" strokeOpacity="0.7" strokeDasharray="3 5">
       <line x1="20" x2="220" y1="52" y2="52" />
       <line x1="20" x2="220" y1="84" y2="84" />
@@ -71,10 +61,8 @@ export const StocksIllustration: React.FC<IllustrationProps> = () => (
     </g>
     <line x1="20" x2="220" y1={BASE} y2={BASE} stroke="#e0f2fe" />
 
-    {/* área bajo la línea */}
     <path className="ao-area" d={AREA} fill="url(#ao-area)" />
 
-    {/* barras */}
     {HEIGHTS.map((h, i) => (
       <rect
         key={i}
@@ -89,7 +77,6 @@ export const StocksIllustration: React.FC<IllustrationProps> = () => (
       />
     ))}
 
-    {/* línea de tendencia */}
     <path
       className="ao-line"
       d={LINE}
@@ -101,19 +88,16 @@ export const StocksIllustration: React.FC<IllustrationProps> = () => (
       strokeLinejoin="round"
     />
 
-    {/* punto luminoso que recorre la línea (en reposo queda al final) */}
     <g style={{ filter: 'drop-shadow(0 0 5px rgba(99,102,241,.55))' }}>
       <path className="ao-dot" d={LINE} pathLength={1} fill="none" stroke="#6366f1" strokeWidth="10" strokeLinecap="round" />
       <path className="ao-dot" d={LINE} pathLength={1} fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" />
     </g>
 
-    {/* insignia de alza */}
     <g className="ao-pop ao-origin-c">
       <rect x="204" y="22" width="28" height="22" rx="11" fill="#d1fae5" stroke="#6ee7b7" />
       <path d="M218 38V28M213.5 32.5L218 28l4.5 4.5" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </g>
 
-    {/* destellos */}
     <g fill="none" stroke="#7dd3fc" strokeWidth="1.8" strokeLinecap="round">
       <path className="ao-twinkle ao-origin-c" style={vars({ '--i': 0 })} d="M26 30v8M22 34h8" />
       <path className="ao-twinkle ao-origin-c" style={vars({ '--i': 1 })} d="M118 22v6M115 25h6" />
