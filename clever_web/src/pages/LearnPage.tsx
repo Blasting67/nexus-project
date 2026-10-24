@@ -6,6 +6,7 @@ import { LearningScenery, LearningFinale, LearningParticles } from '../component
 import { LearningSidebar } from '../components/LearningSidebar'
 import './LearnPage.css'
 import './LearnPage.theme.css'
+import { GuestSignupGate } from '../components/GuestSignupGate'
 
 const UNITS = COURSE_STAGES.trading
   .map((title, unitIndex) => ({
@@ -50,12 +51,13 @@ type View = 'home' | 'path' | 'style' | 'diagnostic' | 'result' | 'lesson' | 'se
 type TrailStyle = React.CSSProperties & { '--node-x': string; '--map-color': string; '--step-delay': string; '--label-x': string }
 
 export const LearnPage: React.FC = () => {
-  const { user, completeModule, addXP, addCoins, logActivity, showToast, updateUserProfile } = usePlatform()
+  const { user, isGuest, completeModule, addXP, addCoins, logActivity, showToast, updateUserProfile } = usePlatform()
   const [searchParams] = useSearchParams()
   const requestedCategory = searchParams.get('cat')
   const initialCategory = CATEGORIES.some((category) => category.id === requestedCategory) ? requestedCategory as string : 'trading'
   const [view, setView] = useState<View>(requestedCategory ? initialCategory === 'trading' ? 'path' : 'secondary' : 'home')
   const [selectedCat, setSelectedCat] = useState(initialCategory)
+  const [isGuestGateOpen, setIsGuestGateOpen] = useState(isGuest)
   const completed = user.moduleProgress.trading || []
   const [lesson, setLesson] = useState(2)
   const [learningStyle, setLearningStyle] = useState(user.learningStyle || '')
@@ -176,6 +178,10 @@ export const LearnPage: React.FC = () => {
   }
 
   function openLesson(index: number) {
+    if (isGuest) {
+      setIsGuestGateOpen(true)
+      return
+    }
     setLesson(index)
     setShowEasy(false)
     const savedSurvey = user.lessonSurveys?.[selectedCat]?.[index]
@@ -286,6 +292,7 @@ export const LearnPage: React.FC = () => {
       <header className="lm-path-hero"><div><span className="lm-eyebrow">Tu recorrido recomendado</span><h1><i className="fa-solid fa-chart-line" /> Trading y Finanzas</h1><p>Un paso a la vez. Construye una base sólida y desbloquea nuevas herramientas mientras avanzas.</p><div className="lm-hero-actions"><button className="platform-btn-primary" onClick={() => openLesson(tradingResumeIndex)}>Continuar aprendizaje <i className="fa-solid fa-arrow-right" /></button><button className="platform-btn-secondary" onClick={beginDiagnostic}>Descubrir mi nivel</button><button className="platform-btn-secondary" onClick={() => { setLearningStyle(user.learningStyle || ''); setView('style') }}><i className="fa-solid fa-sliders" /> {user.learningStyle || '¿Cómo quieres aprender?'}</button></div></div><div className="lm-hero-stats"><strong>{displayXP} <small>XP</small></strong><span>Nivel {user.level} · {user.levelLabel}</span><div><span style={{ width: `${progress}%` }} /></div><small>{progress}% del camino</small></div></header>
       <div className="lm-map-layout"><main className="lm-course-map"><div className="lm-map-heading"><div><span className="lm-eyebrow">Tu mapa de aprendizaje</span><h2>Avanza a tu ritmo</h2></div><span>{completed.length} de {totalLessons} lecciones</span></div><div className="lm-route-tip"><i className="fa-solid fa-compass" /><span><strong>Tu misión</strong> Completa el nodo activo para descubrir el siguiente. Cada etapa termina con una habilidad nueva.</span></div>{UNITS.map((_, index) => makeTrail(index))}<LearningFinale categoryId="trading" /></main><LearningSidebar categoryId="trading" /></div>
       {unitReward !== null && <div className="lm-reward-backdrop" role="presentation" onClick={() => setUnitReward(null)}><section className="lm-reward-modal" role="dialog" aria-modal="true" aria-labelledby="lm-reward-title" onClick={(event) => event.stopPropagation()}><button className="lm-reward-close" onClick={() => setUnitReward(null)} aria-label="Cerrar recompensa">×</button><div className="lm-reward-burst"><i className="fa-solid fa-gift" /></div><span className="lm-eyebrow">¡Etapa completada!</span><h2 id="lm-reward-title">Un cofre para ti</h2><p>Terminaste “{unitReward.title}”. Tu constancia merece una recompensa.</p><div className="lm-reward-chest"><i className="fa-solid fa-box-open" /><span>+{unitReward.bonus} XP · +{unitReward.coins} monedas</span></div><button className="platform-btn-primary" onClick={() => setUnitReward(null)}>Seguir aprendiendo <i className="fa-solid fa-arrow-right" /></button></section></div>}
+      {isGuest && isGuestGateOpen && <GuestSignupGate onClose={() => setIsGuestGateOpen(false)} />}
     </div>
   )
 
