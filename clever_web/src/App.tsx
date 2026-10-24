@@ -131,9 +131,9 @@ const MainAppContent: React.FC = () => {
           <Route path="/misiones" element={<Navigate to="/" replace />} />
           <Route path="/mentor" element={<MentorPage />} />
           <Route path="/analisis" element={<AnalysisPage />} />
-          <Route path="/logros" element={<AchievementsPage />} />
+          <Route path="/logros" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<Navigate to="/" replace />} />
-          <Route path="/comunidad" element={<CommunityPage />} />
+          <Route path="/comunidad" element={<Navigate to="/" replace />} />
           <Route path="/progreso" element={<ProgressPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
           <Route path="/personalizacion" element={<CustomizationPage />} />
