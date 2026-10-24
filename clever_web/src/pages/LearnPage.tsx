@@ -1,65 +1,173 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
-import { CATEGORIES, COURSE_STAGES, MODULES_BY_CATEGORY } from '../data/catalog'
-import { LearningScenery, LearningFinale, LearningParticles } from '../components/LearningScenery'
-import { LearningSidebar } from '../components/LearningSidebar'
-import './LearnPage.css'
-import './LearnPage.theme.css'
+import { MODULES_BY_CATEGORY } from '../data/catalog'
 import { GuestSignupGate } from '../components/GuestSignupGate'
+import { TradingTrailMap, type TrailLessonStatus, type TrailScene } from '../components/learn/TradingTrailMap'
+import { Microtext, NOTE_STYLES, ROSETTE_SMALL, Rosette, SmallRosette } from '../components/note/NoteKit'
 
-const UNITS = COURSE_STAGES.trading
-  .map((title, unitIndex) => ({
-    title,
-    lessons: MODULES_BY_CATEGORY.trading.slice(unitIndex * 4, unitIndex * 4 + 4),
-  }))
-  .filter((unit) => unit.lessons.length > 0)
-const LESSONS = MODULES_BY_CATEGORY.trading.map((title, index) => ({ title, unitIndex: Math.floor(index / 4) }))
-const UNIT_COLORS = ['#45b895', '#eead48', '#638ef3', '#a179e8', '#e87971']
-const CATEGORY_GUIDES: Record<string, string[]> = {
-  trading: ['Empieza por las ideas esenciales para entender cómo funcionan los mercados.', 'Conoce los activos digitales, sus redes y las diferencias entre ellos.', 'Aprende a leer los movimientos del precio con ejemplos visuales.', 'Practica cómo se planea una operación y cómo se cuida el riesgo.', 'Relaciona indicadores y volumen para leer una gráfica con más contexto.', 'Pon en práctica lo aprendido con ejercicios guiados y simulaciones.'],
-  gaming: ['Recorre la evolución de los videojuegos y sus plataformas.', 'Descubre cómo se construyen las mecánicas y los niveles.', 'Relaciona estudios, lanzamientos y economía digital.', 'Aplica lo aprendido al analizar la industria gamer.'],
-  cine: ['Conoce cómo nació el cine y cómo ha cambiado.', 'Observa cómo los planos, el montaje y el sonido cuentan una historia.', 'Explora la dirección, la composición y las decisiones visuales.', 'Practica el análisis de historias y obras cinematográficas.'],
-  libros: ['Ubica los movimientos literarios y su época.', 'Conoce autores, géneros y recursos narrativos.', 'Aprende a leer entre líneas y reconocer figuras retóricas.', 'Construye una interpretación propia con contexto.'],
-  musica: ['Identifica ritmo, melodía y armonía en una canción.', 'Explora cómo evolucionaron los géneros y sus escenas.', 'Descubre cómo se graba, produce y mezcla una pieza.', 'Escucha con atención y reconoce la estructura musical.'],
-  historia: ['Sitúa las civilizaciones y los primeros intercambios.', 'Comprende cómo las rutas e ideas conectaron sociedades.', 'Relaciona revoluciones y cambios con su contexto.', 'Interpreta procesos que ayudan a entender el presente.'],
-  ciencia: ['Aprende a formular preguntas y comprobar ideas.', 'Explora leyes físicas a través de fenómenos cotidianos.', 'Conecta la materia, la vida y los sistemas naturales.', 'Practica lógica y pensamiento crítico con ejemplos.'],
-  cultura: ['Conecta acontecimientos e ideas que influyen en el mundo.', 'Explora preguntas filosóficas que siguen vigentes.', 'Lee el arte y la sociedad desde distintos contextos.', 'Descubre patrones, paradojas y curiosidades.'],
+const COURSE_ID = 'trading'
+const COURSE_NAME = 'Trading y Finanzas'
+const LESSONS_PER_STAGE = 4
+const TRADING_MODULES: string[] = MODULES_BY_CATEGORY.trading
+
+const STAGES = [
+  {
+    title: 'Leer el mercado',
+    objective: 'Entiende cómo funciona un mercado, lee velas japonesas, reconoce soportes y tendencias y aprende a cuidar tu riesgo.',
+  },
+  {
+    title: 'Operar con disciplina',
+    objective: 'Controla tus emociones, usa órdenes y estrategias, practica en el simulador y pon a prueba tus ideas con datos históricos.',
+  },
+]
+
+const LESSON_SCENES: TrailScene[] = ['company', 'candles', 'range', 'stoploss', 'emotions', 'orders', 'simulator', 'backtest']
+
+const LESSONS = TRADING_MODULES.map((title, index) => ({
+  title,
+  stageIndex: Math.floor(index / LESSONS_PER_STAGE),
+  scene: LESSON_SCENES[index % LESSON_SCENES.length],
+}))
+
+const LESSON_COPY = {
+  idea: 'Este concepto te ayuda a interpretar los movimientos del mercado y tomar decisiones con un plan.',
+  simple: 'Imagina que {term} es una pieza de un mapa que te ayuda a orientarte antes de dar el siguiente paso.',
+  example: 'Al revisar una gráfica de precios, puedes reconocer {term} y explicar qué información aporta.',
+  practice: 'Mira una gráfica sencilla e intenta encontrar un ejemplo de {term}. ¿Qué observas?',
 }
-const CATEGORY_LESSON_COPY: Record<string, { idea: string; simple: string; example: string; practice: string }> = {
-  trading: { idea: 'Este concepto te ayuda a interpretar los movimientos del mercado y tomar decisiones con un plan.', simple: 'Imagina que {term} es una pieza de un mapa que te ayuda a orientarte antes de dar el siguiente paso.', example: 'Al revisar una gráfica de precios, puedes reconocer {term} y explicar qué información aporta.', practice: 'Mira una gráfica sencilla e intenta encontrar un ejemplo de {term}. ¿Qué observas?' },
-  gaming: { idea: 'Este tema explica una parte de cómo se crean los videojuegos y cómo se relacionan con su industria.', simple: 'Piensa en {term} como una regla o pieza del juego que ayuda a que todo funcione.', example: 'Al jugar un título que conoces, busca un ejemplo de {term} y observa cómo cambia tu experiencia.', practice: 'Elige tu videojuego favorito: ¿dónde notas {term} y qué función cumple?' },
-  cine: { idea: 'Este recurso ayuda a construir el ritmo, la atmósfera o el significado de una escena.', simple: 'Es como elegir qué mostrar y cuándo para que una historia se sienta de cierta manera.', example: 'En una escena de suspenso, observa cómo {term} guía tu atención y tus emociones.', practice: 'Piensa en una escena que recuerdes: ¿cómo se usa {term} para contar la historia?' },
-  libros: { idea: 'Este concepto ayuda a reconocer cómo está construida una obra y qué contexto le da sentido.', simple: 'Es una pista que te ayuda a entender mejor lo que el autor quiere contar.', example: 'Al leer un cuento, identifica {term} y fíjate cómo cambia tu interpretación.', practice: 'Piensa en una historia que hayas leído: ¿qué ejemplo de {term} recuerdas?' },
-  musica: { idea: 'Este elemento participa en la estructura y en la sensación que transmite una pieza musical.', simple: 'Es una de las piezas que hace que una canción tenga su propio sonido y movimiento.', example: 'Escucha una canción que te guste y nota cómo aparece {term} en distintas partes.', practice: 'Escucha unos segundos de una canción: ¿puedes distinguir dónde aparece {term}?' },
-  historia: { idea: 'Este tema permite relacionar acontecimientos con las condiciones y decisiones de su época.', simple: 'Es una pieza del pasado que nos ayuda a entender por qué las cosas cambiaron.', example: 'Al estudiar {term}, pregúntate qué ocurrió antes y qué consecuencias tuvo después.', practice: 'Relaciona {term} con un cambio que todavía puedas observar en la actualidad.' },
-  ciencia: { idea: 'Este concepto conecta observaciones con explicaciones que pueden ponerse a prueba.', simple: 'Es una forma ordenada de buscar por qué sucede algo y comprobar si nuestra idea tiene sentido.', example: 'Observa algo cotidiano relacionado con {term}, plantea una pregunta y piensa cómo comprobarla.', practice: 'Formula una pregunta sencilla sobre {term}: ¿qué observarías para encontrar una respuesta?' },
-  cultura: { idea: 'Este tema ofrece una lente para interpretar ideas, costumbres y cambios de la vida cotidiana.', simple: 'Es una manera de mirar algo conocido desde un ángulo nuevo.', example: 'Busca {term} en una situación de todos los días y piensa qué dice sobre la sociedad.', practice: 'Conecta {term} con una experiencia, noticia o costumbre que conozcas.' },
-}
+
 const QUESTIONS = [
   { title: '¿Qué es una stablecoin?', answers: ['Una criptomoneda diseñada para mantener un valor estable', 'Una moneda que siempre sube', 'Una acción de una empresa'] },
   { title: '¿Has utilizado alguna vez una plataforma de trading?', answers: ['Sí, varias veces', 'La he explorado, pero no operado', 'Todavía no'] },
   { title: '¿Has visto una vela japonesa?', answers: ['Sí, y sé qué muestra', 'La he visto, pero no la entiendo aún', 'No, todavía no'] },
 ]
+
 const STYLES = [
-  ['fa-solid fa-seedling', 'Explícamelo fácil', 'Ejemplos cotidianos y palabras sencillas.'],
-  ['fa-solid fa-book-open', 'Quiero aprender en detalle', 'Conceptos y términos de los mercados.'],
-  ['fa-solid fa-wand-magic-sparkles', 'Quiero aprender haciendo', 'Gráficas y ejercicios prácticos.'],
-  ['fa-solid fa-forward', 'Ya tengo experiencia', 'Avanza y repasa solo lo que necesitas.'],
+  { icon: 'fa-solid fa-seedling', title: 'Explícamelo fácil', text: 'Ejemplos cotidianos y palabras sencillas.' },
+  { icon: 'fa-solid fa-book-open', title: 'Quiero aprender en detalle', text: 'Conceptos y términos de los mercados.' },
+  { icon: 'fa-solid fa-wand-magic-sparkles', title: 'Quiero aprender haciendo', text: 'Gráficas y ejercicios prácticos.' },
+  { icon: 'fa-solid fa-forward', title: 'Ya tengo experiencia', text: 'Avanza y repasa solo lo que necesitas.' },
 ]
-type View = 'home' | 'path' | 'style' | 'diagnostic' | 'result' | 'lesson' | 'secondary'
-type TrailStyle = React.CSSProperties & { '--node-x': string; '--map-color': string; '--step-delay': string; '--label-x': string }
+
+const RESOURCES = [
+  {
+    icon: 'fa-solid fa-magnifying-glass-chart',
+    name: 'Análisis de mercado',
+    threshold: 4,
+    prompt: 'Elige un ejemplo y describe cómo se relaciona con los conceptos de las primeras lecciones.',
+    link: { to: '/analisis', label: 'Abrir análisis' },
+  },
+  {
+    icon: 'fa-solid fa-clipboard-list',
+    name: 'Plan de operación',
+    threshold: 8,
+    prompt: 'Analiza un caso: identifica sus elementos, explica sus relaciones y justifica tus conclusiones.',
+    link: { to: '/analisis', label: 'Abrir análisis' },
+  },
+  {
+    icon: 'fa-solid fa-flask',
+    name: 'Simulador',
+    threshold: 8,
+    prompt: 'Crea una propuesta usando lo aprendido. Explica sus pasos y cómo comprobarías el resultado.',
+    link: { to: '/exchange', label: 'Abrir simulador' },
+  },
+]
+
+const SURVEY_NEXT_STEPS = ['Repasarlo', 'Aplicarlo en un ejemplo', 'Continuar con el siguiente tema']
+const CANDLE_HEIGHTS = [42, 65, 52, 75, 56, 82, 62, 91, 68, 78, 54, 70]
+const FALLING_CANDLES = new Set([2, 6, 10])
+
+type View = 'path' | 'style' | 'diagnostic' | 'result' | 'lesson'
+type LessonStatus = TrailLessonStatus
+
+const pad = (value: number) => String(value).padStart(2, '0')
+
+
+const ProgressSeal: React.FC<{ done: number; total: number }> = ({ done, total }) => {
+  const radius = 64
+  const circumference = 2 * Math.PI * radius
+  const ratio = total ? done / total : 0
+  return (
+    <div className="relative h-52 w-52 shrink-0" role="img" aria-label={`${done} de ${total} lecciones completadas`}>
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <path d={ROSETTE_SMALL} fill="none" stroke="var(--ink)" strokeWidth="0.35" strokeOpacity="0.55" />
+      </svg>
+      <svg viewBox="0 0 160 160" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="80" cy="80" r={radius} fill="var(--surface)" stroke="var(--paper-2)" strokeWidth="7" />
+        <circle
+          cx="80"
+          cy="80"
+          r={radius}
+          fill="none"
+          stroke="var(--ink)"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={`${circumference * ratio} ${circumference}`}
+          className="transition-[stroke-dasharray] duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span className="note-display note-num text-5xl font-black leading-none text-[var(--text)]">
+          {pad(done)}
+          <span className="text-2xl text-[var(--text-muted)]">/{pad(total)}</span>
+        </span>
+        <span className="mt-1 text-sm text-[var(--text-muted)]">lecciones</span>
+      </div>
+    </div>
+  )
+}
+
+const FlowShell: React.FC<{ onBack: () => void; children: React.ReactNode }> = ({ onBack, children }) => (
+  <div className="note-home mx-auto max-w-3xl py-6">
+    <style>{NOTE_STYLES}</style>
+    <button type="button" onClick={onBack} className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--text-muted)] transition-colors hover:text-[var(--ink)]">
+      <i className="fa-solid fa-arrow-left text-xs"></i>
+      Volver al camino
+    </button>
+    <section className="note-paper relative isolate overflow-hidden rounded-[28px] p-7 sm:p-10">
+      <SmallRosette className="pointer-events-none absolute -right-14 -top-14 -z-10 h-56 w-56 opacity-50" />
+      {children}
+    </section>
+  </div>
+)
+
+const RewardModal: React.FC<{ reward: { title: string; bonus: number; coins: number }; onClose: () => void }> = ({ reward, onClose }) => (
+  <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(5,10,20,0.55)] p-4 backdrop-blur-[3px]" role="presentation" onClick={onClose}>
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="learn-reward-title"
+      onClick={(event) => event.stopPropagation()}
+      className="note-paper relative isolate w-full max-w-md overflow-hidden rounded-[28px] bg-[var(--bg-alt)] p-8 text-center"
+    >
+      <Rosette className="pointer-events-none absolute left-1/2 top-0 -z-10 h-80 w-80 -translate-x-1/2 -translate-y-1/3 opacity-70" />
+      <button type="button" onClick={onClose} aria-label="Cerrar recompensa" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--paper-2)]">
+        <i className="fa-solid fa-xmark"></i>
+      </button>
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--ink)] text-2xl text-[var(--bg)]">
+        <i className="fa-solid fa-award"></i>
+      </span>
+      <h2 id="learn-reward-title" className="note-display mt-5 text-3xl font-black text-[var(--text)]">Etapa completada</h2>
+      <p className="mt-2 text-base leading-relaxed text-[var(--text-muted)]">Terminaste "{reward.title}". Tu constancia merece una recompensa.</p>
+      <div className="note-display note-num mt-5 inline-flex items-center gap-3 rounded-full border-[1.5px] border-[var(--ink)] px-5 py-2 text-lg font-extrabold text-[var(--ink)]">
+        +{reward.bonus} XP &middot; +{reward.coins} monedas
+      </div>
+      <div className="mt-7">
+        <button type="button" onClick={onClose} className="note-btn note-btn-ink w-full">
+          Seguir aprendiendo
+          <i className="fa-solid fa-arrow-right text-sm"></i>
+        </button>
+      </div>
+    </section>
+  </div>
+)
 
 export const LearnPage: React.FC = () => {
   const { user, isGuest, completeModule, addXP, addCoins, logActivity, showToast, updateUserProfile } = usePlatform()
-  const [searchParams] = useSearchParams()
-  const requestedCategory = searchParams.get('cat')
-  const initialCategory = CATEGORIES.some((category) => category.id === requestedCategory) ? requestedCategory as string : 'trading'
-  const [view, setView] = useState<View>(requestedCategory ? initialCategory === 'trading' ? 'path' : 'secondary' : 'home')
-  const [selectedCat, setSelectedCat] = useState(initialCategory)
+  const [searchParams, setSearchParams] = useSearchParams()
+
   const [isGuestGateOpen, setIsGuestGateOpen] = useState(isGuest)
-  const completed = user.moduleProgress.trading || []
-  const [lesson, setLesson] = useState(2)
   const [learningStyle, setLearningStyle] = useState(user.learningStyle || '')
   const [question, setQuestion] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
@@ -67,150 +175,87 @@ export const LearnPage: React.FC = () => {
   const [unitReward, setUnitReward] = useState<{ title: string; bonus: number; coins: number } | null>(null)
   const [surveyClarity, setSurveyClarity] = useState<number | null>(null)
   const [surveyNextStep, setSurveyNextStep] = useState('')
+  const [activeResource, setActiveResource] = useState<number | null>(null)
+  const [notes, setNotes] = useState<Record<number, string>>({})
 
+  const requestedView = searchParams.get('view')
+  const requestedLesson = Number.parseInt(searchParams.get('nivel') || '1', 10)
+  const lesson = Number.isFinite(requestedLesson) ? Math.min(Math.max(requestedLesson - 1, 0), LESSONS.length - 1) : 0
+  const view: View =
+    requestedView === 'lesson' && !isGuest
+      ? 'lesson'
+      : requestedView === 'diagnostic' || requestedView === 'style'
+        ? requestedView
+        : requestedView === 'result' && answers.length === QUESTIONS.length
+          ? 'result'
+          : requestedView === 'result'
+            ? 'diagnostic'
+            : 'path'
+
+  const goTo = (next: View, options: { lessonIndex?: number; replace?: boolean } = {}) => {
+    const params: Record<string, string> = {}
+    if (next !== 'path') params.view = next
+    if (next === 'lesson') params.nivel = String((options.lessonIndex ?? 0) + 1)
+    setSearchParams(params, { replace: options.replace ?? false })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    if (view !== 'lesson') return
+    setShowEasy(false)
+    const savedSurvey = user.lessonSurveys?.[COURSE_ID]?.[lesson]
+    setSurveyClarity(savedSurvey?.clarity ?? null)
+    setSurveyNextStep(savedSurvey?.nextStep ?? '')
+  }, [view, lesson])
+
+  const completed = (user.moduleProgress[COURSE_ID] || []).filter((index) => Number.isInteger(index) && index >= 0 && index < LESSONS.length)
+  const completedSet = new Set(completed)
   const totalLessons = LESSONS.length
-  const progress = Math.round((completed.length / totalLessons) * 100)
-  const firstIncompleteTradingLesson = LESSONS.findIndex((_, index) => !completed.includes(index))
-  const tradingResumeIndex = firstIncompleteTradingLesson < 0 ? totalLessons - 1 : firstIncompleteTradingLesson
-  const displayXP = user.xp
-  const activeCategories = CATEGORIES.filter((category) => user.interests.includes(category.id))
-  const secondaryCategories = CATEGORIES.filter((category) => category.id !== 'trading')
-  const selectedCategory = CATEGORIES.find((category) => category.id === selectedCat) || CATEGORIES[0]
-  const activeModules = MODULES_BY_CATEGORY[selectedCat] || []
-  const activeLessonTitle = selectedCat === 'trading'
-    ? LESSONS[lesson]?.title || LESSONS[0].title
-    : activeModules[lesson] || activeModules[0] || selectedCategory.name
+  const progress = Math.round((completedSet.size / totalLessons) * 100)
+  const firstIncomplete = LESSONS.findIndex((_, index) => !completedSet.has(index))
+  const resumeIndex = firstIncomplete < 0 ? totalLessons - 1 : firstIncomplete
+  const isCourseDone = firstIncomplete < 0
+  const completedStages = STAGES.filter((_, stageIndex) =>
+    LESSONS.every((item, index) => item.stageIndex !== stageIndex || completedSet.has(index)),
+  ).length
 
-  const makeTrail = (unitIndex: number) => {
-    const unit = UNITS[unitIndex]
-    if (!unit || !unit.lessons.length) return null
-    const objective = CATEGORY_GUIDES.trading[unitIndex]
-    const start = UNITS.slice(0, unitIndex).reduce((sum, item) => sum + item.lessons.length, 0)
-    const xs = [50, 72, 55, 30, 43, 68, 51]
-    const points = unit.lessons.map((_, index) => ({ x: xs[(index + unitIndex) % xs.length], y: 56 + index * 108 }))
-    const unitDone = completed.filter((item) => item >= start && item < start + unit.lessons.length).length
-    const unitProgress = Math.round((unitDone / unit.lessons.length) * 100)
-    const path = points.slice(1).reduce((result, point, index) => {
-      const previous = points[index]
-      const middle = (previous.y + point.y) / 2
-      return `${result} C ${previous.x} ${middle}, ${point.x} ${middle}, ${point.x} ${point.y}`
-    }, `M ${points[0].x} ${points[0].y}`)
-
-    return (
-      <section className="lm-unit" data-theme="trading" key={unit.title} style={{ '--map-color': UNIT_COLORS[unitIndex] } as React.CSSProperties}>
-        <header className="lm-unit-head">
-          <div><span className="lm-eyebrow">Etapa {String(unitIndex + 1).padStart(2, '0')}</span><h3>{unit.title}</h3><p className="lm-unit-objective">{objective}</p></div>
-          <div className="lm-unit-progress-wrap"><span className="lm-unit-tag">{unitDone} / {unit.lessons.length} completadas</span><div className="lm-unit-progress" role="progressbar" aria-label={`Progreso de ${unit.title}`} aria-valuenow={unitDone} aria-valuemin={0} aria-valuemax={unit.lessons.length}><i style={{ width: `${unitProgress}%` }} /></div><small>{unitProgress}% de la etapa</small></div>
-        </header>
-        <div className="lm-trail">
-          <LearningScenery categoryId="trading" stage={unitIndex} />
-          <svg className="lm-trail-svg" viewBox={`0 0 100 ${unit.lessons.length * 108}`} preserveAspectRatio="none" aria-hidden="true"><path className="lm-road-edge" d={path} /><path className="lm-road-ribbon" d={path} /><path className="lm-road-progress" pathLength="100" d={path} style={{ strokeDasharray: `${unitProgress} 100` }} /><path className="lm-road-center" d={path} /></svg>
-          {unit.lessons.map((title, index) => {
-            const lessonIndex = start + index
-            const status = completed.includes(lessonIndex) ? 'completed' : lessonIndex === tradingResumeIndex ? 'current' : lessonIndex === tradingResumeIndex + 1 ? 'available' : 'locked'
-            const statusLabel = status === 'completed' ? 'Completada' : status === 'current' ? 'Siguiente lección' : status === 'available' ? 'Disponible' : 'Bloqueada'
-            const x = points[index].x
-            const style: TrailStyle = {
-              '--node-x': `${x}%`,
-              '--map-color': UNIT_COLORS[unitIndex],
-              '--step-delay': `${Math.min(index * 65, 390)}ms`,
-              '--label-x': x > 43 ? 'calc(var(--node-x) - min(225px, 42%))' : 'calc(var(--node-x) + 43px)',
-            }
-            const xp = lessonIndex % 3 === 0 ? 30 : 50
-            return (
-              <article className={`lm-step ${status} ${x > 43 ? 'lm-label-left' : 'lm-label-right'}`} style={style} key={title}>
-                <button className="lm-node" disabled={status === 'locked'} onClick={() => openLesson(lessonIndex)} aria-label={`${title}, ${statusLabel}`}>
-                  <span>{status === 'completed' ? '✓' : status === 'locked' ? <i className="fa-solid fa-lock" /> : status === 'current' ? <i className="fa-solid fa-play" /> : <i className="fa-solid fa-star" />}</span>
-                  {status === 'completed' && <small className="lm-xp-badge">+{xp} XP</small>}
-                </button>
-                <span className={`lm-trail-item ${status}`} aria-hidden="true"><i className={status === 'completed' ? 'fa-solid fa-coins' : status === 'locked' ? 'fa-solid fa-lock' : 'fa-solid fa-gem'} />{status === 'completed' && <small>+{xp}</small>}</span>
-                {status === 'current' && <span className="lm-next-bubble">Sigue por aquí</span>}
-                <button className="lm-step-label" disabled={status === 'locked'} onClick={() => openLesson(lessonIndex)}>
-                  <strong>{title}</strong><small>{statusLabel} · +{xp} XP</small>
-                </button>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-    )
+  const statusOf = (index: number): LessonStatus => {
+    if (completedSet.has(index)) return 'completed'
+    if (index === resumeIndex) return 'current'
+    if (index === resumeIndex + 1) return 'available'
+    return 'locked'
   }
 
-  const makeCategoryTrail = (categoryId: string, unitIndex: number) => {
-    const title = CATEGORIES.find((category) => category.id === categoryId)?.name || 'Camino'
-    const courseModules = MODULES_BY_CATEGORY[categoryId] || []
-    const done = user.moduleProgress[categoryId] || []
-    const chunkSize = 4
-    const start = unitIndex * chunkSize
-    const unitModules = courseModules.slice(start, start + chunkSize)
-    const unitDone = done.filter((index) => index >= start && index < start + unitModules.length).length
-    const unitProgress = unitModules.length ? Math.round((unitDone / unitModules.length) * 100) : 0
-    const offsets = [50, 70, 48, 28]
-    const points = unitModules.map((_, index) => ({ x: offsets[index % offsets.length], y: 54 + index * 108 }))
-    const line = unitModules.length === 1
-      ? `M 24 102 C 31 91, 42 70, ${points[0].x} ${points[0].y}`
-      : points.slice(1).reduce((result, point, index) => {
-      const previous = points[index]
-      const middle = (previous.y + point.y) / 2
-      return `${result} C ${previous.x} ${middle}, ${point.x} ${middle}, ${point.x} ${point.y}`
-    }, `M ${points[0].x} ${points[0].y}`)
-    const color = UNIT_COLORS[(unitIndex + 1) % UNIT_COLORS.length]
-    const objective = CATEGORY_GUIDES[categoryId]?.[unitIndex] || `Explora ${title.toLowerCase()} con ejemplos y avanza tema a tema.`
-    const stageTitle = COURSE_STAGES[categoryId]?.[unitIndex] || `Etapa ${unitIndex + 1}`
-
-    return <section className="lm-unit lm-other-unit" data-theme={categoryId} key={`${categoryId}-${unitIndex}`} style={{ '--map-color': color } as React.CSSProperties}>
-      <header className="lm-unit-head"><div><span className="lm-eyebrow">Etapa {String(unitIndex + 1).padStart(2, '0')}</span><h3>{stageTitle}</h3><p className="lm-unit-objective">{objective}</p></div><div className="lm-unit-progress-wrap"><span className="lm-unit-tag">{unitDone} / {unitModules.length} completadas</span><div className="lm-unit-progress" role="progressbar" aria-label={`Progreso de etapa ${unitIndex + 1}`} aria-valuenow={unitDone} aria-valuemin={0} aria-valuemax={unitModules.length}><i style={{ width: `${unitProgress}%` }} /></div><small>{unitProgress}% de la etapa</small></div></header>
-      <div className="lm-trail"><LearningScenery categoryId={categoryId} stage={unitIndex} /><svg className="lm-trail-svg" viewBox={`0 0 100 ${unitModules.length * 108}`} preserveAspectRatio="none" aria-hidden="true"><path className="lm-road-edge" d={line} /><path className="lm-road-ribbon" d={line} /><path className="lm-road-progress" pathLength="100" d={line} style={{ strokeDasharray: `${unitProgress} 100` }} /><path className="lm-road-center" d={line} /></svg>{unitModules.map((module, index) => {
-        const moduleIndex = start + index
-        const firstIncomplete = courseModules.findIndex((_, courseIndex) => !done.includes(courseIndex))
-        const currentModule = firstIncomplete < 0 ? courseModules.length : firstIncomplete
-        const status = done.includes(moduleIndex) ? 'completed' : moduleIndex === currentModule ? 'current' : moduleIndex === currentModule + 1 ? 'available' : 'locked'
-        const x = points[index].x
-        const style: TrailStyle = { '--node-x': `${x}%`, '--map-color': color, '--step-delay': `${Math.min(index * 55, 260)}ms`, '--label-x': x > 43 ? 'calc(var(--node-x) - min(225px, 42%))' : 'calc(var(--node-x) + 43px)' }
-        return <article className={`lm-step ${status} ${x > 43 ? 'lm-label-left' : 'lm-label-right'}`} style={style} key={module}>
-          <button className="lm-node" disabled={status === 'locked'} onClick={() => openLesson(moduleIndex)} aria-label={`${module} · ${status}`}><span>{status === 'completed' ? '✓' : status === 'locked' ? <i className="fa-solid fa-lock" /> : status === 'current' ? <i className="fa-solid fa-play" /> : <i className="fa-solid fa-star" />}</span>{status === 'completed' && <small className="lm-xp-badge">+35 XP</small>}</button>
-          <span className={`lm-trail-item ${status}`} aria-hidden="true"><i className={status === 'completed' ? 'fa-solid fa-coins' : status === 'locked' ? 'fa-solid fa-lock' : 'fa-solid fa-gem'} />{status === 'completed' && <small>+35</small>}</span>
-          {status === 'current' && <span className="lm-next-bubble">Sigue por aquí</span>}
-          <button className="lm-step-label" disabled={status === 'locked'} onClick={() => openLesson(moduleIndex)}><strong>{module}</strong><small>{status === 'completed' ? 'Completada' : status === 'current' ? 'Siguiente lección' : status === 'available' ? 'Disponible' : 'Bloqueada'} · +35 XP</small></button>
-        </article>
-      })}</div>
-    </section>
-  }
+  const openPath = (replace = false) => goTo('path', { replace })
 
   function openLesson(index: number) {
     if (isGuest) {
       setIsGuestGateOpen(true)
       return
     }
-    setLesson(index)
-    setShowEasy(false)
-    const savedSurvey = user.lessonSurveys?.[selectedCat]?.[index]
-    setSurveyClarity(savedSurvey?.clarity ?? null)
-    setSurveyNextStep(savedSurvey?.nextStep ?? '')
-    setView('lesson')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    goTo('lesson', { lessonIndex: index })
   }
 
   function completeCurrentLesson() {
-    const finished = user.moduleProgress[selectedCat] || []
+    const finished = user.moduleProgress[COURSE_ID] || []
     if (finished.includes(lesson)) {
-      setView(selectedCat === 'trading' ? 'path' : 'secondary')
+      openPath(true)
       return
     }
-
-    completeModule(selectedCat, lesson)
-    logActivity(`Lección completada: ${activeModules[lesson]}`)
-    const unitIndex = Math.floor(lesson / 4)
-    const unitStart = unitIndex * 4
-    const stageCompleted = Array.from({ length: 4 }, (_, offset) => unitStart + offset).every((index) => finished.includes(index) || index === lesson)
+    completeModule(COURSE_ID, lesson)
+    logActivity(`Lección completada: ${TRADING_MODULES[lesson]}`)
+    const stageIndex = Math.floor(lesson / LESSONS_PER_STAGE)
+    const stageStart = stageIndex * LESSONS_PER_STAGE
+    const stageCompleted = Array.from({ length: LESSONS_PER_STAGE }, (_, offset) => stageStart + offset)
+      .filter((index) => index < totalLessons)
+      .every((index) => finished.includes(index) || index === lesson)
     if (stageCompleted) {
       addXP(100)
       addCoins(50)
-      setUnitReward({ title: COURSE_STAGES[selectedCat]?.[unitIndex] || `Etapa ${unitIndex + 1}`, bonus: 100, coins: 50 })
+      setUnitReward({ title: STAGES[stageIndex]?.title || `Etapa ${stageIndex + 1}`, bonus: 100, coins: 50 })
     }
-
-    if (stageCompleted || lesson >= activeModules.length - 1) {
-      setView(selectedCat === 'trading' ? 'path' : 'secondary')
+    if (stageCompleted || lesson >= totalLessons - 1) {
+      openPath(true)
       return
     }
     openLesson(lesson + 1)
@@ -222,88 +267,570 @@ export const LearnPage: React.FC = () => {
       return
     }
     const surveys = user.lessonSurveys || {}
-    updateUserProfile({ lessonSurveys: { ...surveys, [selectedCat]: { ...(surveys[selectedCat] || {}), [lesson]: { clarity: surveyClarity, nextStep: surveyNextStep, completedAt: Date.now() } } } })
+    updateUserProfile({
+      lessonSurveys: {
+        ...surveys,
+        [COURSE_ID]: { ...(surveys[COURSE_ID] || {}), [lesson]: { clarity: surveyClarity, nextStep: surveyNextStep, completedAt: Date.now() } },
+      },
+    })
     completeCurrentLesson()
   }
-  const beginDiagnostic = () => { setQuestion(0); setAnswers([]); setView('diagnostic') }
-  const selectAnswer = (choice: number) => setAnswers((previous) => {
-    const updated = [...previous]
-    updated[question] = choice
-    return updated
-  })
-  const advanceDiagnostic = () => {
-    if (answers[question] === undefined) { showToast('Elige una respuesta para continuar.', 'info'); return }
-    if (question < QUESTIONS.length - 1) setQuestion((previous) => previous + 1)
-    else setView('result')
+
+  const beginDiagnostic = () => {
+    setQuestion(0)
+    setAnswers([])
+    goTo('diagnostic')
   }
 
-  const home = () => { setSelectedCat('trading'); setView('home'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-  const openPath = () => { setSelectedCat('trading'); setView('path'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-  const returnHomeButton = <button className="lm-return-home" onClick={home} title="Volver a elegir un camino"><i className="fa-solid fa-arrow-left" /> Caminos</button>
+  const selectAnswer = (choice: number) =>
+    setAnswers((previous) => {
+      const updated = [...previous]
+      updated[question] = choice
+      return updated
+    })
+
+  const advanceDiagnostic = () => {
+    if (answers[question] === undefined) {
+      showToast('Elige una respuesta para continuar.', 'info')
+      return
+    }
+    if (question < QUESTIONS.length - 1) setQuestion((previous) => previous + 1)
+    else goTo('result')
+  }
+
+  const openStyle = () => {
+    setLearningStyle(user.learningStyle || '')
+    goTo('style')
+  }
+
   const saveLearningStyle = () => {
-    if (!learningStyle) { showToast('Selecciona una forma de aprender.', 'info'); return }
+    if (!learningStyle) {
+      showToast('Selecciona una forma de aprender.', 'info')
+      return
+    }
     updateUserProfile({ learningStyle })
     showToast('Tu forma de aprender quedó actualizada.', 'success')
-    setView(selectedCat === 'trading' ? 'path' : 'secondary')
+    openPath(true)
   }
 
-  if (view === 'style') return (
-    <div className="lm-page lm-flow-wrap">{returnHomeButton}<section className="lm-flow-card"><button className="lm-back" onClick={() => setView(selectedCat === 'trading' ? 'path' : 'secondary')}>← Volver al camino</button><span className="lm-eyebrow">Tu forma de aprender</span><h1>¿Cómo quieres aprender?</h1><p>Escoge lo que se sienta mejor para ti. Puedes cambiarlo después.</p><div className="lm-choice-grid">{STYLES.map(([icon, title, description]) => <button key={title} className={`lm-choice ${learningStyle === title ? 'selected' : ''}`} onClick={() => setLearningStyle(title)}><i className={icon} /><strong>{title}</strong><small>{description}</small></button>)}</div><div className="lm-flow-footer"><span>{user.learningStyle ? `Estilo actual: ${user.learningStyle}` : 'Tu camino se adaptará a tu preferencia.'}</span><button className="platform-btn-primary" onClick={saveLearningStyle}>Guardar preferencia →</button></div></section></div>
-  )
+  if (view === 'style') {
+    return (
+      <FlowShell onBack={() => openPath()}>
+        <h1 className="note-display text-4xl font-black leading-tight text-[var(--text)] sm:text-5xl">¿Cómo quieres aprender?</h1>
+        <p className="mt-3 text-lg text-[var(--text-muted)]">Escoge lo que se sienta mejor para ti. Puedes cambiarlo después.</p>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          {STYLES.map((style) => {
+            const isSelected = learningStyle === style.title
+            return (
+              <button
+                key={style.title}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setLearningStyle(style.title)}
+                className={`flex items-start gap-4 rounded-2xl border-[1.5px] p-5 text-left transition-colors ${
+                  isSelected ? 'border-[var(--ink)] bg-[color-mix(in_srgb,var(--ink)_8%,var(--surface))]' : 'border-[var(--border)] bg-[var(--surface)] hover:border-[color-mix(in_srgb,var(--ink)_45%,var(--border))]'
+                }`}
+              >
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isSelected ? 'bg-[var(--ink)] text-[var(--bg)]' : 'border border-[var(--rule)] text-[var(--ink)]'}`}>
+                  <i className={style.icon}></i>
+                </span>
+                <span>
+                  <span className="note-display block text-lg font-bold text-[var(--text)]">{style.title}</span>
+                  <span className="mt-1 block text-[15px] text-[var(--text-muted)]">{style.text}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-6">
+          <span className="text-[15px] text-[var(--text-muted)]">
+            {user.learningStyle ? `Estilo actual: ${user.learningStyle}` : 'Tu camino se adaptará a tu preferencia.'}
+          </span>
+          <button type="button" onClick={saveLearningStyle} className="note-btn note-btn-ink">
+            Guardar preferencia
+            <i className="fa-solid fa-arrow-right text-sm"></i>
+          </button>
+        </div>
+      </FlowShell>
+    )
+  }
 
-  if (view === 'diagnostic') return (
-    <div className="lm-page lm-flow-wrap">{returnHomeButton}<section className="lm-flow-card"><button className="lm-back" onClick={openPath}>← Volver al camino</button><div className="lm-diagnostic-progress"><div><span style={{ width: `${((question + 1) / QUESTIONS.length) * 100}%` }} /></div><small>{question + 1} de {QUESTIONS.length}</small></div><span className="lm-eyebrow">Un punto de partida a tu medida</span><h1>Descubramos qué sabes</h1><p>No hay respuestas malas. Esto nos ayuda a sugerirte por dónde empezar.</p><h2>{QUESTIONS[question].title}</h2><div className="lm-diagnostic-options">{QUESTIONS[question].answers.map((answer, index) => <button key={answer} className={`lm-choice lm-answer ${answers[question] === index ? 'selected' : ''}`} onClick={() => selectAnswer(index)}><span>{String.fromCharCode(65 + index)}</span><strong>{answer}</strong></button>)}</div><div className="lm-flow-footer"><span>Responde con tranquilidad.</span><button className="platform-btn-primary" onClick={advanceDiagnostic}>{question === QUESTIONS.length - 1 ? 'Ver mi recomendación →' : 'Continuar →'}</button></div></section></div>
-  )
+  if (view === 'diagnostic') {
+    const current = QUESTIONS[question]
+    return (
+      <FlowShell onBack={() => openPath()}>
+        <div className="flex items-center gap-4">
+          <div className="grid flex-1 grid-cols-3 gap-1.5" aria-hidden="true">
+            {QUESTIONS.map((item, index) => (
+              <span key={item.title} className={`h-2 rounded-full ${index <= question ? 'bg-[var(--ink)]' : 'bg-[var(--paper-2)]'}`}></span>
+            ))}
+          </div>
+          <span className="note-num text-sm font-medium text-[var(--text-muted)]">
+            {question + 1} de {QUESTIONS.length}
+          </span>
+        </div>
+        <h1 className="note-display mt-8 text-4xl font-black leading-tight text-[var(--text)] sm:text-5xl">Descubramos qué sabes</h1>
+        <p className="mt-3 text-lg text-[var(--text-muted)]">No hay respuestas malas. Esto nos ayuda a sugerirte por dónde empezar.</p>
+        <h2 className="note-display mt-8 text-2xl font-extrabold text-[var(--text)]">{current.title}</h2>
+        <div className="mt-5 grid gap-3">
+          {current.answers.map((answer, index) => {
+            const isSelected = answers[question] === index
+            return (
+              <button
+                key={answer}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => selectAnswer(index)}
+                className={`flex items-center gap-4 rounded-2xl border-[1.5px] p-4 text-left transition-colors ${
+                  isSelected ? 'border-[var(--ink)] bg-[color-mix(in_srgb,var(--ink)_8%,var(--surface))]' : 'border-[var(--border)] bg-[var(--surface)] hover:border-[color-mix(in_srgb,var(--ink)_45%,var(--border))]'
+                }`}
+              >
+                <span className={`note-display flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${isSelected ? 'bg-[var(--ink)] text-[var(--bg)]' : 'border border-[var(--rule)] text-[var(--ink)]'}`}>
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span className="text-base font-medium text-[var(--text)]">{answer}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-6">
+          <span className="text-[15px] text-[var(--text-muted)]">Responde con tranquilidad.</span>
+          <button type="button" onClick={advanceDiagnostic} className="note-btn note-btn-ink">
+            {question === QUESTIONS.length - 1 ? 'Ver mi recomendación' : 'Continuar'}
+            <i className="fa-solid fa-arrow-right text-sm"></i>
+          </button>
+        </div>
+      </FlowShell>
+    )
+  }
 
   if (view === 'result') {
-    const experienced = answers[0] === 0 && answers[1] === 0
-    const recommended = experienced ? Math.min(8, totalLessons - 1) : Math.min(2, totalLessons - 1)
-    return <div className="lm-page lm-flow-wrap">{returnHomeButton}<section className="lm-flow-card"><button className="lm-back" onClick={openPath}>← Volver al camino</button><span className="lm-eyebrow">Tu recomendación</span><div className="lm-result-icon"><i className="fa-solid fa-compass" /></div><h1>Tu punto de partida</h1><h2>{experienced ? 'Principiante con experiencia' : 'Principiante'}</h2><p>Te recomendamos avanzar a tu ritmo, construyendo una base clara antes de explorar nuevas herramientas.</p><div className="lm-recommendation"><div><strong>{LESSONS[recommended].title}</strong><small>Etapa {LESSONS[recommended].unitIndex + 1} · Trading y Finanzas</small></div><span>Recomendado</span></div><div className="lm-flow-footer"><span>Siempre puedes explorar otros temas.</span><button className="platform-btn-primary" onClick={() => openLesson(recommended)}>Ir a mi lección →</button></div></section></div>
+    const isExperienced = answers[0] === 0 && answers[1] === 0
+    const recommended = isExperienced ? Math.min(4, totalLessons - 1) : 0
+    return (
+      <FlowShell onBack={() => openPath()}>
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ink)] text-xl text-[var(--bg)]">
+          <i className="fa-solid fa-compass"></i>
+        </span>
+        <h1 className="note-display mt-6 text-4xl font-black leading-tight text-[var(--text)] sm:text-5xl">Tu punto de partida</h1>
+        <p className="note-display mt-2 text-2xl font-bold text-[var(--ink)]">{isExperienced ? 'Principiante con experiencia' : 'Principiante'}</p>
+        <p className="mt-3 text-lg leading-relaxed text-[var(--text-muted)]">
+          Te recomendamos avanzar a tu ritmo, construyendo una base clara antes de explorar nuevas herramientas.
+        </p>
+        <div className="mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-[1.5px] border-[var(--ink)] bg-[var(--surface)] p-5">
+          <div>
+            <span className="note-num text-sm text-[var(--text-muted)]">
+              Lección {pad(recommended + 1)} &middot; Etapa {pad(LESSONS[recommended].stageIndex + 1)}
+            </span>
+            <strong className="note-display mt-1 block text-xl font-extrabold text-[var(--text)]">{LESSONS[recommended].title}</strong>
+          </div>
+          <span className="rounded-full bg-[var(--ink)] px-3 py-1 text-sm font-semibold text-[var(--bg)]">Recomendado</span>
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-6">
+          <span className="text-[15px] text-[var(--text-muted)]">Puedes recorrer el camino en el orden que prefieras.</span>
+          <button type="button" onClick={() => openLesson(recommended)} className="note-btn note-btn-ink">
+            Ir a mi lección
+            <i className="fa-solid fa-arrow-right text-sm"></i>
+          </button>
+        </div>
+        {isGuest && isGuestGateOpen && <GuestSignupGate onClose={() => setIsGuestGateOpen(false)} />}
+      </FlowShell>
+    )
   }
 
   if (view === 'lesson') {
-    const title = activeLessonTitle
-    const candle = title.toLowerCase().includes('vela')
-    const isSimpleStyle = user.learningStyle === STYLES[0][1]
-    const isDetailedStyle = user.learningStyle === STYLES[1][1]
-    const isPracticeStyle = user.learningStyle === STYLES[2][1]
-    const categoryCopy = CATEGORY_LESSON_COPY[selectedCat] || CATEGORY_LESSON_COPY.trading
-    const technical = candle ? 'Una vela japonesa representa cómo se movió el precio de un activo durante un periodo. Su cuerpo muestra la apertura y el cierre; las mechas señalan los precios máximo y mínimo.' : `${title}: ${categoryCopy.idea}`
-    const simple = candle ? 'Piensa en una vela como el resumen de una historia: te enseña dónde empezó y terminó el precio, y hasta dónde llegó en el camino.' : categoryCopy.simple.replace('{term}', title.toLowerCase())
-    const example = candle ? 'Si una criptomoneda comenzó en $100 y terminó en $110, la vela muestra ese movimiento. Sus mechas señalan si llegó a subir o bajar más.' : categoryCopy.example.replaceAll('{term}', title.toLowerCase())
-    const practicePrompt = categoryCopy.practice.replace('{term}', title.toLowerCase())
-    return <div className="lm-page lm-lesson-page">{returnHomeButton}<div className="lm-breadcrumb"><button onClick={home}>Caminos</button><span>›</span><button onClick={() => setView(selectedCat === 'trading' ? 'path' : 'secondary')}>{selectedCategory.name}</button><span>›</span><span>Lección</span></div><header className="lm-lesson-heading"><div><span className="lm-eyebrow">Etapa {selectedCat === 'trading' ? LESSONS[lesson].unitIndex + 1 : Math.floor(lesson / 4) + 1} · {selectedCategory.name}</span><h1>{title}</h1><p>{technical}</p></div><span>Lección {lesson + 1} / {selectedCat === 'trading' ? totalLessons : activeModules.length}</span></header><div className="lm-lesson-grid"><section className="lm-content-card"><span className="lm-eyebrow">{isDetailedStyle ? 'Concepto clave' : 'La idea principal'}</span><p>{technical}</p>{isDetailedStyle && <div className="lm-term-chip"><i className="fa-solid fa-bookmark" /> Término clave: {title}</div>}</section><section className="lm-content-card lm-simple-card"><header><strong>{isSimpleStyle ? 'En palabras simples' : 'Una forma de entenderlo'}</strong><button onClick={() => setShowEasy((previous) => !previous)}>{showEasy ? 'Ver explicación' : 'Explicarlo más fácil'}</button></header><p>{showEasy ? simple : isSimpleStyle ? simple : technical}</p></section>{candle && <section className="lm-content-card lm-chart-card"><header><strong>{isPracticeStyle ? 'Prueba a leer este movimiento' : 'Así se ve un movimiento'}</strong><small>Ilustración · sin datos de mercado</small></header><div className="lm-candles">{[42, 65, 52, 75, 56, 82, 62, 91, 68, 78, 54, 70].map((height, index) => <span key={index} className={index === 2 || index === 6 || index === 10 ? 'down' : ''} style={{ height, '--wick': `${14 + (index % 3) * 5}px` } as React.CSSProperties} />)}</div><div className="lm-chart-labels"><span>Apertura</span><span>Movimiento del precio</span><span>Cierre</span></div>{isPracticeStyle && <p className="lm-practice-prompt">Observa el cuerpo y las mechas. ¿En qué dirección terminó el precio?</p>}</section>}{isPracticeStyle && !candle && <section className="lm-content-card lm-practice-card"><strong><i className="fa-solid fa-pencil" /> Prueba rápida</strong><p>{practicePrompt}</p><span>Piensa tu respuesta antes de continuar.</span></section>}<section className="lm-content-card lm-example-card"><strong><i className="fa-regular fa-lightbulb" /> {isDetailedStyle ? 'Aplicación del concepto' : 'Ejemplo cotidiano'}</strong><p>{example}</p></section></div><section className="lm-survey-card"><span className="lm-eyebrow">Encuesta de la lección</span><h2>Antes de seguir, cuéntanos</h2><p>Tu respuesta guarda tu avance y activa tus recompensas.</p><strong>¿Qué tan clara fue esta lección?</strong><div className="lm-survey-options">{[1,2,3,4,5].map((value) => <button type="button" className={surveyClarity === value ? 'selected' : ''} key={value} onClick={() => setSurveyClarity(value)} aria-pressed={surveyClarity === value}>{value}<small>{value === 1 ? 'Poco' : value === 5 ? 'Mucho' : ''}</small></button>)}</div><strong>¿Qué harás con lo aprendido?</strong><div className="lm-survey-next">{['Repasarlo','Aplicarlo en un ejemplo','Continuar con el siguiente tema'].map((choice) => <button type="button" className={surveyNextStep === choice ? 'selected' : ''} key={choice} onClick={() => setSurveyNextStep(choice)} aria-pressed={surveyNextStep === choice}>{choice}</button>)}</div><div className="lm-lesson-footer"><span>Recompensa: <strong>+35 XP · +15 monedas</strong>{(lesson + 1) % 4 === 0 && <small> Cofre de etapa: +100 XP · +50 monedas</small>}</span><button className="platform-btn-primary" onClick={submitLessonSurvey} disabled={(user.moduleProgress[selectedCat] || []).includes(lesson) || surveyClarity === null || !surveyNextStep}>{(user.moduleProgress[selectedCat] || []).includes(lesson) ? 'Lección completada' : 'Completar encuesta y continuar →'}</button></div></section></div>
+    const title = LESSONS[lesson]?.title || LESSONS[0].title
+    const stageIndex = LESSONS[lesson]?.stageIndex ?? 0
+    const term = title.toLowerCase()
+    const isCandle = term.includes('vela')
+    const isSimpleStyle = user.learningStyle === STYLES[0].title
+    const isDetailedStyle = user.learningStyle === STYLES[1].title
+    const isPracticeStyle = user.learningStyle === STYLES[2].title
+    const technical = isCandle
+      ? 'Una vela japonesa representa cómo se movió el precio de un activo durante un periodo. Su cuerpo muestra la apertura y el cierre; las mechas señalan los precios máximo y mínimo.'
+      : `${title}: ${LESSON_COPY.idea}`
+    const simple = isCandle
+      ? 'Piensa en una vela como el resumen de una historia: te enseña dónde empezó y terminó el precio, y hasta dónde llegó en el camino.'
+      : LESSON_COPY.simple.replace('{term}', term)
+    const example = isCandle
+      ? 'Si una criptomoneda comenzó en $100 y terminó en $110, la vela muestra ese movimiento. Sus mechas señalan si llegó a subir o bajar más.'
+      : LESSON_COPY.example.replaceAll('{term}', term)
+    const practicePrompt = LESSON_COPY.practice.replace('{term}', term)
+    const isLessonDone = completedSet.has(lesson)
+    const isStageClosing = (lesson + 1) % LESSONS_PER_STAGE === 0
+
+    return (
+      <div className="note-home mx-auto max-w-6xl space-y-8 py-6">
+        <style>{NOTE_STYLES}</style>
+        <nav aria-label="Ruta" className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-muted)]">
+          <button type="button" onClick={() => openPath()} className="font-semibold transition-colors hover:text-[var(--ink)]">
+            Aprender
+          </button>
+          <i className="fa-solid fa-chevron-right text-[10px] text-[var(--text-dim)]"></i>
+          <button type="button" onClick={() => openPath()} className="font-semibold transition-colors hover:text-[var(--ink)]">
+            {COURSE_NAME}
+          </button>
+          <i className="fa-solid fa-chevron-right text-[10px] text-[var(--text-dim)]"></i>
+          <span className="note-num">Lección {pad(lesson + 1)}</span>
+        </nav>
+
+        <header className="note-bill note-paper relative isolate overflow-hidden rounded-[28px] p-7 sm:p-10">
+          <Rosette className="pointer-events-none absolute -right-32 -top-40 -z-10 h-[460px] w-[460px]" />
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="note-wide text-xs font-extrabold text-[var(--ink)]">ETAPA {pad(stageIndex + 1)} &middot; {STAGES[stageIndex]?.title.toUpperCase()}</span>
+            <span className="h-px w-8 bg-[var(--rule)]"></span>
+            <span className="note-num text-sm text-[var(--text-muted)]">
+              Lección {pad(lesson + 1)} de {pad(totalLessons)}
+            </span>
+          </div>
+          <h1 className="note-display mt-4 max-w-[20ch] text-4xl font-black leading-[1.02] text-[var(--text)] sm:text-[3.4rem]">{title}</h1>
+          <p className="mt-4 max-w-[60ch] text-lg leading-relaxed text-[var(--text-muted)]">{technical}</p>
+        </header>
+
+        <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+          <div className="space-y-5">
+            <section className="note-card p-6 sm:p-7">
+              <h2 className="note-display text-xl font-extrabold text-[var(--text)]">{isDetailedStyle ? 'Concepto clave' : 'La idea principal'}</h2>
+              <p className="mt-3 text-base leading-relaxed text-[var(--text)]">{technical}</p>
+              {isDetailedStyle && (
+                <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--rule)] px-3 py-1 text-sm text-[var(--ink)]">
+                  <i className="fa-solid fa-bookmark text-xs"></i>
+                  Término clave: {title}
+                </span>
+              )}
+            </section>
+
+            <section className="note-card p-6 sm:p-7">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="note-display text-xl font-extrabold text-[var(--text)]">{isSimpleStyle ? 'En palabras simples' : 'Una forma de entenderlo'}</h2>
+                <button type="button" onClick={() => setShowEasy((previous) => !previous)} className="note-btn note-btn-line !h-10 !px-4 !text-sm">
+                  {showEasy ? 'Ver explicación' : 'Explicarlo más fácil'}
+                </button>
+              </div>
+              <p className="mt-3 text-base leading-relaxed text-[var(--text)]">{showEasy || isSimpleStyle ? simple : technical}</p>
+            </section>
+
+            {isCandle && (
+              <section className="note-card p-6 sm:p-7">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="note-display text-xl font-extrabold text-[var(--text)]">{isPracticeStyle ? 'Prueba a leer este movimiento' : 'Así se ve un movimiento'}</h2>
+                  <small className="text-sm text-[var(--text-muted)]">Ilustración &middot; sin datos de mercado</small>
+                </div>
+                <svg viewBox="0 0 360 140" className="mt-5 h-40 w-full" role="img" aria-label="Ilustración de velas japonesas">
+                  {[35, 70, 105].map((y) => (
+                    <line key={y} x1="0" x2="360" y1={y} y2={y} stroke="var(--rule)" strokeWidth="0.8" />
+                  ))}
+                  {CANDLE_HEIGHTS.map((height, index) => {
+                    const isFalling = FALLING_CANDLES.has(index)
+                    const body = height * 0.55
+                    const x = 18 + index * 28
+                    const top = 128 - body - index * 1.5
+                    const wick = 10 + (index % 3) * 5
+                    const color = isFalling ? 'var(--ink-3)' : 'var(--ink)'
+                    return (
+                      <g key={index}>
+                        <line x1={x} x2={x} y1={top - wick} y2={top + body + wick / 2} stroke={color} strokeWidth="1.6" />
+                        <rect x={x - 7} y={top} width="14" height={body} rx="2" fill={color} fillOpacity={isFalling ? 0.75 : 0.85} />
+                      </g>
+                    )
+                  })}
+                </svg>
+                <div className="mt-3 flex justify-between text-sm text-[var(--text-muted)]">
+                  <span>Apertura</span>
+                  <span>Movimiento del precio</span>
+                  <span>Cierre</span>
+                </div>
+                {isPracticeStyle && <p className="mt-4 text-base font-medium text-[var(--ink)]">Observa el cuerpo y las mechas. ¿En qué dirección terminó el precio?</p>}
+              </section>
+            )}
+
+            {isPracticeStyle && !isCandle && (
+              <section className="note-card p-6 sm:p-7">
+                <h2 className="note-display flex items-center gap-2 text-xl font-extrabold text-[var(--text)]">
+                  <i className="fa-solid fa-pencil text-base text-[var(--ink)]"></i>
+                  Prueba rápida
+                </h2>
+                <p className="mt-3 text-base leading-relaxed text-[var(--text)]">{practicePrompt}</p>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">Piensa tu respuesta antes de continuar.</p>
+              </section>
+            )}
+          </div>
+
+          <div className="space-y-5">
+            <section className="note-paper relative isolate overflow-hidden rounded-[20px] p-6 sm:p-7">
+              <SmallRosette className="pointer-events-none absolute -bottom-12 -right-12 -z-10 h-40 w-40 opacity-50" />
+              <h2 className="note-display flex items-center gap-2 text-xl font-extrabold text-[var(--text)]">
+                <i className="fa-regular fa-lightbulb text-base text-[var(--ink)]"></i>
+                {isDetailedStyle ? 'Aplicación del concepto' : 'Ejemplo cotidiano'}
+              </h2>
+              <p className="mt-3 text-base leading-relaxed text-[var(--text)]">{example}</p>
+            </section>
+            <button type="button" onClick={openStyle} className="note-card note-link group flex w-full items-center gap-4 p-5 text-left">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--rule)] text-[var(--ink)]">
+                <i className="fa-solid fa-sliders"></i>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm text-[var(--text-muted)]">Tu forma de aprender</span>
+                <span className="note-display block text-lg font-bold text-[var(--text)]">{user.learningStyle || 'Elegir estilo'}</span>
+              </span>
+              <i className="fa-solid fa-arrow-right text-sm text-[var(--text-dim)] transition-transform duration-300 group-hover:translate-x-1 group-hover:text-[var(--ink)]"></i>
+            </button>
+          </div>
+        </div>
+
+        <section className="note-card p-6 sm:p-9">
+          <h2 className="note-display text-3xl font-black text-[var(--text)]">Antes de seguir, cuéntanos</h2>
+          <p className="mt-2 text-base text-[var(--text-muted)]">Tu respuesta guarda tu avance y activa tus recompensas.</p>
+
+          <fieldset className="mt-7">
+            <legend className="note-display text-lg font-bold text-[var(--text)]">¿Qué tan clara fue esta lección?</legend>
+            <div className="mt-3 grid max-w-xl grid-cols-5 gap-2">
+              {[1, 2, 3, 4, 5].map((value) => {
+                const isSelected = surveyClarity === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSurveyClarity(value)}
+                    className={`flex flex-col items-center justify-center rounded-2xl border-[1.5px] py-3 transition-colors ${
+                      isSelected ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--bg)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[color-mix(in_srgb,var(--ink)_45%,var(--border))]'
+                    }`}
+                  >
+                    <span className="note-display note-num text-xl font-extrabold">{value}</span>
+                    <small className={`h-4 text-xs ${isSelected ? 'opacity-80' : 'text-[var(--text-muted)]'}`}>{value === 1 ? 'Poco' : value === 5 ? 'Mucho' : ''}</small>
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-7">
+            <legend className="note-display text-lg font-bold text-[var(--text)]">¿Qué harás con lo aprendido?</legend>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {SURVEY_NEXT_STEPS.map((choice) => {
+                const isSelected = surveyNextStep === choice
+                return (
+                  <button
+                    key={choice}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSurveyNextStep(choice)}
+                    className={`rounded-full border-[1.5px] px-4 py-2 text-[15px] font-medium transition-colors ${
+                      isSelected ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--bg)]' : 'border-[var(--border)] text-[var(--text)] hover:border-[color-mix(in_srgb,var(--ink)_45%,var(--border))]'
+                    }`}
+                  >
+                    {choice}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--rule)] pt-6">
+            <span className="text-[15px] text-[var(--text-muted)]">
+              Recompensa: <strong className="note-num text-[var(--ink)]">+35 XP &middot; +15 monedas</strong>
+              {isStageClosing && <span className="block text-sm">Cierre de etapa: +100 XP &middot; +50 monedas</span>}
+            </span>
+            <button
+              type="button"
+              onClick={submitLessonSurvey}
+              disabled={isLessonDone || surveyClarity === null || !surveyNextStep}
+              className="note-btn note-btn-ink disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLessonDone ? 'Lección completada' : 'Completar y continuar'}
+              {!isLessonDone && <i className="fa-solid fa-arrow-right text-sm"></i>}
+            </button>
+          </div>
+        </section>
+      </div>
+    )
   }
 
-  if (view === 'secondary') {
-    const finished = user.moduleProgress[selectedCat] || []
-    const unitCount = Math.ceil(activeModules.length / 4)
-    const categoryProgress = activeModules.length ? Math.round((finished.length / activeModules.length) * 100) : 0
-    const nextCategoryLesson = activeModules.findIndex((_, index) => !finished.includes(index))
-    const categoryResumeIndex = nextCategoryLesson < 0 ? 0 : nextCategoryLesson
-    return <div className="lm-page lm-learning-page" data-theme={selectedCat}><LearningParticles />{returnHomeButton}<div className="lm-breadcrumb"><button onClick={home}>Caminos</button><span>›</span><span>{selectedCategory.name}</span></div><header className="lm-category-banner"><div className="lm-category-copy"><span className="lm-eyebrow">Camino para explorar</span><h1><i className={selectedCategory.icon} /> {selectedCategory.name}</h1><p>{selectedCategory.desc}</p><span className="lm-banner-meta"><i className="fa-solid fa-route" /> {activeModules.length} lecciones · {unitCount} etapas</span><button className="lm-category-continue platform-btn-primary" onClick={() => openLesson(categoryResumeIndex)}>{nextCategoryLesson < 0 ? 'Repasar el camino' : finished.length ? 'Continuar camino' : 'Comenzar camino'} <i className="fa-solid fa-arrow-right" /></button></div><div className="lm-category-art" aria-hidden="true"><span className="lm-art-orbit orbit-one"/><span className="lm-art-orbit orbit-two"/><i className={selectedCategory.icon}/><span className="lm-art-spark spark-one">✦</span><span className="lm-art-spark spark-two">✧</span></div><div className="lm-other-summary"><strong>{categoryProgress}%</strong><span>{finished.length} de {activeModules.length} lecciones</span><div className="lm-category-progress"><i style={{width:`${categoryProgress}%`}}/></div></div></header><div className="lm-other-layout"><main><div className="lm-map-heading"><div><span className="lm-eyebrow">Tu recorrido</span><h2>Avanza a tu manera</h2></div><button className="lm-change-style" onClick={() => { setLearningStyle(user.learningStyle || ''); setView('style') }}><i className="fa-solid fa-sliders" /> {user.learningStyle || 'Elegir estilo'}</button></div><div className="lm-route-tip"><i className="fa-solid fa-compass" /><span><strong>¿Cómo recorrerlo?</strong> Sigue el nodo resaltado, aprende con cada tema y gana XP al completar una lección.</span></div>{Array.from({ length: unitCount }, (_, index) => makeCategoryTrail(selectedCat, index))}<LearningFinale categoryId={selectedCat} /></main><LearningSidebar key={selectedCat} categoryId={selectedCat} /></div>{unitReward !== null && <div className="lm-reward-backdrop" role="presentation" onClick={() => setUnitReward(null)}><section className="lm-reward-modal" role="dialog" aria-modal="true" aria-labelledby="lm-reward-title" onClick={(event) => event.stopPropagation()}><button className="lm-reward-close" onClick={() => setUnitReward(null)} aria-label="Cerrar recompensa">×</button><div className="lm-reward-burst"><i className="fa-solid fa-gift" /></div><span className="lm-eyebrow">¡Etapa completada!</span><h2 id="lm-reward-title">Un cofre para ti</h2><p>Terminaste “{unitReward.title}”. Tu constancia merece una recompensa.</p><div className="lm-reward-chest"><i className="fa-solid fa-box-open" /><span>+{unitReward.bonus} XP · +{unitReward.coins} monedas</span></div><button className="platform-btn-primary" onClick={() => setUnitReward(null)}>Seguir aprendiendo <i className="fa-solid fa-arrow-right" /></button></section></div>}</div>
-  }
+  return (
+    <div className="note-home mx-auto max-w-6xl space-y-14 py-6">
+      <style>{NOTE_STYLES}</style>
 
-  if (view === 'path') return (
-    <div className="lm-page lm-learning-page" data-theme="trading">
-      <LearningParticles />
-      {returnHomeButton}
-      <div className="lm-breadcrumb"><button onClick={home}>Caminos</button><span>›</span><span>Trading y Finanzas</span></div>
-      <header className="lm-path-hero"><div><span className="lm-eyebrow">Tu recorrido recomendado</span><h1><i className="fa-solid fa-chart-line" /> Trading y Finanzas</h1><p>Un paso a la vez. Construye una base sólida y desbloquea nuevas herramientas mientras avanzas.</p><div className="lm-hero-actions"><button className="platform-btn-primary" onClick={() => openLesson(tradingResumeIndex)}>Continuar aprendizaje <i className="fa-solid fa-arrow-right" /></button><button className="platform-btn-secondary" onClick={beginDiagnostic}>Descubrir mi nivel</button><button className="platform-btn-secondary" onClick={() => { setLearningStyle(user.learningStyle || ''); setView('style') }}><i className="fa-solid fa-sliders" /> {user.learningStyle || '¿Cómo quieres aprender?'}</button></div></div><div className="lm-hero-stats"><strong>{displayXP} <small>XP</small></strong><span>Nivel {user.level} · {user.levelLabel}</span><div><span style={{ width: `${progress}%` }} /></div><small>{progress}% del camino</small></div></header>
-      <div className="lm-map-layout"><main className="lm-course-map"><div className="lm-map-heading"><div><span className="lm-eyebrow">Tu mapa de aprendizaje</span><h2>Avanza a tu ritmo</h2></div><span>{completed.length} de {totalLessons} lecciones</span></div><div className="lm-route-tip"><i className="fa-solid fa-compass" /><span><strong>Tu misión</strong> Completa el nodo activo para descubrir el siguiente. Cada etapa termina con una habilidad nueva.</span></div>{UNITS.map((_, index) => makeTrail(index))}<LearningFinale categoryId="trading" /></main><LearningSidebar categoryId="trading" /></div>
-      {unitReward !== null && <div className="lm-reward-backdrop" role="presentation" onClick={() => setUnitReward(null)}><section className="lm-reward-modal" role="dialog" aria-modal="true" aria-labelledby="lm-reward-title" onClick={(event) => event.stopPropagation()}><button className="lm-reward-close" onClick={() => setUnitReward(null)} aria-label="Cerrar recompensa">×</button><div className="lm-reward-burst"><i className="fa-solid fa-gift" /></div><span className="lm-eyebrow">¡Etapa completada!</span><h2 id="lm-reward-title">Un cofre para ti</h2><p>Terminaste “{unitReward.title}”. Tu constancia merece una recompensa.</p><div className="lm-reward-chest"><i className="fa-solid fa-box-open" /><span>+{unitReward.bonus} XP · +{unitReward.coins} monedas</span></div><button className="platform-btn-primary" onClick={() => setUnitReward(null)}>Seguir aprendiendo <i className="fa-solid fa-arrow-right" /></button></section></div>}
+      <header data-tour="learn-hero" className="note-bill note-paper note-enter relative isolate overflow-hidden rounded-[28px]">
+        <Rosette className="pointer-events-none absolute -right-36 -top-44 -z-10 h-[520px] w-[520px] opacity-80" />
+        <div className="absolute inset-x-6 top-4 sm:inset-x-8">
+          <Microtext />
+        </div>
+        <div className="grid items-center gap-10 px-6 pb-10 pt-12 sm:px-10 lg:grid-cols-[1fr_auto] lg:px-14 lg:pb-12 lg:pt-14">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="note-wide text-sm font-extrabold text-[var(--ink)]">CLEVER</span>
+              <span className="h-px w-10 bg-[var(--rule)]"></span>
+              <span className="note-num text-sm text-[var(--text-muted)]">
+                {totalLessons} lecciones &middot; {STAGES.length} etapas
+              </span>
+            </div>
+            <h1 className="note-display mt-6 pr-16 text-[clamp(2.6rem,5vw,4.4rem)] font-black leading-[0.98] text-[var(--text)] [font-stretch:100%] sm:pr-0">{COURSE_NAME}</h1>
+            <p className="mt-4 max-w-[52ch] text-lg leading-relaxed text-[var(--text-muted)]">
+              Un paso a la vez. Construye una base sólida y desbloquea nuevas herramientas mientras avanzas.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <button type="button" onClick={() => openLesson(resumeIndex)} className="note-btn note-btn-ink">
+                {isCourseDone ? 'Repasar el camino' : completedSet.size ? 'Continuar aprendizaje' : 'Empezar el camino'}
+                <i className="fa-solid fa-arrow-right text-sm"></i>
+              </button>
+              <button type="button" onClick={beginDiagnostic} className="note-btn note-btn-line">
+                Descubrir mi nivel
+              </button>
+              <button type="button" data-tour="learn-style" onClick={openStyle} className="note-btn note-btn-line">
+                <i className="fa-solid fa-sliders text-sm"></i>
+                {user.learningStyle || '¿Cómo quieres aprender?'}
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <ProgressSeal done={completedSet.size} total={totalLessons} />
+            <div className="text-center">
+              <div className="note-display text-lg font-extrabold text-[var(--text)]">
+                Nivel {user.level} &middot; {user.levelLabel}
+              </div>
+              <div className="note-num text-sm text-[var(--text-muted)]">
+                {user.xp} XP &middot; {progress}% del camino
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid gap-10 lg:grid-cols-[1fr_340px] lg:items-stretch">
+        <main data-tour="learn-map" className="flex min-w-0 flex-col gap-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--rule)] pb-5">
+            <div>
+              <h2 className="note-display text-3xl font-black leading-tight text-[var(--text)] sm:text-4xl">Tu mapa de niveles</h2>
+              <p className="mt-2 text-base text-[var(--text-muted)]">Recorre la ciudad nivel por nivel. Arrastra el mapa para ver todo el camino.</p>
+            </div>
+            <span className="note-num text-sm font-semibold text-[var(--text-muted)]">
+              {completedSet.size} de {totalLessons} niveles
+            </span>
+          </div>
+          <div className="relative h-[72vh] min-h-[520px] lg:h-auto lg:flex-1">
+            <div className="absolute inset-0">
+              <TradingTrailMap
+                lessons={LESSONS}
+                stages={STAGES}
+                statusOf={statusOf}
+                onOpenLesson={openLesson}
+                isCourseDone={isCourseDone}
+                completedCount={completedSet.size}
+              />
+            </div>
+          </div>
+        </main>
+
+        <aside className="space-y-5">
+          <section className="note-card p-6">
+            <h2 className="note-display text-xl font-extrabold text-[var(--text)]">Tu progreso</h2>
+            <div className="mt-4 flex items-baseline justify-between">
+              <span className="note-display note-num text-4xl font-black text-[var(--ink)]">{progress}%</span>
+              <span className="note-num text-sm text-[var(--text-muted)]">
+                {completedSet.size} de {totalLessons} lecciones
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-8 gap-1" aria-hidden="true">
+              {LESSONS.map((item, index) => (
+                <span key={item.title} className={`h-2 rounded-full ${completedSet.has(index) ? 'bg-[var(--ink)]' : 'bg-[var(--paper-2)]'}`}></span>
+              ))}
+            </div>
+            <p className="mt-4 text-[15px] leading-relaxed text-[var(--text-muted)]">
+              {isCourseDone ? 'Camino completado. Puedes repasar tus lecciones.' : `Siguiente: ${LESSONS[resumeIndex].title}`}
+            </p>
+            <div className="mt-4 grid grid-cols-3 divide-x divide-[var(--rule)] rounded-2xl border border-[var(--rule)]">
+              {[
+                { value: user.xp, label: 'XP' },
+                { value: user.level, label: 'Nivel' },
+                { value: completedStages, label: 'Etapas' },
+              ].map((stat) => (
+                <div key={stat.label} className="py-2.5 text-center">
+                  <div className="note-display note-num text-lg font-extrabold text-[var(--text)]">{stat.value}</div>
+                  <div className="text-xs text-[var(--text-muted)]">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+              <i className="fa-solid fa-fire text-[var(--ink-3)]"></i>
+              Racha de {user.streak} días
+            </p>
+          </section>
+
+          <section className="note-card p-6">
+            <h2 className="note-display text-xl font-extrabold text-[var(--text)]">Recursos para practicar</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Se desbloquean conforme completas lecciones.</p>
+            <div className="mt-4 space-y-2">
+              {RESOURCES.map((resource, index) => {
+                const threshold = Math.min(resource.threshold, totalLessons)
+                const isUnlocked = completedSet.size >= threshold
+                const isExpanded = activeResource === index && isUnlocked
+                return (
+                  <div key={resource.name} className={`overflow-hidden rounded-2xl border ${isExpanded ? 'border-[var(--ink)]' : 'border-[var(--rule)]'}`}>
+                    <button
+                      type="button"
+                      disabled={!isUnlocked}
+                      aria-expanded={isExpanded}
+                      onClick={() => setActiveResource(isExpanded ? null : index)}
+                      className="flex w-full items-center gap-3 p-3.5 text-left disabled:cursor-not-allowed"
+                    >
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isUnlocked ? 'bg-[var(--ink)] text-[var(--bg)]' : 'bg-[var(--bg-alt)] text-[var(--text-dim)]'}`}>
+                        <i className={resource.icon}></i>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={`block text-[15px] font-semibold ${isUnlocked ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>{resource.name}</span>
+                        <span className="note-num block text-xs text-[var(--text-muted)]">
+                          {isUnlocked ? 'Desbloqueado · Abrir recurso' : `Completa ${threshold} lecciones (${completedSet.size}/${threshold})`}
+                        </span>
+                      </span>
+                      <i className={`text-xs ${isUnlocked ? 'fa-solid fa-chevron-down text-[var(--ink)]' : 'fa-solid fa-lock text-[var(--text-dim)]'} ${isExpanded ? 'rotate-180' : ''} transition-transform`}></i>
+                    </button>
+                    {isExpanded && (
+                      <div className="space-y-3 border-t border-[var(--rule)] p-4">
+                        <p className="text-[15px] leading-relaxed text-[var(--text)]">{resource.prompt}</p>
+                        <p className="text-xs text-[var(--text-muted)]">
+                          Conceptos de apoyo: {TRADING_MODULES.slice(Math.max(0, threshold - LESSONS_PER_STAGE), threshold).join(' · ')}
+                        </p>
+                        <label htmlFor={`learn-resource-${index}`} className="block text-sm font-semibold text-[var(--text)]">
+                          Tus notas de práctica
+                        </label>
+                        <textarea
+                          id={`learn-resource-${index}`}
+                          className="platform-input"
+                          rows={4}
+                          value={notes[index] || ''}
+                          onChange={(event) => setNotes((previous) => ({ ...previous, [index]: event.target.value }))}
+                          placeholder="Escribe tus observaciones y conclusiones"
+                        />
+                        <Link to={resource.link.to} className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ink)]">
+                          {resource.link.label}
+                          <i className="fa-solid fa-arrow-right text-xs"></i>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          <Link to="/mentor?cat=trading" className="note-paper note-link group relative isolate block overflow-hidden rounded-[20px] p-6">
+            <SmallRosette className="pointer-events-none absolute -bottom-10 -right-10 -z-10 h-36 w-36 opacity-50" />
+            <h2 className="note-display flex items-center gap-2 text-xl font-extrabold text-[var(--text)]">
+              <i className="fa-solid fa-robot text-base text-[var(--ink)]"></i>
+              Kor &middot; Mentor IA
+            </h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">Consulta tus dudas y repasa los conceptos de este camino con Kor.</p>
+            <span className="note-display mt-3 inline-flex items-center gap-1.5 text-base font-bold text-[var(--ink)]">
+              Preguntar a Kor
+              <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1"></i>
+            </span>
+          </Link>
+        </aside>
+      </div>
+
+      {unitReward !== null && <RewardModal reward={unitReward} onClose={() => setUnitReward(null)} />}
       {isGuest && isGuestGateOpen && <GuestSignupGate onClose={() => setIsGuestGateOpen(false)} />}
     </div>
   )
-
-  if (view === 'home') return (
-    <div className="lm-page lm-learning-page" data-theme="trading">
-      <header className="lm-home-heading"><div><span className="lm-eyebrow">Tu espacio para avanzar</span><h1>Caminos</h1><p>Elige algo que quieras aprender. Tu progreso se adapta a ti.</p></div><div className="lm-home-tools">{returnHomeButton}<button className="lm-style-chip" onClick={() => { setLearningStyle(user.learningStyle || ''); setView('style') }}><i className="fa-solid fa-sliders" /> {user.learningStyle || 'Personalizar aprendizaje'}</button><span className="lm-streak"><i className="fa-solid fa-fire" /> {user.streak} días aprendiendo</span></div></header>
-      <section className="lm-feature"><div className="lm-feature-main"><span className="lm-eyebrow">Tu camino recomendado</span><div className="lm-feature-title"><span><i className="fa-solid fa-chart-line" /></span><h2>Trading y Finanzas</h2></div><p>Entiende los mercados desde cero, aprende a leer gráficas y descubre cómo funcionan las inversiones.</p><div className="lm-feature-level">Nivel {user.level} · {user.levelLabel} <span>•</span> {completed.length} lecciones completadas</div><div className="lm-progress-line"><span><i style={{ width: `${progress}%` }} /></span><strong>{progress}%</strong></div><div className="lm-feature-actions"><button className="platform-btn-primary" onClick={openPath}>Continuar camino <i className="fa-solid fa-arrow-right" /></button><button className="platform-btn-secondary" onClick={beginDiagnostic}>Descubrir mi nivel</button></div></div><div className="lm-feature-stats"><div><span>Experiencia</span><strong>{displayXP} XP</strong></div><div><span>Siguiente lección</span><strong>{LESSONS[tradingResumeIndex]?.title || 'Camino completado'}</strong></div><div><span>Racha actual</span><strong><i className="fa-solid fa-fire" /> {user.streak} días</strong></div></div></section>
-      <section className="lm-more-paths"><div className="lm-section-heading"><div><span className="lm-eyebrow">Más para descubrir</span><h2>Elige otro camino</h2></div><Link to="/explorar">Ver temas <i className="fa-solid fa-arrow-right" /></Link></div><div className="lm-category-grid">{secondaryCategories.map((category, index) => <button key={category.id} data-theme={category.id} className="lm-category-card" onClick={() => { setSelectedCat(category.id); setView('secondary') }}><span className={`lm-category-icon tone-${index % 6}`}><i className={category.icon} /></span><span><strong>{category.name}</strong><small>{MODULES_BY_CATEGORY[category.id]?.length || 0} módulos para explorar</small></span><i className={category.icon + ' lm-card-art'} /><i className="fa-solid fa-arrow-up-right-from-square lm-card-arrow" /></button>)}</div></section>
-      {activeCategories.length > 0 && <p className="lm-interest-note"><i className="fa-solid fa-sparkles" /> Tus intereses incluyen {activeCategories.map((category) => category.name).join(' y ')}.</p>}
-    </div>
-  )
-
-  return null
 }

@@ -66,7 +66,7 @@ const getGuestUser = (): UserProfile => ({
   widgets: { mision: true, mercado: true, progreso: true, mentor: true, recomendaciones: true, racha: true, comunidad: true },
   publicProfile: { logros: true, estadisticas: true, nivel: true, actividad: true, intereses: true },
   activity: [],
-  moduleProgress: { trading: [0] },
+  moduleProgress: { trading: [] },
 })
 
 const createNewUser = (name: string, username: string, email: string, pass: string): UserProfile => ({
