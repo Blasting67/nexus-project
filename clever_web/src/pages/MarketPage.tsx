@@ -143,7 +143,7 @@ export const MarketPage: React.FC<MarketPageProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[var(--surface-alt)] text-[var(--text-muted)] text-xs font-medium mb-1.5 border border-[var(--border)]">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Pop Culture Exchange</span>
+            <span>Clever Exchange</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] tracking-tight">
             Mercado de Videojuegos

@@ -25,11 +25,9 @@ const MAIN_ITEMS: NavItem[] = [
   { to: '/', label: 'Inicio', shortLabel: 'Inicio', icon: 'fa-solid fa-house' },
   { to: '/aprender', label: 'Aprender', shortLabel: 'Aprender', icon: 'fa-solid fa-road' },
   { to: '/exchange', label: 'Exchange Spot', shortLabel: 'Exchange', icon: 'fa-solid fa-chart-simple' },
-  { to: '/comunidad', label: 'Comunidad', shortLabel: 'Comunidad', icon: 'fa-solid fa-users' },
 ]
 
 const MORE_ITEMS: MoreItem[] = [
-  { to: '/misiones', label: 'Misiones', description: 'Retos diarios con recompensa', icon: 'fa-solid fa-bullseye' },
   { to: '/analisis', label: 'Análisis Técnico', description: 'Indicadores y gráficas', icon: 'fa-solid fa-magnifying-glass-chart' },
   { to: '/mentor', label: 'Mentor IA', description: 'Pregúntale a Kor', icon: 'fa-solid fa-robot' },
   { to: '/logros', label: 'Logros', description: 'Tus insignias ganadas', icon: 'fa-solid fa-trophy' },
@@ -697,7 +695,7 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
         >
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--border)]"></div>
           <div className="note-wide mb-3 px-1 text-[10px] font-bold text-[var(--ink)]">MÁS SECCIONES</div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {MORE_ITEMS.map((item) => {
               const isActive = matchesPath(pathname, item.to)
               return (
@@ -721,10 +719,10 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
           aria-label="Navegación principal"
           className="fixed inset-x-0 bottom-0 z-[57] border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--bg-alt)_94%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
         >
-          <div className="relative grid h-16 grid-cols-5">
+          <div className="relative grid h-16 grid-cols-4">
             <span
               className="nav-tab-ind pointer-events-none absolute top-2 h-8 w-14 -translate-x-1/2 rounded-full bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]"
-              style={{ left: `${tabIndex * 20 + 10}%`, opacity: tabIndex >= 0 ? 1 : 0 }}
+              style={{ left: `${tabIndex * 25 + 12.5}%`, opacity: tabIndex >= 0 ? 1 : 0 }}
               aria-hidden="true"
             ></span>
             {MAIN_ITEMS.map((item, index) => {

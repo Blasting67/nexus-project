@@ -7,20 +7,16 @@ import { PageTutorial } from './components/PageTutorial'
 import { SyncModal } from './components/SyncModal'
 import { ToastContainer, type ToastData } from './components/Toast'
 import { PlatformProvider, usePlatform } from './context/PlatformContext'
-import { AchievementsPage } from './pages/AchievementsPage'
 import { AnalysisPage } from './pages/AnalysisPage'
-import { CommunityPage } from './pages/CommunityPage'
 import { CustomizationPage } from './pages/CustomizationPage'
 import { DiagnosticPage } from './pages/DiagnosticPage'
 import { ExperiencesPage } from './pages/ExperiencesPage'
-import { ExplorePage } from './pages/ExplorePage'
 import { HistoryPage } from './pages/HistoryPage'
 import { HomePage } from './pages/HomePage'
 import { LearnPage } from './pages/LearnPage'
 import { LoginPage } from './pages/LoginPage'
 import { MarketPage } from './pages/MarketPage'
 import { MentorPage } from './pages/MentorPage'
-import { MissionsPage } from './pages/MissionsPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -132,7 +128,7 @@ const MainAppContent: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/aprender" element={<LearnPage />} />
           <Route path="/experiencias" element={<ExperiencesPage />} />
-          <Route path="/misiones" element={<MissionsPage />} />
+          <Route path="/misiones" element={<Navigate to="/" replace />} />
           <Route path="/mentor" element={<MentorPage />} />
           <Route path="/analisis" element={<AnalysisPage />} />
           <Route path="/logros" element={<AchievementsPage />} />
@@ -142,7 +138,7 @@ const MainAppContent: React.FC = () => {
           <Route path="/perfil" element={<ProfilePage />} />
           <Route path="/personalizacion" element={<CustomizationPage />} />
           <Route path="/configuracion" element={<SettingsPage />} />
-          <Route path="/explorar" element={<ExplorePage />} />
+          <Route path="/explorar" element={<Navigate to="/" replace />} />
           <Route path="/diagnostico" element={<DiagnosticPage />} />
           <Route path="/resultado" element={<ResultPage />} />
           <Route path="/login" element={<LoginPage />} />
