@@ -1,6 +1,6 @@
 @layer utilities {
-  :root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .analysis-theme,
-  :root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) body.analysis-theme-portal > :not(#root) {
+  :root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .analysis-theme,
+  :root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) body.analysis-theme-portal > :not(#root) {
     color-scheme: dark;
     --color-white: var(--surface);
     --color-red-50: color-mix(in oklab, var(--color-red-500) 10%, var(--surface));
@@ -196,7 +196,7 @@
     --color-stone-950: var(--text);
   }
 
-  :root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) :is(.analysis-theme, body.analysis-theme-portal > :not(#root)) {
+  :root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) :is(.analysis-theme, body.analysis-theme-portal > :not(#root)) {
     :is(&, & *):is([class*="bg-red-600"], [class*="from-red-600"], [class*="via-red-600"], [class*="to-red-600"]) {
       --color-red-600: oklch(57.7% 0.245 27.325);
     }

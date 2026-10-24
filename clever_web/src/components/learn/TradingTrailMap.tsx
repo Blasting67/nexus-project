@@ -1,5 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CleverkorMascot3D } from '../CleverkorMascot3D'
+import type { LearnWorld } from '../../types/profileCustomization'
+import { CANDLES_KIT, ISLAND_KIT, WORLD_STYLES } from './TrailWorlds'
+import type { WorldKit } from './TrailWorlds'
 
 export type TrailLessonStatus = 'completed' | 'current' | 'available' | 'locked'
 
@@ -22,6 +25,7 @@ interface TradingTrailMapProps {
   onOpenLesson: (index: number) => void
   isCourseDone: boolean
   completedCount: number
+  world?: LearnWorld
 }
 
 interface Point {
@@ -53,10 +57,11 @@ const AD_SKINS: AdSkin[] = [
   { bg: '#7a5ea8', fg: '#ffffff', accent: '#ffe08a', up: '#9ff5bd', down: '#ffc2b8' },
 ]
 const CAR_COLORS = ['#e4572e', '#2e86ab', '#f2c14e', '#7a5ea8', '#ffffff']
+const ROOF_TONES = ['#f0b8a0', '#a9c4ea', '#f4d07a', '#c9b8e8', '#9fd3c7']
 
 const CITY_STYLES = `
 .city-map{--grass:#c3e5b5;--grass-2:#b0dba0;--walk:#efe9dd;--walk-edge:#d9cfbc;--asphalt:#4b5563;--asphalt-edge:#353d4a;--lane:#f6f1e4;--tree:#55a564;--tree-2:#3f8b52;--water:#7cc8ec;--wall:#fbf7ef;--wall-2:#e6dece;--window:#a9cbea;--window-lit:#ffd66b;--roof:#c9d3dd;--shade:rgba(20,30,40,.14)}
-:root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .city-map{--grass:#1d3a2b;--grass-2:#183225;--walk:#2b3344;--walk-edge:#394357;--asphalt:#20252f;--asphalt-edge:#151920;--lane:#c8c2b2;--tree:#2b6643;--tree-2:#225636;--water:#24557a;--wall:#384157;--wall-2:#2d3547;--window:#2f4a70;--window-lit:#ffd66b;--roof:#2a3142;--shade:rgba(0,0,0,.3)}
+:root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .city-map{--grass:#1d3a2b;--grass-2:#183225;--walk:#2b3344;--walk-edge:#394357;--asphalt:#20252f;--asphalt-edge:#151920;--lane:#c8c2b2;--tree:#2b6643;--tree-2:#225636;--water:#24557a;--wall:#384157;--wall-2:#2d3547;--window:#2f4a70;--window-lit:#ffd66b;--roof:#2a3142;--shade:rgba(0,0,0,.3)}
 .city-scroll{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--ink) 40%,transparent) transparent}
 .city-scroll.is-dragging{cursor:grabbing;user-select:none}
 .city-dash{stroke-dasharray:14 14;animation:city-dash 2.4s linear infinite}
@@ -480,7 +485,78 @@ const Billboard: React.FC<{ scene: TrailScene; isLocked: boolean; skinIndex: num
   )
 }
 
-export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stages, statusOf, onOpenLesson, isCourseDone, completedCount }) => {
+const CityStreet: React.FC<{ sy: number; index: number; reduced: boolean }> = ({ sy, index, reduced }) => (
+  <g>
+    <rect x="0" y={sy - 30} width={W} height="60" fill="var(--walk)" />
+    <rect x="0" y={sy - 21} width={W} height="42" fill="var(--asphalt)" />
+    <line x1="0" x2={W} y1={sy} y2={sy} stroke="var(--lane)" strokeWidth="2.5" strokeDasharray="16 14" />
+    {!reduced && (
+      <>
+        <g className="city-car-right" style={{ ['--car-dur' as string]: `${12 + index * 3}s`, animationDelay: `${-index * 4}s` } as React.CSSProperties}>
+          <g transform={`translate(0 ${sy + 10})`}>
+            <Car color={CAR_COLORS[index % CAR_COLORS.length]} />
+          </g>
+        </g>
+        <g className="city-car-left" style={{ ['--car-dur' as string]: `${15 + index * 2}s`, animationDelay: `${-index * 6 - 3}s` } as React.CSSProperties}>
+          <g transform={`translate(0 ${sy - 10})`}>
+            <Car color={CAR_COLORS[(index + 2) % CAR_COLORS.length]} />
+          </g>
+        </g>
+      </>
+    )}
+  </g>
+)
+
+const CityCrossing: React.FC<{ rx: number; sy: number }> = ({ rx, sy }) => (
+  <g>
+    {[-1, 1].map((side) =>
+      Array.from({ length: 6 }).map((_, k) => <rect key={`${side}-${k}`} x={rx + side * 42 - 3} y={sy - 18 + k * 7} width="12" height="4" fill="var(--lane)" opacity="0.85" />),
+    )}
+  </g>
+)
+
+const CITY_KIT: WorldKit = {
+  districts: DISTRICT_NAMES,
+  stageColor: '#0f5c3a',
+  finaleLabel: 'La bóveda del Banco Central',
+  lane: { width: 3.5, dash: '14 14', opacity: 1 },
+  Tree,
+  Stall,
+  Plaza: Fountain,
+  Duo: ({ x, base, seed }) => (
+    <g>
+      <ExchangeHouse x={x - 72} y={base} seed={seed} />
+      <PriceBoard x={x + 14} y={base} />
+    </g>
+  ),
+  Block: ({ x, base, seed }) => (
+    <g>
+      <Building x={x - 80} y={base} w={46} h={98} roof="#2e86ab" seed={seed} />
+      <Building x={x - 28} y={base} w={56} h={118} seed={seed + 3} />
+      <Building x={x + 34} y={base} w={44} h={84} roof="#7a5ea8" seed={seed + 5} />
+    </g>
+  ),
+  Landmark: ({ x, base }) => <Bolsa x={x - 60} y={base} />,
+  Finale: Bank,
+  Garland: PapelPicado,
+  Lamp,
+  Filler: ({ cx, cy, seed }) => (
+    <g>
+      <rect x={cx - 34} y={cy - 28} width="68" height="56" rx="8" fill="var(--walk)" stroke="var(--walk-edge)" strokeWidth="2" />
+      <rect x={cx - 24} y={cy - 18} width="26" height="22" rx="3" fill={ROOF_TONES[seed % ROOF_TONES.length]} opacity="0.85" />
+      <rect x={cx + 4} y={cy - 18} width="20" height="30" rx="3" fill={ROOF_TONES[(seed + 2) % ROOF_TONES.length]} opacity="0.85" />
+      <rect x={cx - 24} y={cy + 8} width="26" height="10" rx="2" fill="var(--grass-2)" />
+    </g>
+  ),
+  Street: CityStreet,
+  Crossing: CityCrossing,
+  Vehicle: Car,
+}
+
+const WORLD_KITS: Record<LearnWorld, WorldKit> = { city: CITY_KIT, candles: CANDLES_KIT, island: ISLAND_KIT }
+
+export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stages, statusOf, onOpenLesson, isCourseDone, completedCount, world = 'city' }) => {
+  const kit = WORLD_KITS[world] || CITY_KIT
   const reducedMotion = usePrefersReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ startY: number; startTop: number; moved: boolean } | null>(null)
@@ -583,7 +659,7 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
   points.forEach((point, i) => {
     const next = points[i + 1]
     const lampX = point.x < W / 2 ? point.x + 58 : point.x - 58
-    scenery.push(<Lamp key={`l${i}`} x={lampX} y={point.y + 52} />)
+    scenery.push(<kit.Lamp key={`l${i}`} x={lampX} y={point.y + 52} />)
     if (!next) return
     const midY = (point.y + next.y) / 2
     const hasStreet = i % 2 === 0
@@ -603,20 +679,20 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
       if (isStageOne) {
         scenery.push(
           <g key={`s${i}`}>
-            <Stall x={mainCenter - 62} y={base} color={STALL_COLORS[i % 5]} />
-            <Stall x={mainCenter + 8} y={base} color={STALL_COLORS[(i + 2) % 5]} />
+            <kit.Stall x={mainCenter - 62} y={base} color={STALL_COLORS[i % 5]} />
+            <kit.Stall x={mainCenter + 8} y={base} color={STALL_COLORS[(i + 2) % 5]} />
           </g>,
         )
       } else {
         scenery.push(
           <g key={`s${i}`}>
-            <Tree x={mainCenter - 40} y={base - 22} r={16} />
-            <Tree x={mainCenter} y={base - 18} r={13} />
-            <Tree x={mainCenter + 40} y={base - 22} r={16} />
+            <kit.Tree x={mainCenter - 40} y={base - 22} r={16} />
+            <kit.Tree x={mainCenter} y={base - 18} r={13} />
+            <kit.Tree x={mainCenter + 40} y={base - 22} r={16} />
           </g>,
         )
       }
-      if (sideWidth > 90) scenery.push(<Tree key={`t${i}`} x={sideCenter} y={midY - 52} r={14} />)
+      if (sideWidth > 90) scenery.push(<kit.Tree key={`t${i}`} x={sideCenter} y={midY - 52} r={14} />)
       return
     }
     const base = midY + 55
@@ -624,36 +700,24 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
     occupy(mainCenter, midY - 75, base + 8)
     if (isStageOne) {
       if (kind === 0) {
-        scenery.push(<Fountain key={`s${i}`} x={mainCenter} y={midY - 6} />)
+        scenery.push(<kit.Plaza key={`s${i}`} x={mainCenter} y={midY - 6} />)
       } else {
-        scenery.push(
-          <g key={`s${i}`}>
-            <ExchangeHouse x={mainCenter - 72} y={base} seed={i} />
-            <PriceBoard x={mainCenter + 14} y={base} />
-          </g>,
-        )
+        scenery.push(<kit.Duo key={`s${i}`} x={mainCenter} base={base} seed={i} />)
       }
     } else if (kind === 0) {
-      scenery.push(
-        <g key={`s${i}`}>
-          <Building x={mainCenter - 80} y={base} w={46} h={98} roof="#2e86ab" seed={i} />
-          <Building x={mainCenter - 28} y={base} w={56} h={118} seed={i + 3} />
-          <Building x={mainCenter + 34} y={base} w={44} h={84} roof="#7a5ea8" seed={i + 5} />
-        </g>,
-      )
+      scenery.push(<kit.Block key={`s${i}`} x={mainCenter} base={base} seed={i} />)
     } else {
-      scenery.push(<Bolsa key={`s${i}`} x={mainCenter - 60} y={base} />)
+      scenery.push(<kit.Landmark key={`s${i}`} x={mainCenter} base={base} />)
     }
     if (sideWidth > 90) {
-      scenery.push(<Tree key={`t${i}a`} x={sideCenter - 18} y={midY - 24} r={15} />)
-      scenery.push(<Tree key={`t${i}b`} x={sideCenter + 20} y={midY + 20} r={12} />)
+      scenery.push(<kit.Tree key={`t${i}a`} x={sideCenter - 18} y={midY - 24} r={15} />)
+      scenery.push(<kit.Tree key={`t${i}b`} x={sideCenter + 20} y={midY + 20} r={12} />)
     }
   })
 
   const fillers: React.ReactNode[] = []
   const CELL_W = 86
   const CELL_H = 84
-  const ROOF_TONES = ['#f0b8a0', '#a9c4ea', '#f4d07a', '#c9b8e8', '#9fd3c7']
   for (let row = 0; row * CELL_H < bankY - 200; row++) {
     for (let col = 0; col * CELL_W < W; col++) {
       const cx = col * CELL_W + CELL_W / 2 + (row % 2 ? 18 : 0)
@@ -667,26 +731,20 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
       if (seed % 5 === 0) {
         fillers.push(
           <g key={`f${row}-${col}`}>
-            <Tree x={cx - 14} y={cy - 8} r={13} />
-            <Tree x={cx + 16} y={cy + 10} r={11} />
+            <kit.Tree x={cx - 14} y={cy - 8} r={13} />
+            <kit.Tree x={cx + 16} y={cy + 10} r={11} />
           </g>,
         )
         continue
       }
-      fillers.push(
-        <g key={`f${row}-${col}`}>
-          <rect x={cx - 34} y={cy - 28} width="68" height="56" rx="8" fill="var(--walk)" stroke="var(--walk-edge)" strokeWidth="2" />
-          <rect x={cx - 24} y={cy - 18} width="26" height="22" rx="3" fill={ROOF_TONES[seed % ROOF_TONES.length]} opacity="0.85" />
-          <rect x={cx + 4} y={cy - 18} width="20" height="30" rx="3" fill={ROOF_TONES[(seed + 2) % ROOF_TONES.length]} opacity="0.85" />
-          <rect x={cx - 24} y={cy + 8} width="26" height="10" rx="2" fill="var(--grass-2)" />
-        </g>,
-      )
+      fillers.push(<kit.Filler key={`f${row}-${col}`} cx={cx} cy={cy} seed={seed} />)
     }
   }
 
   return (
-    <div className="city-map relative h-full overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[var(--grass)]">
+    <div data-world={world} className="city-map relative h-full overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[var(--grass)]">
       <style>{CITY_STYLES}</style>
+      <style>{WORLD_STYLES}</style>
       <div
         ref={scrollRef}
         className={`city-scroll absolute inset-0 overflow-y-auto overscroll-contain ${isDragging ? 'is-dragging' : 'cursor-grab'}`}
@@ -700,60 +758,34 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
           <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
             <rect width={W} height={H} fill="var(--grass)" />
             <rect y={stageTwoTop} width={W} height={H - stageTwoTop} fill="var(--grass-2)" />
+            {kit.Backdrop && <kit.Backdrop h={H} reduced={reducedMotion} />}
             {Array.from({ length: Math.ceil(H / 120) }).map((_, row) =>
               Array.from({ length: 6 }).map((__, col) => (
                 <circle key={`g${row}-${col}`} cx={col * 110 + (row % 2) * 55 + 20} cy={row * 120 + 40} r="2" fill="var(--tree)" opacity="0.35" />
               )),
             )}
             {streetYs.map((sy, i) => (
-              <g key={`street${i}`}>
-                <rect x="0" y={sy - 30} width={W} height="60" fill="var(--walk)" />
-                <rect x="0" y={sy - 21} width={W} height="42" fill="var(--asphalt)" />
-                <line x1="0" x2={W} y1={sy} y2={sy} stroke="var(--lane)" strokeWidth="2.5" strokeDasharray="16 14" />
-                {!reducedMotion && (
-                  <>
-                    <g className="city-car-right" style={{ ['--car-dur' as string]: `${12 + i * 3}s`, animationDelay: `${-i * 4}s` } as React.CSSProperties}>
-                      <g transform={`translate(0 ${sy + 10})`}>
-                        <Car color={CAR_COLORS[i % CAR_COLORS.length]} />
-                      </g>
-                    </g>
-                    <g className="city-car-left" style={{ ['--car-dur' as string]: `${15 + i * 2}s`, animationDelay: `${-i * 6 - 3}s` } as React.CSSProperties}>
-                      <g transform={`translate(0 ${sy - 10})`}>
-                        <Car color={CAR_COLORS[(i + 2) % CAR_COLORS.length]} />
-                      </g>
-                    </g>
-                  </>
-                )}
-              </g>
+              <kit.Street key={`street${i}`} sy={sy} index={i} reduced={reducedMotion} />
             ))}
 
             <path d={roadPath} fill="none" stroke="var(--walk)" strokeWidth="92" strokeLinecap="round" strokeLinejoin="round" />
             <path d={roadPath} fill="none" stroke="var(--walk-edge)" strokeWidth="70" strokeLinecap="round" strokeLinejoin="round" />
             <path d={roadPath} fill="none" stroke="var(--asphalt)" strokeWidth="64" strokeLinecap="round" strokeLinejoin="round" />
             {progressPath && <path d={progressPath} fill="none" stroke="var(--ink)" strokeOpacity="0.55" strokeWidth="64" strokeLinecap="round" strokeLinejoin="round" />}
-            <path d={roadPath} fill="none" stroke="var(--lane)" strokeWidth="3.5" strokeLinecap="round" className="city-dash" />
-            {streetYs.map((sy, i) => {
-              const rx = roadXAt(sy)
-              return (
-                <g key={`cross${i}`}>
-                  {[-1, 1].map((side) =>
-                    Array.from({ length: 6 }).map((_, k) => (
-                      <rect key={`${side}-${k}`} x={rx + side * 42 - 3} y={sy - 18 + k * 7} width="12" height="4" fill="var(--lane)" opacity="0.85" />
-                    )),
-                  )}
-                </g>
-              )
-            })}
+            <path d={roadPath} fill="none" stroke="var(--lane)" strokeWidth={kit.lane.width} strokeOpacity={kit.lane.opacity} strokeDasharray={kit.lane.dash} strokeLinecap={kit.lane.width > 10 ? 'butt' : 'round'} className={kit.lane.width > 10 ? undefined : 'city-dash'} />
+            {streetYs.map((sy, i) => (
+              <kit.Crossing key={`cross${i}`} rx={roadXAt(sy)} sy={sy} />
+            ))}
 
             {!reducedMotion && (
               <g>
-                <Car color={CAR_COLORS[1]} />
+                <kit.Vehicle color={CAR_COLORS[1]} />
                 <animateMotion dur="26s" repeatCount="indefinite" rotate="auto" path={roadPath} />
               </g>
             )}
             {!reducedMotion && (
               <g>
-                <Car color={CAR_COLORS[2]} />
+                <kit.Vehicle color={CAR_COLORS[2]} />
                 <animateMotion dur="26s" begin="-13s" repeatCount="indefinite" rotate="auto" path={roadPath} />
               </g>
             )}
@@ -761,15 +793,16 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
             {fillers}
             {scenery}
 
-            <PapelPicado y={92} />
-            <Tree x={70} y={170} r={20} />
-            <Tree x={530} y={180} r={18} />
-            <Stall x={40} y={260} color={STALL_COLORS[3]} />
-            <Stall x={500} y={250} color={STALL_COLORS[0]} />
+            <kit.Garland y={92} />
+            <kit.Tree x={90} y={170} r={20} />
+            <kit.Tree x={510} y={180} r={18} />
+            <kit.Stall x={60} y={260} color={STALL_COLORS[3]} />
+            <kit.Stall x={486} y={250} color={STALL_COLORS[0]} />
 
-            <Bank x={W / 2} y={bankY} isOpen={isCourseDone} />
-            <Tree x={90} y={bankY - 30} r={22} />
-            <Tree x={510} y={bankY - 30} r={22} />
+            <kit.Finale x={W / 2} y={bankY} isOpen={isCourseDone} />
+            {world === 'city' && <kit.Tree x={90} y={bankY - 30} r={22} />}
+            {world === 'city' && <kit.Tree x={510} y={bankY - 30} r={22} />}
+            {kit.Front && <kit.Front h={H} reduced={reducedMotion} />}
           </svg>
 
           {stages.map((stage, s) => {
@@ -779,12 +812,12 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
             const done = stageLessons.filter((item) => statusOf(item.i) === 'completed').length
             return (
               <div key={stage.title} className="absolute left-1/2 z-10 w-[min(86%,380px)] -translate-x-1/2 -translate-y-1/2" style={{ top: pct(first.y - (s === 0 ? 150 : 140), H) }}>
-                <div className="flex items-center gap-3 rounded-2xl border-[3px] border-white/80 bg-[#0f5c3a] px-4 py-2.5 text-white shadow-[0_12px_24px_-14px_rgba(0,0,0,.6)]">
-                  <span className="note-display note-num flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-base font-black text-[#0f5c3a]">
+                <div style={{ background: kit.stageColor }} className="flex items-center gap-3 rounded-2xl border-[3px] border-white/80 px-4 py-2.5 text-white shadow-[0_12px_24px_-14px_rgba(0,0,0,.6)]">
+                  <span className="note-display note-num flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-base font-black" style={{ color: kit.stageColor }}>
                     {String(s + 1).padStart(2, '0')}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="note-wide block text-[10px] font-extrabold opacity-85">{(DISTRICT_NAMES[s] || `Etapa ${s + 1}`).toUpperCase()}</span>
+                    <span className="note-wide block text-[10px] font-extrabold opacity-85">{(kit.districts[s] || `Etapa ${s + 1}`).toUpperCase()}</span>
                     <span className="note-display block text-base font-black leading-tight sm:text-lg">{stage.title}</span>
                   </span>
                   <span className="note-num text-sm font-bold opacity-90">
@@ -894,7 +927,7 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
 
           <div className="absolute left-1/2 z-10 -translate-x-1/2 text-center" style={{ top: pct(bankY + 14, H) }}>
             <span className="note-display inline-block rounded-full bg-white/90 px-4 py-1.5 text-sm font-black text-[#111827] shadow">
-              {isCourseDone ? 'Bóveda abierta' : `La bóveda del mercado · faltan ${lessons.length - completedCount}`}
+              {isCourseDone ? `${kit.finaleLabel} · completado` : `${kit.finaleLabel} · faltan ${lessons.length - completedCount}`}
             </span>
           </div>
         </div>

@@ -1,9 +1,9 @@
 import React from 'react'
 
 export const NOTE_STYLES = `
-.note-home{--ink:color-mix(in srgb,var(--primary) 86%,var(--text));--ink-2:color-mix(in srgb,#5b3e9e 72%,var(--text));--ink-3:color-mix(in srgb,#a8323e 75%,var(--text));--paper:color-mix(in srgb,var(--primary) 6%,var(--surface));--paper-2:color-mix(in srgb,var(--primary) 11%,var(--surface));--rule:color-mix(in srgb,var(--ink) 22%,transparent);font-family:"Schibsted Grotesk",system-ui,sans-serif;font-size:16px;color:var(--text)}
-:root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .note-home{--ink:color-mix(in srgb,var(--primary) 88%,var(--text));--ink-2:color-mix(in srgb,#b9a4ff 80%,var(--text));--ink-3:color-mix(in srgb,#ff8f9a 82%,var(--text));--paper:color-mix(in srgb,var(--primary) 7%,var(--bg-alt));--paper-2:color-mix(in srgb,var(--primary) 13%,var(--bg-alt))}
-.note-display{font-family:"Archivo","Schibsted Grotesk",system-ui,sans-serif;font-stretch:112%;letter-spacing:-0.03em}
+.note-home{--ink:color-mix(in srgb,var(--primary) 86%,var(--text));--ink-2:color-mix(in srgb,#5b3e9e 72%,var(--text));--ink-3:color-mix(in srgb,#a8323e 75%,var(--text));--paper:color-mix(in srgb,var(--primary) 6%,var(--surface));--paper-2:color-mix(in srgb,var(--primary) 11%,var(--surface));--rule:color-mix(in srgb,var(--ink) 22%,transparent);font-family:var(--font-body);font-size:16px;color:var(--text)}
+:root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .note-home{--ink:color-mix(in srgb,var(--primary) 88%,var(--text));--ink-2:color-mix(in srgb,#b9a4ff 80%,var(--text));--ink-3:color-mix(in srgb,#ff8f9a 82%,var(--text));--paper:color-mix(in srgb,var(--primary) 7%,var(--bg-alt));--paper-2:color-mix(in srgb,var(--primary) 13%,var(--bg-alt))}
+.note-display{font-family:var(--font-display);font-stretch:calc(var(--display-stretch) + 4%);letter-spacing:calc(var(--display-tracking) - 0.005em)}
 .note-wide{font-family:"Archivo","Schibsted Grotesk",system-ui,sans-serif;font-stretch:125%;letter-spacing:.02em}
 .note-num{font-variant-numeric:tabular-nums lining-nums}
 .note-home ::selection{background:color-mix(in srgb,var(--ink) 25%,transparent)}

@@ -14,7 +14,7 @@ const TUTORIALS: Record<TutorialPage, { label: string; steps: TutorialStep[] }> 
   home: { label: 'Inicio', steps: [
     { title: 'Tu punto de partida', text: 'Desde aquí puedes retomar tu aprendizaje y ver qué sigue en tu camino.', target: '.platform-card' },
     { title: 'Herramientas para avanzar', text: 'Explora las herramientas disponibles para aprender, practicar y seguir tu progreso.', target: '[data-tour="home-tools"]' },
-    { title: 'Top Ranking de Usuarios', text: 'Escala a lo largo de tu jornada en el Top Ranking de Usuarios.', target: '[data-tour="home-ranking"]' },
+    { title: 'Hazlo tuyo', text: 'Desde tu perfil puedes personalizar esta página, los temas, la barra y tu mundo de Aprender.', target: null },
   ] },
   learn: { label: 'Aprender', steps: [
     { title: 'Tu camino de Trading y Finanzas', text: 'Aquí ves tu avance, tu nivel y el botón para continuar donde te quedaste.', target: '[data-tour="learn-hero"]' },

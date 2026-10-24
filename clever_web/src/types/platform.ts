@@ -60,6 +60,8 @@ export interface UserProfile {
   diagnosticoCompleted: boolean
   interests: string[]
   goal: string
+  bio?: string
+  featuredAchievement?: string | null
   level: number
   levelLabel: string
   xp: number

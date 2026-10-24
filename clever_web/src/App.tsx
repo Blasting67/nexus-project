@@ -25,7 +25,6 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProgressPage } from './pages/ProgressPage'
-import { RankingPage } from './pages/RankingPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResultPage } from './pages/ResultPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -33,10 +32,13 @@ import { StockAnalysisPage } from './pages/StockAnalysisPage'
 import { CryptoAnalysisPage } from './pages/CryptoAnalysisPage'
 import { TradingTerminalPage } from './pages/TradingTerminalPage'
 import { api } from './services/api'
+import { useProfileCustomization } from './services/profileCustomizationService'
 import type { Asset, MarketEvent, MarketOverview, Portfolio, Top10ComparisonItem, Transaction } from './types'
 
 const MainAppContent: React.FC = () => {
-  const { toasts, dismissToast, showToast } = usePlatform()
+  const { toasts, dismissToast, showToast, user, isGuest } = usePlatform()
+  const [customization] = useProfileCustomization(user.username)
+  const hasRail = !isGuest && customization.navStyle === 'sidebar'
   const [assets, setAssets] = useState<Asset[]>([])
   const [top10Data, setTop10Data] = useState<Top10ComparisonItem[]>([])
   const [overview, setOverview] = useState<MarketOverview | null>(null)
@@ -122,8 +124,8 @@ const MainAppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
-      <Navbar />
+    <div className={`flex flex-col min-h-screen text-[var(--text)] pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 ${hasRail ? 'md:pl-[76px]' : ''}`}>
+      <Navbar assets={assets} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         <Routes>
@@ -134,7 +136,7 @@ const MainAppContent: React.FC = () => {
           <Route path="/mentor" element={<MentorPage />} />
           <Route path="/analisis" element={<AnalysisPage />} />
           <Route path="/logros" element={<AchievementsPage />} />
-          <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/ranking" element={<Navigate to="/" replace />} />
           <Route path="/comunidad" element={<CommunityPage />} />
           <Route path="/progreso" element={<ProgressPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
@@ -182,6 +184,7 @@ const MainAppContent: React.FC = () => {
               <PortfolioPage
                 portfolio={portfolio}
                 isLoading={isLoading}
+                onRetry={() => loadData(true)}
               />
             }
           />

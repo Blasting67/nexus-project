@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
+import { resolveAvatarSrc } from '../data/avatarPresets'
+import { useProfileCustomization } from '../services/profileCustomizationService'
+import type { Asset } from '../types'
+import type { NavStyle } from '../types/profileCustomization'
 import { NOTE_STYLES, WaveField } from './note/NoteKit'
 
 interface NavItem {
@@ -28,16 +32,15 @@ const MORE_ITEMS: MoreItem[] = [
   { to: '/misiones', label: 'Misiones', description: 'Retos diarios con recompensa', icon: 'fa-solid fa-bullseye' },
   { to: '/analisis', label: 'Análisis Técnico', description: 'Indicadores y gráficas', icon: 'fa-solid fa-magnifying-glass-chart' },
   { to: '/mentor', label: 'Mentor IA', description: 'Pregúntale a Kor', icon: 'fa-solid fa-robot' },
-  { to: '/ranking', label: 'Ranking', description: 'Compárate con otros', icon: 'fa-solid fa-medal' },
   { to: '/logros', label: 'Logros', description: 'Tus insignias ganadas', icon: 'fa-solid fa-trophy' },
   { to: '/explorar', label: 'Explorar Temas', description: 'Glosario y temas extra', icon: 'fa-solid fa-compass' },
 ]
 
 const PROFILE_ITEMS: MoreItem[] = [
   { to: '/perfil', label: 'Perfil', description: '', icon: 'fa-solid fa-user' },
+  { to: '/perfil?estudio=diseno', label: 'Personalizar', description: '', icon: 'fa-solid fa-wand-magic-sparkles' },
   { to: '/progreso', label: 'Mi Progreso', description: '', icon: 'fa-solid fa-chart-pie' },
   { to: '/portfolio', label: 'Portafolio', description: '', icon: 'fa-solid fa-wallet' },
-  { to: '/personalizacion', label: 'Personalización', description: '', icon: 'fa-solid fa-palette' },
   { to: '/configuracion', label: 'Configuración', description: '', icon: 'fa-solid fa-gear' },
 ]
 
@@ -45,9 +48,11 @@ const NAV_MICROTEXT = 'CLEVER · TRADING Y FINANZAS · APRENDE PRACTICANDO · SE
 
 const NAV_STYLES = `
 .nav-shell{--coin:#d99a1e}
-.nav-shell .nav-font{font-family:"Archivo","Schibsted Grotesk",system-ui,sans-serif;font-stretch:108%}
+.nav-shell .nav-font{font-family:var(--font-display);font-stretch:var(--display-stretch)}
 .nav-marquee{animation:nav-marquee 60s linear infinite}
 @keyframes nav-marquee{to{transform:translateX(-50%)}}
+.nav-ticker{animation:nav-marquee var(--ticker-dur,70s) linear infinite}
+.nav-ticker-wrap:hover .nav-ticker{animation-play-state:paused}
 .nav-ink{transition:left .45s cubic-bezier(.23,1,.32,1),width .45s cubic-bezier(.23,1,.32,1),opacity .2s}
 .nav-link{transition:color .2s}
 .nav-flame{display:inline-block;transform-origin:50% 90%;animation:nav-flame 1.8s ease-in-out infinite}
@@ -72,9 +77,15 @@ const NAV_STYLES = `
 .nav-item-icon{transition:background-color .2s,color .2s}
 .nav-item-row:hover .nav-item-icon{background:var(--ink);color:var(--bg)}
 .nav-xp{transition:width .8s cubic-bezier(.23,1,.32,1)}
+.nav-island{transition:height .35s cubic-bezier(.23,1,.32,1),box-shadow .35s,max-width .45s cubic-bezier(.23,1,.32,1)}
+.nav-rail{transition:width .32s cubic-bezier(.23,1,.32,1),box-shadow .32s}
+.nav-rail-label{transition:opacity .2s .05s,transform .25s cubic-bezier(.23,1,.32,1)}
+.nav-rail:not(:hover):not(:focus-within) .nav-rail-label{opacity:0;transform:translateX(-6px);pointer-events:none}
+.nav-rail:not(:hover):not(:focus-within) .nav-rail-stats{display:none}
+.nav-rail:hover,.nav-rail:focus-within{width:248px;box-shadow:18px 0 40px -30px rgba(10,20,40,.55)}
 @media (prefers-reduced-motion:reduce){
-.nav-marquee,.nav-flame,.nav-bump,.nav-delta{animation:none!important}
-.nav-ink,.nav-pop,.nav-sheet,.nav-scrim,.nav-tab-ind,.nav-logo-ring,.nav-chevron,.nav-item-row,.nav-item-icon,.nav-xp,.nav-tab-icon{transition:none!important}
+.nav-marquee,.nav-ticker,.nav-flame,.nav-bump,.nav-delta{animation:none!important}
+.nav-ink,.nav-pop,.nav-sheet,.nav-scrim,.nav-tab-ind,.nav-logo-ring,.nav-chevron,.nav-item-row,.nav-item-icon,.nav-xp,.nav-tab-icon,.nav-island,.nav-rail,.nav-rail-label{transition:none!important}
 .nav-delta{display:none}
 }
 `
@@ -181,20 +192,20 @@ const StatChip: React.FC<{
   )
 }
 
-const Avatar: React.FC<{ avatar: string | null; initials: string; progress: number; size?: number }> = ({ avatar, initials, progress, size = 36 }) => (
+const Avatar: React.FC<{ src: string; initials: string; progress: number; size?: number }> = ({ src, initials, progress, size = 36 }) => (
   <span
     className="relative inline-flex shrink-0 items-center justify-center rounded-full p-[2.5px]"
     style={{ width: size, height: size, background: `conic-gradient(var(--ink) ${progress * 360}deg, color-mix(in srgb, var(--ink) 16%, transparent) 0deg)` }}
   >
     <span className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-[var(--bg-alt)] bg-[var(--surface)] text-[11px] font-bold text-[var(--text)]">
-      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : initials}
+      {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : initials}
     </span>
   </span>
 )
 
-const LogoMark: React.FC = () => (
+const LogoMark: React.FC<{ compact?: boolean }> = ({ compact = false }) => (
   <Link to="/" className="nav-logo flex shrink-0 items-center gap-2.5" aria-label="Clever, ir a Inicio">
-    <span className="relative flex h-9 w-9 items-center justify-center">
+    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
       <svg viewBox="0 0 40 40" className="nav-logo-ring absolute inset-0 h-full w-full" aria-hidden="true">
         <circle cx="20" cy="20" r="18.5" fill="none" stroke="var(--ink)" strokeWidth="1" strokeDasharray="2 2.6" opacity="0.6" />
       </svg>
@@ -202,15 +213,86 @@ const LogoMark: React.FC = () => (
         <i className="fa-solid fa-graduation-cap"></i>
       </span>
     </span>
-    <span className="flex flex-col leading-none">
+    <span className={`flex-col leading-none ${compact ? 'nav-rail-label flex' : 'hidden min-[430px]:flex'}`}>
       <span className="note-display text-[17px] font-black text-[var(--text)]">CLEVER</span>
       <span className="note-wide mt-0.5 text-[8px] font-bold text-[var(--ink)] opacity-80">PLATAFORMA</span>
     </span>
   </Link>
 )
 
-export const Navbar: React.FC = () => {
+const formatPrice = (value: number) => (value >= 1000 ? value.toLocaleString('es-MX', { maximumFractionDigits: 0 }) : value.toLocaleString('es-MX', { maximumFractionDigits: 2 }))
+
+const TickerStrip: React.FC<{ assets: Asset[]; fallback: { icon: string; label: string; value: string; to: string }[] }> = ({ assets, fallback }) => {
+  const items = assets
+    .filter((asset) => Number.isFinite(asset.current_price))
+    .slice()
+    .sort((a, b) => Math.abs(b.change_24h) - Math.abs(a.change_24h))
+    .slice(0, 24)
+  if (items.length === 0) {
+    const fallbackRow = (copy: number) => (
+      <span className="flex shrink-0 items-center" aria-hidden={copy > 0}>
+        {fallback.map((item) => (
+          <Link key={`${copy}-${item.label}`} to={item.to} tabIndex={copy > 0 ? -1 : undefined} className="flex items-center gap-2 border-r border-[var(--rule)] px-4 text-[12px] hover:bg-[var(--paper)]">
+            <i className={`${item.icon} text-[11px] text-[var(--ink)]`}></i>
+            <span className="nav-font font-bold text-[var(--text)]">{item.label}</span>
+            <span className="note-num text-[var(--text-muted)]">{item.value}</span>
+          </Link>
+        ))}
+      </span>
+    )
+    return (
+      <div className="nav-ticker-wrap relative flex h-8 items-stretch overflow-hidden border-t border-[var(--rule)] bg-[var(--paper)]" aria-label="Resumen de tu cuenta">
+        <span className="note-wide relative z-10 flex shrink-0 items-center gap-1.5 bg-[var(--ink-3)] px-3 text-[9px] font-bold text-[var(--bg)]" title="El exchange no respondió. Se muestran tus datos de Clever.">
+          <i className="fa-solid fa-plug-circle-xmark text-[10px]"></i>
+          SIN MERCADO
+        </span>
+        <div className="nav-ticker flex w-max items-stretch" style={{ ['--ticker-dur' as string]: '40s' } as React.CSSProperties}>
+          {fallbackRow(0)}
+          {fallbackRow(1)}
+          {fallbackRow(2)}
+        </div>
+      </div>
+    )
+  }
+  const row = (copy: number) => (
+    <span className="flex shrink-0 items-center" aria-hidden={copy > 0}>
+      {items.map((asset) => {
+        const isUp = asset.change_24h >= 0
+        return (
+          <Link key={`${copy}-${asset.id}`} to="/exchange" tabIndex={copy > 0 ? -1 : undefined} className="flex items-center gap-2 border-r border-[var(--rule)] px-4 text-[12px] hover:bg-[var(--paper)]">
+            <span className="nav-font max-w-[150px] truncate font-bold text-[var(--text)]">{asset.name}</span>
+            <span className="note-num text-[var(--text-muted)]">${formatPrice(asset.current_price)}</span>
+            <span className="note-num flex items-center gap-1 font-bold" style={{ color: isUp ? 'var(--success)' : 'var(--danger)' }}>
+              <i className={`fa-solid ${isUp ? 'fa-caret-up' : 'fa-caret-down'} text-[10px]`}></i>
+              {Math.abs(asset.change_24h).toFixed(2)}%
+            </span>
+          </Link>
+        )
+      })}
+    </span>
+  )
+  return (
+    <div className="nav-ticker-wrap relative flex h-8 items-stretch overflow-hidden border-t border-[var(--rule)] bg-[var(--paper)]" aria-label="Precios del exchange">
+      <span className="note-wide relative z-10 flex shrink-0 items-center gap-1.5 bg-[var(--ink)] px-3 text-[9px] font-bold text-[var(--bg)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--bg)]"></span>
+        EN VIVO
+      </span>
+      <div className="nav-ticker flex w-max items-stretch" style={{ ['--ticker-dur' as string]: `${Math.max(30, items.length * 5)}s` } as React.CSSProperties}>
+        {row(0)}
+        {row(1)}
+      </div>
+    </div>
+  )
+}
+
+interface NavbarProps {
+  assets?: Asset[]
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
   const { user, isGuest, logout } = usePlatform()
+  const [customization] = useProfileCustomization(user.username)
+  const navStyle: NavStyle = isGuest ? 'bill' : customization.navStyle
   const location = useLocation()
   const navigate = useNavigate()
   const reduced = usePrefersReducedMotion()
@@ -226,11 +308,13 @@ export const Navbar: React.FC = () => {
   const linksRef = useRef<HTMLDivElement>(null)
   const moreRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const railProfileRef = useRef<HTMLDivElement>(null)
 
   const closeMore = useCallback(() => setIsMoreOpen(false), [])
   const closeProfile = useCallback(() => setIsProfileOpen(false), [])
   useDismiss(isMoreOpen, closeMore, moreRef)
-  useDismiss(isProfileOpen, closeProfile, profileRef)
+  useDismiss(isProfileOpen && navStyle !== 'sidebar', closeProfile, profileRef)
+  useDismiss(isProfileOpen && navStyle === 'sidebar', closeProfile, railProfileRef)
 
   const pathname = location.pathname
   const isMoreActive = MORE_ITEMS.some((item) => matchesPath(pathname, item.to))
@@ -238,9 +322,11 @@ export const Navbar: React.FC = () => {
   const targetKey = hoverKey ?? activeKey
   const activeTabIndex = MAIN_ITEMS.findIndex((item) => matchesPath(pathname, item.to))
   const tabIndex = isSheetOpen || (activeTabIndex < 0 && isMoreActive) ? MAIN_ITEMS.length : activeTabIndex
+  const isIsland = navStyle === 'island'
 
   const xpProgress = user.xpToNext > 0 ? Math.min(1, Math.max(0, user.xp / user.xpToNext)) : 0
   const initials = (user.name || user.username || 'U').slice(0, 2).toUpperCase()
+  const avatarSrc = isGuest ? '' : resolveAvatarSrc(user.avatar, user.username)
 
   const measure = useCallback(() => {
     const element = targetKey ? itemRefs.current.get(targetKey) : null
@@ -251,12 +337,12 @@ export const Navbar: React.FC = () => {
     }
     const box = element.getBoundingClientRect()
     const origin = container.getBoundingClientRect()
-    setIndicator({ left: box.left - origin.left + 12, width: box.width - 24, visible: true })
+    setIndicator({ left: box.left - origin.left, width: box.width, visible: true })
   }, [targetKey])
 
   useLayoutEffect(() => {
     measure()
-  }, [measure, pathname])
+  }, [measure, pathname, navStyle, isScrolled])
 
   useEffect(() => {
     window.addEventListener('resize', measure)
@@ -275,7 +361,7 @@ export const Navbar: React.FC = () => {
     setIsMoreOpen(false)
     setIsProfileOpen(false)
     setIsSheetOpen(false)
-  }, [pathname])
+  }, [pathname, location.search])
 
   useEffect(() => {
     if (!isSheetOpen) return
@@ -297,7 +383,7 @@ export const Navbar: React.FC = () => {
     navigate('/')
   }
 
-  const stats = (
+  const renderStats = () => (
     <>
       <StatChip icon="fa-solid fa-fire" iconClassName="nav-flame" value={user.streak} suffix="d" color="var(--ink-3)" label="Racha de días" reduced={reduced} />
       <StatChip icon="fa-solid fa-star" value={user.level} prefix="Nv. " color="var(--ink-2)" label="Nivel" reduced={reduced} progress={xpProgress} />
@@ -305,180 +391,295 @@ export const Navbar: React.FC = () => {
     </>
   )
 
+  const renderProfilePanel = (placement: 'below' | 'side') => (
+    <div
+      data-open={isProfileOpen}
+      className={`nav-pop absolute z-50 w-72 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)] ${
+        placement === 'below' ? 'right-0 top-[calc(100%+10px)] origin-top-right' : 'bottom-0 left-[calc(100%+12px)] origin-bottom-left'
+      }`}
+    >
+      <div className="note-paper flex items-center gap-3 border-x-0 border-t-0 p-4">
+        <Avatar src={avatarSrc} initials={initials} progress={xpProgress} size={48} />
+        <div className="min-w-0 flex-1">
+          <div className="nav-font truncate text-[15px] font-bold text-[var(--text)]">{user.name}</div>
+          <div className="truncate text-[13px] text-[var(--text-muted)]">@{user.username}</div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]">
+              <span className="nav-xp block h-full rounded-full bg-[var(--ink)]" style={{ width: `${Math.round(xpProgress * 100)}%` }}></span>
+            </span>
+            <span className="note-num shrink-0 text-[11.5px] font-semibold text-[var(--text-muted)]">
+              {user.xp}/{user.xpToNext} XP
+            </span>
+          </div>
+        </div>
+      </div>
+      {placement === 'below' && <div className="hidden items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 md:flex lg:hidden">{renderStats()}</div>}
+      <div className="p-1.5">
+        {PROFILE_ITEMS.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={closeProfile}
+            className="nav-item-row flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[var(--text)] hover:bg-[var(--paper)]"
+          >
+            <i className={`${item.icon} w-4 text-center text-[13px] text-[var(--ink)]`}></i>
+            {item.label}
+          </Link>
+        ))}
+        <div className="mx-2 my-1 border-t border-[var(--border)]"></div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="nav-item-row flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14px] font-medium text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--ink-3)_10%,transparent)]"
+        >
+          <i className="fa-solid fa-right-from-bracket w-4 text-center text-[13px]"></i>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  )
+
+  const renderAccount = () =>
+    isGuest ? (
+      <div className="flex items-center gap-1 sm:gap-2">
+        <Link to="/login" className="nav-font hidden px-2 py-1.5 text-[14px] font-semibold text-[var(--text)] transition-colors hover:text-[var(--ink)] sm:inline">
+          Iniciar sesión
+        </Link>
+        <Link
+          to="/register"
+          className="nav-font inline-flex h-9 items-center gap-2 rounded-full bg-[var(--ink)] px-4 text-[13.5px] font-bold text-[var(--bg)] transition-transform active:scale-[.97]"
+        >
+          Registrarse
+        </Link>
+      </div>
+    ) : (
+      <div ref={profileRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setIsProfileOpen((open) => !open)}
+          aria-haspopup="true"
+          aria-expanded={isProfileOpen}
+          aria-label="Abrir menú de perfil"
+          className="flex cursor-pointer items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-[var(--paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] xl:pr-3"
+        >
+          <Avatar src={avatarSrc} initials={initials} progress={xpProgress} />
+          <span className="nav-font hidden text-[14px] font-semibold text-[var(--text)] xl:inline">{user.username}</span>
+          <i className={`nav-chevron fa-solid fa-chevron-down hidden text-[9px] text-[var(--text-muted)] xl:inline ${isProfileOpen ? 'rotate-180' : ''}`}></i>
+        </button>
+        {renderProfilePanel('below')}
+      </div>
+    )
+
+  const renderDesktopLinks = () => (
+    <nav aria-label="Navegación principal" className="hidden md:block">
+      <div ref={linksRef} className="relative flex items-center" onMouseLeave={() => setHoverKey(null)}>
+        {isIsland && (
+          <span
+            className="nav-ink pointer-events-none absolute inset-y-1.5 rounded-full bg-[color-mix(in_srgb,var(--ink)_13%,transparent)]"
+            style={{ left: indicator.left, width: indicator.width, opacity: indicator.visible ? 1 : 0 }}
+            aria-hidden="true"
+          ></span>
+        )}
+        {MAIN_ITEMS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            ref={registerItem(item.to)}
+            onMouseEnter={() => setHoverKey(item.to)}
+            onFocus={() => setHoverKey(item.to)}
+            onBlur={() => setHoverKey(null)}
+            className={({ isActive }) =>
+              `nav-link nav-font relative flex items-center gap-2 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
+                isIsland ? 'h-10 rounded-full' : 'h-14'
+              } ${isActive ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`
+            }
+          >
+            <i className={`${item.icon} text-[12px] opacity-80`}></i>
+            <span className="lg:hidden">{item.shortLabel}</span>
+            <span className="hidden lg:inline">{item.label}</span>
+          </NavLink>
+        ))}
+
+        <div ref={moreRef} className="relative" onMouseEnter={() => setHoverKey('more')}>
+          <button
+            type="button"
+            ref={registerItem('more')}
+            onClick={() => setIsMoreOpen((open) => !open)}
+            aria-haspopup="true"
+            aria-expanded={isMoreOpen}
+            className={`nav-link nav-font relative flex cursor-pointer items-center gap-1.5 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
+              isIsland ? 'h-10 rounded-full' : 'h-14'
+            } ${isMoreActive || isMoreOpen ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+          >
+            Más
+            <i className={`nav-chevron fa-solid fa-chevron-down text-[9px] ${isMoreOpen ? 'rotate-180' : ''}`}></i>
+          </button>
+
+          <div
+            data-open={isMoreOpen}
+            className={`nav-pop absolute left-1/2 w-[440px] origin-top -translate-x-1/2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)] ${
+              isIsland ? 'top-[calc(100%+14px)]' : 'top-[calc(100%+6px)]'
+            }`}
+          >
+            <div className="grid grid-cols-2 gap-1">
+              {MORE_ITEMS.map((item) => {
+                const isActive = matchesPath(pathname, item.to)
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={closeMore}
+                    className={`nav-item-row flex items-start gap-3 rounded-xl p-2.5 ${isActive ? 'bg-[var(--paper-2)]' : 'hover:bg-[var(--paper)]'}`}
+                  >
+                    <span className="nav-item-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--paper-2)] text-[13px] text-[var(--ink)]">
+                      <i className={item.icon}></i>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="nav-font block text-[14px] font-bold text-[var(--text)]">{item.label}</span>
+                      <span className="block text-[12.5px] leading-snug text-[var(--text-muted)]">{item.description}</span>
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {!isIsland && (
+          <span
+            className="nav-ink pointer-events-none absolute bottom-0 h-[3px] rounded-t-full bg-[var(--ink)]"
+            style={{ left: indicator.left + 12, width: Math.max(0, indicator.width - 24), opacity: indicator.visible ? 1 : 0 }}
+            aria-hidden="true"
+          ></span>
+        )}
+      </div>
+    </nav>
+  )
+
+  const renderBillHeader = () => (
+    <header
+      className={`note-home nav-shell sticky top-0 z-40 border-b border-[var(--rule)] bg-[var(--bg-alt)] transition-shadow duration-300 ${navStyle === 'sidebar' ? 'md:hidden' : ''} ${
+        isScrolled ? 'shadow-[0_10px_30px_-18px_rgba(10,20,40,.45)]' : ''
+      }`}
+    >
+      <div className="relative h-4 overflow-hidden border-b border-[var(--rule)] bg-[var(--paper-2)]" aria-hidden="true">
+        <div className="nav-marquee note-wide flex w-max whitespace-nowrap pt-[4px] text-[7.5px] font-bold leading-none text-[var(--ink)] opacity-70">
+          <span>{NAV_MICROTEXT}</span>
+          <span>{NAV_MICROTEXT}</span>
+        </div>
+      </div>
+      <div className="relative">
+        <WaveField className="pointer-events-none absolute inset-y-0 right-0 h-full w-[46%] opacity-40 [mask-image:linear-gradient(to_right,transparent,#000_40%)]" />
+        <div className="relative mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-6 lg:gap-8">
+            <LogoMark />
+            {navStyle !== 'sidebar' && renderDesktopLinks()}
+          </div>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {!isGuest && <div className="flex items-center gap-1.5 md:hidden lg:flex">{renderStats()}</div>}
+            {renderAccount()}
+          </div>
+        </div>
+      </div>
+      {navStyle === 'ticker' && (
+        <TickerStrip
+          assets={assets}
+          fallback={[
+            { icon: 'fa-solid fa-star', label: 'Nivel', value: `${user.level} · ${user.xp}/${user.xpToNext} XP`, to: '/perfil' },
+            { icon: 'fa-solid fa-fire', label: 'Racha', value: `${user.streak} ${user.streak === 1 ? 'día' : 'días'}`, to: '/perfil' },
+            { icon: 'fa-solid fa-coins', label: 'Kor', value: String(user.coins), to: '/perfil?estudio=tema' },
+            { icon: 'fa-solid fa-road', label: 'Lecciones', value: `${(user.moduleProgress?.trading || []).length}/8`, to: '/aprender' },
+            { icon: 'fa-solid fa-trophy', label: 'Logros', value: String(user.achievements.length), to: '/logros' },
+            { icon: 'fa-solid fa-chart-simple', label: 'Exchange', value: 'Enciende el servidor para ver precios en vivo', to: '/exchange' },
+          ]}
+        />
+      )}
+    </header>
+  )
+
+  const renderIslandHeader = () => (
+    <header className="note-home nav-shell pointer-events-none sticky top-0 z-40 px-3 pt-3 sm:px-5">
+      <div
+        className={`nav-island pointer-events-auto mx-auto flex items-center justify-between gap-3 rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-alt)_84%,transparent)] pl-3 pr-2 backdrop-blur-xl ${
+          isScrolled ? 'h-14 max-w-[1080px] shadow-[0_18px_40px_-22px_rgba(10,20,40,.55)]' : 'h-16 max-w-[1240px] shadow-[0_10px_30px_-24px_rgba(10,20,40,.4)]'
+        }`}
+      >
+        <div className="flex min-w-0 items-center gap-4 lg:gap-6">
+          <LogoMark />
+          <span className="hidden h-6 w-px bg-[var(--border)] md:block" aria-hidden="true"></span>
+          {renderDesktopLinks()}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {!isGuest && <div className="flex items-center gap-1.5 md:hidden lg:flex">{renderStats()}</div>}
+          {renderAccount()}
+        </div>
+      </div>
+    </header>
+  )
+
+  const railLinkClass = (isActive: boolean) =>
+    `nav-link relative flex h-11 items-center gap-3 rounded-xl px-[14px] text-[14px] font-semibold ${
+      isActive ? 'bg-[color-mix(in_srgb,var(--ink)_13%,transparent)] text-[var(--ink)]' : 'text-[var(--text-muted)] hover:bg-[var(--paper)] hover:text-[var(--text)]'
+    }`
+
+  const renderRail = () => (
+    <aside className="note-home nav-shell nav-rail fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-[var(--rule)] bg-[var(--bg-alt)] md:flex" aria-label="Navegación principal">
+      <div className="relative h-4 overflow-hidden border-b border-[var(--rule)] bg-[var(--paper-2)]" aria-hidden="true">
+        <div className="nav-marquee note-wide flex w-max whitespace-nowrap pt-[4px] text-[7.5px] font-bold leading-none text-[var(--ink)] opacity-70">
+          <span>{NAV_MICROTEXT}</span>
+          <span>{NAV_MICROTEXT}</span>
+        </div>
+      </div>
+      <div className="flex h-16 items-center px-[19px]">
+        <LogoMark compact />
+      </div>
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2.5 pb-3">
+        {MAIN_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => railLinkClass(isActive)} title={item.label}>
+            <i className={`${item.icon} w-5 shrink-0 text-center text-[16px]`}></i>
+            <span className="nav-rail-label nav-font whitespace-nowrap">{item.label}</span>
+          </NavLink>
+        ))}
+        <div className="nav-rail-label note-wide mx-[14px] mb-1 mt-4 whitespace-nowrap text-[9px] font-bold text-[var(--ink)] opacity-80">MÁS SECCIONES</div>
+        <div className="mx-auto my-2 h-px w-8 bg-[var(--border)]" aria-hidden="true"></div>
+        {MORE_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} className={({ isActive }) => railLinkClass(isActive)} title={item.label}>
+            <i className={`${item.icon} w-5 shrink-0 text-center text-[15px]`}></i>
+            <span className="nav-rail-label nav-font whitespace-nowrap">{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+      <div className="border-t border-[var(--rule)] p-2.5">
+        <div className="nav-rail-stats mb-2 flex flex-wrap gap-1.5 px-1">{renderStats()}</div>
+        <div ref={railProfileRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen((open) => !open)}
+            aria-haspopup="true"
+            aria-expanded={isProfileOpen}
+            aria-label="Abrir menú de perfil"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-[7px] text-left transition-colors hover:bg-[var(--paper)]"
+          >
+            <Avatar src={avatarSrc} initials={initials} progress={xpProgress} size={38} />
+            <span className="nav-rail-label min-w-0 flex-1">
+              <span className="nav-font block truncate text-[14px] font-bold text-[var(--text)]">{user.username}</span>
+              <span className="block text-[12px] text-[var(--text-muted)]">Nivel {user.level}</span>
+            </span>
+          </button>
+          {renderProfilePanel('side')}
+        </div>
+      </div>
+    </aside>
+  )
+
   return (
     <>
       <style>{NOTE_STYLES}</style>
       <style>{NAV_STYLES}</style>
-      <header
-        className={`note-home nav-shell sticky top-0 z-40 border-b border-[var(--rule)] bg-[var(--bg-alt)] transition-shadow duration-300 ${isScrolled ? 'shadow-[0_10px_30px_-18px_rgba(10,20,40,.45)]' : ''}`}
-      >
-        <div className="relative h-4 overflow-hidden border-b border-[var(--rule)] bg-[var(--paper-2)]" aria-hidden="true">
-          <div className="nav-marquee note-wide flex w-max whitespace-nowrap pt-[4px] text-[7.5px] font-bold leading-none text-[var(--ink)] opacity-70">
-            <span>{NAV_MICROTEXT}</span>
-            <span>{NAV_MICROTEXT}</span>
-          </div>
-        </div>
 
-        <div className="relative">
-          <WaveField className="pointer-events-none absolute inset-y-0 right-0 h-full w-[46%] opacity-40 [mask-image:linear-gradient(to_right,transparent,#000_40%)]" />
-          <div className="relative mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
-            <div className="flex min-w-0 items-center gap-6 lg:gap-8">
-              <LogoMark />
-
-              <nav aria-label="Navegación principal" className="hidden md:block">
-                <div ref={linksRef} className="relative flex items-center" onMouseLeave={() => setHoverKey(null)}>
-                  {MAIN_ITEMS.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.to === '/'}
-                      ref={registerItem(item.to)}
-                      onMouseEnter={() => setHoverKey(item.to)}
-                      onFocus={() => setHoverKey(item.to)}
-                      onBlur={() => setHoverKey(null)}
-                      className={({ isActive }) =>
-                        `nav-link nav-font flex h-14 items-center gap-2 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
-                          isActive ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                        }`
-                      }
-                    >
-                      <i className={`${item.icon} text-[12px] opacity-80`}></i>
-                      <span className="lg:hidden">{item.shortLabel}</span>
-                      <span className="hidden lg:inline">{item.label}</span>
-                    </NavLink>
-                  ))}
-
-                  <div ref={moreRef} className="relative" onMouseEnter={() => setHoverKey('more')}>
-                    <button
-                      type="button"
-                      ref={registerItem('more')}
-                      onClick={() => setIsMoreOpen((open) => !open)}
-                      aria-haspopup="true"
-                      aria-expanded={isMoreOpen}
-                      className={`nav-link nav-font flex h-14 cursor-pointer items-center gap-1.5 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
-                        isMoreActive || isMoreOpen ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                      }`}
-                    >
-                      Más
-                      <i className={`nav-chevron fa-solid fa-chevron-down text-[9px] ${isMoreOpen ? 'rotate-180' : ''}`}></i>
-                    </button>
-
-                    <div
-                      data-open={isMoreOpen}
-                      className="nav-pop absolute left-1/2 top-[calc(100%+6px)] w-[440px] origin-top -translate-x-1/2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)]"
-                    >
-                      <div className="grid grid-cols-2 gap-1">
-                        {MORE_ITEMS.map((item) => {
-                          const isActive = matchesPath(pathname, item.to)
-                          return (
-                            <Link
-                              key={item.to}
-                              to={item.to}
-                              onClick={closeMore}
-                              className={`nav-item-row flex items-start gap-3 rounded-xl p-2.5 ${isActive ? 'bg-[var(--paper-2)]' : 'hover:bg-[var(--paper)]'}`}
-                            >
-                              <span className="nav-item-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--paper-2)] text-[13px] text-[var(--ink)]">
-                                <i className={item.icon}></i>
-                              </span>
-                              <span className="min-w-0">
-                                <span className="nav-font block text-[14px] font-bold text-[var(--text)]">{item.label}</span>
-                                <span className="block text-[12.5px] leading-snug text-[var(--text-muted)]">{item.description}</span>
-                              </span>
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className="nav-ink pointer-events-none absolute bottom-0 h-[3px] rounded-t-full bg-[var(--ink)]"
-                    style={{ left: indicator.left, width: indicator.width, opacity: indicator.visible ? 1 : 0 }}
-                    aria-hidden="true"
-                  ></span>
-                </div>
-              </nav>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-              {!isGuest && <div className="flex items-center gap-1.5 md:hidden lg:flex">{stats}</div>}
-
-              {isGuest ? (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Link to="/login" className="nav-font hidden px-2 py-1.5 text-[14px] font-semibold text-[var(--text)] transition-colors hover:text-[var(--ink)] sm:inline">
-                    Iniciar sesión
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="nav-font inline-flex h-9 items-center gap-2 rounded-full bg-[var(--ink)] px-4 text-[13.5px] font-bold text-[var(--bg)] transition-transform active:scale-[.97]"
-                  >
-                    Registrarse
-                  </Link>
-                </div>
-              ) : (
-                <div ref={profileRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setIsProfileOpen((open) => !open)}
-                    aria-haspopup="true"
-                    aria-expanded={isProfileOpen}
-                    aria-label="Abrir menú de perfil"
-                    className="flex cursor-pointer items-center gap-2 rounded-full p-0.5 pr-0.5 transition-colors hover:bg-[var(--paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] xl:pr-3"
-                  >
-                    <Avatar avatar={user.avatar} initials={initials} progress={xpProgress} />
-                    <span className="nav-font hidden text-[14px] font-semibold text-[var(--text)] xl:inline">{user.username}</span>
-                    <i className={`nav-chevron fa-solid fa-chevron-down hidden text-[9px] text-[var(--text-muted)] xl:inline ${isProfileOpen ? 'rotate-180' : ''}`}></i>
-                  </button>
-
-                  <div
-                    data-open={isProfileOpen}
-                    className="nav-pop absolute right-0 top-[calc(100%+10px)] w-72 origin-top-right overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)]"
-                  >
-                    <div className="note-paper flex items-center gap-3 border-x-0 border-t-0 p-4">
-                      <Avatar avatar={user.avatar} initials={initials} progress={xpProgress} size={48} />
-                      <div className="min-w-0 flex-1">
-                        <div className="nav-font truncate text-[15px] font-bold text-[var(--text)]">{user.name}</div>
-                        <div className="truncate text-[13px] text-[var(--text-muted)]">@{user.username}</div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]">
-                            <span className="nav-xp block h-full rounded-full bg-[var(--ink)]" style={{ width: `${Math.round(xpProgress * 100)}%` }}></span>
-                          </span>
-                          <span className="note-num shrink-0 text-[11.5px] font-semibold text-[var(--text-muted)]">
-                            {user.xp}/{user.xpToNext} XP
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="hidden items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 md:flex lg:hidden">{stats}</div>
-                    <div className="p-1.5">
-                      {PROFILE_ITEMS.map((item) => (
-                        <Link
-                          key={item.to}
-                          to={item.to}
-                          onClick={closeProfile}
-                          className="nav-item-row flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[var(--text)] hover:bg-[var(--paper)]"
-                        >
-                          <i className={`${item.icon} w-4 text-center text-[13px] text-[var(--ink)]`}></i>
-                          {item.label}
-                        </Link>
-                      ))}
-                      <div className="mx-2 my-1 border-t border-[var(--border)]"></div>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="nav-item-row flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14px] font-medium text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--ink-3)_10%,transparent)]"
-                      >
-                        <i className="fa-solid fa-right-from-bracket w-4 text-center text-[13px]"></i>
-                        Cerrar sesión
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      {navStyle === 'island' ? renderIslandHeader() : renderBillHeader()}
+      {navStyle === 'sidebar' && renderRail()}
 
       <div className="note-home nav-shell md:hidden">
         <div

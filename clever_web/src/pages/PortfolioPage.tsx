@@ -5,8 +5,42 @@ import type { Portfolio } from '../types'
 export const PortfolioPage: React.FC<{
   portfolio: Portfolio | null
   isLoading: boolean
-}> = ({ portfolio, isLoading }) => {
+  onRetry?: () => void
+}> = ({ portfolio, isLoading, onRetry }) => {
   const navigate = useNavigate()
+
+  if (!isLoading && !portfolio) {
+    return (
+      <div className="mx-auto max-w-2xl py-16">
+        <div className="platform-card space-y-5 p-8 text-center sm:p-10">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--primary)_14%,transparent)] text-xl text-[var(--primary)]">
+            <i className="fa-solid fa-wallet"></i>
+          </span>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-[var(--text)]">Tu portafolio del Exchange Spot</h1>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">
+              Aquí aparecen tu efectivo simulado, lo que vale lo que compraste y la ganancia o pérdida de cada posición que abras en el Exchange Spot.
+            </p>
+          </div>
+          <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface-alt)] px-4 py-3 text-sm text-[var(--text-muted)]">
+            <i className="fa-solid fa-plug-circle-xmark mr-2 text-[var(--danger)]"></i>
+            No pudimos conectar con el servidor del exchange. Revisa que esté encendido e inténtalo de nuevo.
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {onRetry && (
+              <button type="button" onClick={onRetry} className="platform-btn-primary px-5 py-2.5 text-sm">
+                <i className="fa-solid fa-rotate-right text-xs"></i>
+                Reintentar
+              </button>
+            )}
+            <button type="button" onClick={() => navigate('/exchange')} className="platform-btn-secondary px-5 py-2.5 text-sm">
+              Ir al Exchange Spot
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (isLoading || !portfolio) {
     return (
