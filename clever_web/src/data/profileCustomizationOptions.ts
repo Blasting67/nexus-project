@@ -37,7 +37,7 @@ export const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
   learnWorld: 'city',
   owned: [],
   adminMode: false,
-  homeMain: ['lesson', 'community', 'exchange'],
+  homeMain: ['lesson', 'exchange'],
   homeSide: ['credential', 'mission', 'mentor'],
   homeHidden: [],
   homeGreeting: 'continue',
@@ -51,7 +51,6 @@ export const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
 
 export const HOME_MAIN_SECTIONS: { id: HomeMainSection; label: string; icon: string }[] = [
   { id: 'lesson', label: 'Tu lección actual', icon: 'fa-solid fa-play' },
-  { id: 'community', label: 'Comunidad', icon: 'fa-solid fa-users' },
   { id: 'exchange', label: 'Exchange Spot', icon: 'fa-solid fa-chart-simple' },
 ]
 

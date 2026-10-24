@@ -54,6 +54,13 @@ export const LAYOUT_STYLES = `
 }
 `
 
+export const nameSizeClass = (name: string, size: 'xl' | 'lg' = 'xl') => {
+  const length = (name || '').length
+  if (length > 26) return 'text-[26px] sm:text-[32px]'
+  if (length > 16) return 'text-[30px] sm:text-[38px] lg:text-[42px]'
+  return size === 'xl' ? 'text-[38px] sm:text-[52px]' : 'text-[34px] sm:text-[42px]'
+}
+
 export const getFolio = (username: string) => {
   let hash = 7
   for (const char of username || 'clever') hash = (hash * 31 + char.charCodeAt(0)) % 999983
@@ -170,7 +177,7 @@ export const CredentialHero: React.FC<HeroProps> = (props) => {
         <ProfileCover custom={custom} cover={user.cover} className="h-44 sm:h-56" />
         <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-3 py-1.5 backdrop-blur sm:left-6 sm:top-5">
           <i className="fa-solid fa-id-card text-[12px] text-[var(--ink)]"></i>
-          <span className="note-wide text-[10px] font-bold text-[var(--ink)]">CREDENCIAL DE INVERSIONISTA</span>
+          <span className="note-wide text-[10px] font-bold text-[var(--ink)]"><span className="sm:hidden">CREDENCIAL</span><span className="hidden sm:inline">CREDENCIAL DE INVERSIONISTA</span></span>
         </div>
         <div className="absolute right-4 top-4 rounded-full bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-3 py-1.5 backdrop-blur sm:right-6 sm:top-5">
           <span className="note-wide text-[10px] font-bold text-[var(--text-muted)]">FOLIO </span>
@@ -179,13 +186,13 @@ export const CredentialHero: React.FC<HeroProps> = (props) => {
       </div>
 
       <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
-        <div className="-mt-16 flex flex-col items-center gap-5 sm:-mt-[72px] sm:flex-row sm:items-end">
-          <div className="shrink-0">
+        <div className="flex flex-col items-center gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-start">
+          <div className="-mt-16 shrink-0 sm:-mt-[72px]">
             <Avatar props={props} size={140} />
           </div>
-          <div className="min-w-0 flex-1 text-center sm:pb-1 sm:text-left">
+          <div className="min-w-0 flex-1 text-center sm:pt-5 sm:text-left">
             <div className="note-wide text-[10px] font-bold text-[var(--text-muted)]">TITULAR</div>
-            <h1 className="note-display mt-1 text-[38px] font-black leading-[0.95] text-[var(--text)] [overflow-wrap:anywhere] sm:text-[52px]">{displayName}</h1>
+            <h1 className={`note-display mt-1 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</h1>
             <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[14px] text-[var(--text-muted)] sm:justify-start">
               <span className="font-semibold text-[var(--text)]">@{user.username}</span>
               <span className="h-1 w-1 rounded-full bg-[var(--text-dim)]"></span>
@@ -194,7 +201,7 @@ export const CredentialHero: React.FC<HeroProps> = (props) => {
               <span>Desde {memberSince(user.createdAt)}</span>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap justify-center gap-2 sm:pb-1">{actions}</div>
+          <div className="flex shrink-0 flex-wrap justify-center gap-2 sm:basis-full sm:justify-start sm:pl-[164px] lg:basis-auto lg:pl-0 lg:pt-7">{actions}</div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -433,7 +440,7 @@ export const OfficeHero: React.FC<HeroProps> = (props) => {
           <Avatar props={props} size={112} />
         </div>
         <div className="min-w-0 flex-1 text-center sm:text-left">
-          <h1 className="note-display text-[34px] font-black leading-none [overflow-wrap:anywhere] text-[var(--text)] sm:text-[42px]">{displayName}</h1>
+          <h1 className={`note-display font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName, 'lg')}`}>{displayName}</h1>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[14px] text-[var(--text-muted)] sm:justify-start">
             <span className="font-semibold text-[var(--text)]">@{user.username}</span>
             <span>{user.levelLabel}</span>
@@ -549,7 +556,7 @@ export const CardHero: React.FC<HeroProps> = (props) => {
           <div className="note-wide text-[10px] font-bold" style={{ color: rarity.colors[1] }}>
             CARTA {rarity.label.toUpperCase()} · #{folio}
           </div>
-          <h1 className="note-display mt-2 text-[40px] font-black leading-[0.95] text-[var(--text)] sm:text-[56px]">{displayName}</h1>
+          <h1 className={`note-display mt-2 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</h1>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[14px] text-[var(--text-muted)] md:justify-start">
             <span className="font-semibold text-[var(--text)]">@{user.username}</span>
             <span>{user.levelLabel}</span>
