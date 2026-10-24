@@ -16,45 +16,6 @@ const STEPS = [
 ]
 
 
-const TOP_RANKING = [
-  { name: 'Juan P.', xp: 4500 },
-  { name: 'María S.', xp: 4200 },
-  { name: 'Luis R.', xp: 3900 },
-  { name: 'Ana G.', xp: 3650 },
-]
-
-const COMMUNITY_POSTS = [
-  {
-    id: 1,
-    author: 'Juan P.',
-    time: '18h',
-    channel: 'Trading',
-    title: '¿Cómo identifican un buen soporte?',
-    body: 'Marqué esta zona en 4H y rebotó dos veces. ¿Opiniones?',
-    likes: 7,
-    comments: 5,
-  },
-  {
-    id: 2,
-    author: 'María S.',
-    time: '1d',
-    channel: 'General',
-    title: 'Terminé mi primer módulo de gestión de riesgo',
-    body: 'Lo que más me costó fue entender el stop-loss. Aquí mi resumen.',
-    likes: 14,
-    comments: 10,
-  },
-  {
-    id: 3,
-    author: 'Luis R.',
-    time: '2d',
-    channel: 'Exchange',
-    title: 'Mi portafolio simulado de la semana',
-    body: 'Subió 6% en el exchange spot, pero con mucha volatilidad.',
-    likes: 9,
-    comments: 3,
-  },
-]
 
 const STEP_X = 40
 const CLOSES = [112, 98, 104, 84, 92, 70, 78, 58, 72, 96]
@@ -473,25 +434,6 @@ export const HomePage: React.FC = () => {
     </div>
   )
 
-  const RankingWidget = (
-    <div data-tour="home-ranking" className="note-card p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="note-display text-lg font-extrabold text-[var(--text)]">Top Ranking de Usuarios</h2>
-        <Link to="/comunidad" className="text-sm font-medium text-[var(--ink)] hover:underline">
-          Ver todo
-        </Link>
-      </div>
-      <ol className="mt-3">
-        {TOP_RANKING.map((r, i) => (
-          <li key={r.name} className="flex items-center gap-3 border-b border-[var(--rule)] py-2.5 text-[15px] last:border-b-0">
-            <span className="note-display note-num w-5 text-base font-extrabold text-[var(--ink)]">{i + 1}</span>
-            <span className="flex-1 truncate font-medium text-[var(--text)]">{r.name}</span>
-            <span className="note-num text-sm text-[var(--text-muted)]">{r.xp} XP</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  )
 
   const MentorWidget = (
     <Link to="/mentor" className="note-card note-link group block space-y-2 p-5">
@@ -566,47 +508,6 @@ export const HomePage: React.FC = () => {
             </div>
           </section>
 
-          <section className="order-4 min-w-0 space-y-6 lg:order-none">
-            <SectionHeading
-              title="Únete a la comunidad"
-              text="Lo que otros estudiantes están compartiendo."
-              action={
-                <Link to="/comunidad" className="note-display group inline-flex shrink-0 items-center gap-1.5 text-base font-bold text-[var(--ink)]">
-                  Ir a Comunidad
-                  <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-1"></i>
-                </Link>
-              }
-            />
-            <div className="rail-fade -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 pr-16">
-              {COMMUNITY_POSTS.map((p) => (
-                <Link key={p.id} to="/comunidad" className="note-card note-link block w-[80%] shrink-0 snap-start space-y-3 p-5 sm:w-72">
-                  <div className="flex items-center gap-3">
-                    <span className="note-display flex h-10 w-10 items-center justify-center rounded-full border border-[var(--rule)] text-base font-extrabold text-[var(--ink)]">
-                      {p.author.charAt(0)}
-                    </span>
-                    <div className="leading-tight">
-                      <div className="text-[15px] font-semibold text-[var(--text)]">
-                        {p.author} <span className="font-normal text-[var(--text-muted)]">&middot; {p.time}</span>
-                      </div>
-                      <div className="text-sm text-[var(--text-muted)]">#{p.channel}</div>
-                    </div>
-                  </div>
-                  <h3 className="note-display text-lg font-bold leading-snug text-[var(--text)]">{p.title}</h3>
-                  <p className="line-clamp-2 text-[15px] text-[var(--text-muted)]">{p.body}</p>
-                  <div className="flex items-center gap-4 pt-1 text-sm text-[var(--text-muted)]">
-                    <span className="note-num flex items-center gap-1.5">
-                      <i className="fa-regular fa-heart"></i>
-                      {p.likes}
-                    </span>
-                    <span className="note-num flex items-center gap-1.5">
-                      <i className="fa-regular fa-comment"></i>
-                      {p.comments}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
 
           <div className="order-5 lg:order-none">
             <ExchangeShowcase includeMentor={false} />
@@ -617,7 +518,6 @@ export const HomePage: React.FC = () => {
           <div className="order-2 lg:order-none">{ProfileWidget}</div>
           <div className="order-3 lg:order-none">{MissionWidget}</div>
           <div className="order-6 lg:order-none">{MentorWidget}</div>
-          <div className="order-7 lg:order-none">{RankingWidget}</div>
         </aside>
       </div>
     </div>
