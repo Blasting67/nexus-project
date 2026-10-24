@@ -385,3 +385,8 @@
     }
   }
 }
+
+:root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .bc-glow {
+  opacity: 0.4;
+  filter: saturate(1.8);
+}

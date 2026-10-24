@@ -119,7 +119,7 @@ export const AnalysisPage: React.FC = () => {
             </HudItem>
           </HudSlide>
 
-          <HudSlide {...slide(2)} className="grid gap-4 lg:grid-rows-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          <HudSlide {...slide(2)} className="grid gap-4 lg:grid-rows-[auto_minmax(0,1fr)]">
             <HudItem order={0}>
               <TraderTypesCard />
             </HudItem>

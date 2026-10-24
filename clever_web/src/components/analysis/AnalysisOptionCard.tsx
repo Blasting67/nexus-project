@@ -25,6 +25,8 @@ export interface AnalysisOptionTheme {
   ring: string
 
   selected: string
+
+  tint?: string
 }
 
 export interface AnalysisOptionCardProps {
@@ -102,10 +104,18 @@ ${ON} .ao-spark{animation:ao-spark 1.6s ease-out infinite;animation-delay:calc(v
 @keyframes ao-spark{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0px),var(--dy,0px)) scale(1)}}
 
 
-${DARK} .ao-surface{opacity:.16}
-${DARK} .ao-blob-a,${DARK} .ao-blob-b{opacity:.32}
+${DARK} .ao-root .ao-surface{opacity:1;background:radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--ao-tint,var(--primary)) 20%,transparent),transparent 62%),radial-gradient(90% 80% at 0% 100%,color-mix(in srgb,var(--ao-tint,var(--primary)) 10%,transparent),transparent 60%)!important}
+${DARK} .ao-root .ao-blob-a,${DARK} .ao-root .ao-blob-b{opacity:.16;background:var(--ao-tint,var(--primary))!important}
+${DARK} .ao-root .ao-dots{opacity:.35}
+${DARK} .ao-root{border-color:color-mix(in srgb,var(--ao-tint,var(--primary)) 22%,var(--border))!important;box-shadow:0 20px 40px -30px rgba(0,0,0,.8)}
+${DARK} .ao-root:hover{border-color:color-mix(in srgb,var(--ao-tint,var(--primary)) 45%,var(--border))!important}
+${DARK} .ao-root .ao-panel{fill:color-mix(in srgb,var(--ao-tint,var(--primary)) 14%,var(--surface));fill-opacity:.85;stroke:color-mix(in srgb,var(--ao-tint,var(--primary)) 35%,transparent)}
+${DARK} .ao-shine{background:linear-gradient(100deg,transparent,rgba(255,255,255,.12),transparent)}
 ${DARK} .ao-root .ao-chip{background-color:color-mix(in srgb,var(--surface) 72%,transparent);color:var(--text);--tw-ring-color:var(--border)}
 ${DARK} .ao-root .ao-cta{background-color:color-mix(in srgb,var(--surface-alt) 70%,transparent);color:var(--text);--tw-ring-color:var(--border)}
+
+@media (max-height:780px){.ao-compact{padding-top:1rem;padding-bottom:1rem}.ao-compact .ao-desc{display:none}.ao-compact .ao-illu{max-width:150px}}
+@media (max-height:660px){.ao-compact .ao-illu{display:none}}
 
 @media (prefers-reduced-motion:reduce){
   .ao-root *{animation:none!important;transition:none!important}
@@ -224,8 +234,9 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
         style={{
           transform:
             'perspective(1100px) translateY(var(--ty,0px)) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(var(--s,1))',
-        }}
-        className={`ao-root group relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-[var(--surface)] shadow-sm shadow-black/10 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          ['--ao-tint' as string]: theme.tint,
+        } as React.CSSProperties}
+        className={`ao-root ${compact ? 'ao-compact' : ''} group relative flex h-full flex-col overflow-hidden rounded-[2rem] border bg-[var(--surface)] shadow-sm shadow-black/10 transition-[transform,box-shadow,border-color] duration-200 ease-out hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-reduce:transition-none ${
           compact
             ? 'min-h-0 p-5 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] sm:items-center sm:gap-x-4'
             : 'min-h-[380px] p-7 sm:p-8'
@@ -235,7 +246,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
         <span aria-hidden="true" className={`ao-surface pointer-events-none absolute inset-0 ${theme.surface}`} />
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 ${theme.dots}`}
+          className={`ao-dots pointer-events-none absolute inset-0 ${theme.dots}`}
           style={{
             backgroundImage: 'radial-gradient(currentColor 1.1px, transparent 1.1px)',
             backgroundSize: '20px 20px',
@@ -283,7 +294,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           >
             {title}
           </span>
-          <span className={`mt-2 block max-w-xs leading-relaxed text-[var(--text-muted)] ${compact ? 'text-xs' : 'text-sm'}`}>
+          <span className={`ao-desc mt-2 block max-w-xs leading-relaxed text-[var(--text-muted)] ${compact ? 'text-xs' : 'text-sm'}`}>
             {description}
           </span>
         </span>
@@ -294,7 +305,7 @@ export const AnalysisOptionCard: React.FC<AnalysisOptionCardProps> = ({
           }`}
         >
           <span
-            className={`block w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transition-none ${
+            className={`ao-illu block w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transition-none ${
               compact ? 'max-w-[200px]' : 'max-w-[290px]'
             }`}
           >
