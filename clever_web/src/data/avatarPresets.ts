@@ -67,7 +67,7 @@ const buildHuman = (config: HumanConfig) => {
 
 const buildRobot = () =>
   wrapSvg(
-    '<path d="M20 128 C20 104 40 96 64 96 C88 96 108 104 108 128 Z" fill="#f8fafc"/><rect x="40" y="16" width="5" height="18" rx="2.5" fill="#0f172a"/><rect x="83" y="16" width="5" height="18" rx="2.5" fill="#0f172a"/><rect x="30" y="30" width="68" height="62" rx="28" fill="#f8fafc"/><circle cx="28" cy="60" r="7" fill="#0f172a"/><circle cx="100" cy="60" r="7" fill="#0f172a"/><rect x="38" y="42" width="52" height="38" rx="18" fill="#0b101d"/><ellipse cx="53" cy="60" rx="5" ry="9" fill="#ffffff"/><path d="M70 53 L81 60 L70 67" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="64" cy="108" r="4" fill="#38bdf8"/>',
+    '<path d="M20 128 C20 104 40 96 64 96 C88 96 108 104 108 128 Z" fill="#f8fafc"/><rect x="40" y="16" width="5" height="18" rx="2.5" fill="#0f172a"/><rect x="83" y="16" width="5" height="18" rx="2.5" fill="#0f172a"/><rect x="30" y="30" width="68" height="62" rx="28" fill="#f8fafc"/><circle cx="28" cy="60" r="7" fill="#0f172a"/><circle cx="100" cy="60" r="7" fill="#0f172a"/><rect x="38" y="42" width="52" height="38" rx="18" fill="#0b101d"/><ellipse cx="53" cy="60" rx="5" ry="9" fill="#ffffff"/><path d="M81 53 L70 60 L81 67" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="64" cy="108" r="4" fill="#38bdf8"/>',
     '#bae6fd',
     '#6366f1'
   )

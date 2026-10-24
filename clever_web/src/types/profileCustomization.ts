@@ -14,7 +14,7 @@ export type NavStyle = 'bill' | 'island' | 'ticker' | 'sidebar'
 
 export type LearnWorld = 'city' | 'candles' | 'island'
 
-export type HomeMainSection = 'lesson' | 'community' | 'exchange'
+export type HomeMainSection = 'lesson' | 'exchange'
 
 export type HomeSideSection = 'credential' | 'mission' | 'mentor'
 
