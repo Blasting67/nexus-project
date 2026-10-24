@@ -51,7 +51,7 @@ export const PageTutorial: React.FC = () => {
   const [step, setStep] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [target, setTarget] = useState<HTMLElement | null>(null)
-  const [buttonPosition, setButtonPosition] = useState<React.CSSProperties>({ top: 72, left: 12 })
+  const [buttonPosition, setButtonPosition] = useState<React.CSSProperties>({ top: 80, left: 12 })
   const [panelPosition, setPanelPosition] = useState<React.CSSProperties>({ top: 120, left: 12 })
 
   const close = useCallback(() => {
@@ -81,7 +81,7 @@ export const PageTutorial: React.FC = () => {
       const heading = document.querySelector<HTMLElement>('main h1, main h2')
       const rect = heading?.getBoundingClientRect()
       if (!rect) return
-      setButtonPosition({ top: Math.max(68, rect.top), left: Math.max(12, Math.min(rect.right + 12, window.innerWidth - 104)) })
+      setButtonPosition({ top: Math.max(80, rect.top), left: Math.max(12, Math.min(rect.right + 12, window.innerWidth - 104)) })
     }
     const frame = window.requestAnimationFrame(placeButton)
     window.addEventListener('resize', placeButton)
@@ -123,7 +123,7 @@ export const PageTutorial: React.FC = () => {
     if (!target && page === 'learn') {
       const panelWidth = Math.min(480, window.innerWidth * 0.92)
       const panelHeight = window.innerWidth < 640 ? 220 : 190
-      setPanelPosition({ top: Math.max(68, (window.innerHeight - panelHeight) / 2), left: (window.innerWidth - panelWidth) / 2, width: panelWidth })
+      setPanelPosition({ top: Math.max(80, (window.innerHeight - panelHeight) / 2), left: (window.innerWidth - panelWidth) / 2, width: panelWidth })
       return
     }
     if (!target) return
@@ -137,7 +137,7 @@ export const PageTutorial: React.FC = () => {
       let left = canPlaceRight ? rect.right + gap : canPlaceLeft ? rect.left - gap - panelWidth : Math.max(12, (window.innerWidth - panelWidth) / 2)
       let top = canPlaceRight || canPlaceLeft ? rect.top + rect.height / 2 - panelHeight / 2 : rect.bottom + gap
       if (top + panelHeight > window.innerHeight - 12) top = rect.top - panelHeight - gap
-      top = Math.max(68, Math.min(top, window.innerHeight - panelHeight - 12))
+      top = Math.max(80, Math.min(top, window.innerHeight - panelHeight - 12))
       left = Math.max(12, Math.min(left, window.innerWidth - panelWidth - 12))
       setPanelPosition({ top, left, width: panelWidth })
     }
@@ -173,7 +173,7 @@ export const PageTutorial: React.FC = () => {
       <i className="fa-regular fa-circle-question text-[var(--primary)]"></i><span>Tutorial</span>
     </button>}
     {isOpen && <div className="fixed inset-0 z-[62] pointer-events-none">
-      {isPanelOnlyStep && <div style={{ top: page === 'learn' ? '3.5rem' : 0 }} className="pointer-events-auto fixed inset-x-0 bottom-0 bg-[rgba(5,10,20,0.38)]"></div>}
+      {isPanelOnlyStep && <div style={{ top: page === 'learn' ? '4.5rem' : 0 }} className="pointer-events-auto fixed inset-x-0 bottom-0 bg-[rgba(5,10,20,0.38)]"></div>}
       <section style={{ ...panelPosition, borderColor: 'var(--primary)', backgroundColor: 'var(--surface)', boxShadow: '0 0 0 4px color-mix(in srgb,var(--primary) 45%,transparent),0 0 30px color-mix(in srgb,var(--primary) 65%,transparent),0 18px 60px rgba(0,0,0,.55)' }} className="pointer-events-auto fixed z-[1] flex items-center gap-3 rounded-2xl border-2 p-4">
         <div className="h-24 w-20 shrink-0 animate-[tutorial-bob_2s_ease-in-out_infinite] sm:h-28 sm:w-24"><CleverkorMascot3D height="100%" /></div>
         <div className="min-w-0 flex-1">
