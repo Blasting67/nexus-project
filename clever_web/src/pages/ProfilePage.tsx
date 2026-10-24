@@ -758,7 +758,7 @@ export const ProfilePage: React.FC = () => {
             <div className="platform-card p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-[var(--text)]">Temas que sigues</h2>
-                <Link to="/explorar" className="text-xs text-[var(--primary)] hover:underline">
+                <Link to="/aprender" className="text-xs text-[var(--primary)] hover:underline">
                   Explorar
                 </Link>
               </div>
@@ -784,7 +784,7 @@ export const ProfilePage: React.FC = () => {
               ) : (
                 <p className="text-xs text-[var(--text-muted)]">
                   Aún no sigues ningún tema.{' '}
-                  <Link to="/explorar" className="text-[var(--primary)] hover:underline">
+                  <Link to="/aprender" className="text-[var(--primary)] hover:underline">
                     Elige tus primeros temas
                   </Link>
                   .
@@ -799,7 +799,7 @@ export const ProfilePage: React.FC = () => {
                   {otherCategories.map((category) => (
                     <Link
                       key={category.id}
-                      to="/explorar"
+                      to="/aprender"
                       className="inline-flex items-center gap-2 rounded-full border border-dashed border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)]"
                     >
                       <i className={category.icon}></i>
