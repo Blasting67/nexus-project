@@ -20,14 +20,14 @@ export const MentorWidget: React.FC = () => {
     <>
       <button
         onClick={() => setIsMentorOpen(!isMentorOpen)}
-        className="fixed bottom-5 right-5 w-10 h-10 rounded bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--primary)] flex items-center justify-center shadow-lg transition-colors z-50 cursor-pointer text-xs"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-5 right-5 w-10 h-10 rounded bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--primary)] flex items-center justify-center shadow-lg transition-colors z-50 cursor-pointer text-xs"
         title="Mentor IA"
       >
         <i className={`fa-solid ${isMentorOpen ? 'fa-xmark' : 'fa-robot'}`}></i>
       </button>
 
       {isMentorOpen && (
-        <div className="fixed bottom-16 right-5 w-80 max-w-[calc(100vw-2rem)] h-96 bg-[var(--surface)] border border-[var(--border)] rounded shadow-2xl flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-[calc(8rem+env(safe-area-inset-bottom))] md:bottom-16 right-5 w-80 max-w-[calc(100vw-2rem)] h-96 bg-[var(--surface)] border border-[var(--border)] rounded shadow-2xl flex flex-col z-50 overflow-hidden">
           <div className="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border)] flex items-center justify-between">
             <span className="text-xs font-mono font-bold text-[var(--text)]">Mentor IA</span>
             <button
