@@ -1,10 +1,30 @@
 import React, { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { MISSIONS_BY_CATEGORY, MODULES_BY_CATEGORY } from '../data/catalog'
 import { CleverkorMascot3D } from '../components/CleverkorMascot3D'
 import { DraggableMascot, type MascotSide } from '../components/DraggableMascot'
 import { Microtext, NOTE_STYLES, ROSETTE_A, ROSETTE_B, Rosette, SmallRosette, WaveField } from '../components/note/NoteKit'
+import { ProfileStudio, STUDIO_TAB_IDS } from '../components/profile/ProfileStudio'
+import type { StudioTabId } from '../components/profile/ProfileStudio'
+import { ProfileCover } from '../components/profile/ProfileLayouts'
+import { PROFILE_STYLES } from '../components/profile/ProfileVisuals'
+import { DEFAULT_BANNER_A, DEFAULT_BANNER_B, HOME_GREETINGS, HOME_LESSON_BACKGROUNDS } from '../data/profileCustomizationOptions'
+import { ModernBanner } from '../components/profile/ProfileBanners'
+import { resolveAvatarSrc } from '../data/avatarPresets'
+import { useProfileCustomization } from '../services/profileCustomizationService'
+import type { HomeLessonBg, HomeMainSection, HomeSideSection } from '../types/profileCustomization'
+
+const LESSON_DARK_VARS = {
+  '--text': '#ffffff',
+  '--text-muted': 'rgba(255,255,255,.78)',
+  '--ink': '#ffffff',
+  '--bg': '#0b1226',
+  '--paper-2': 'rgba(255,255,255,.22)',
+  '--rule': 'rgba(255,255,255,.4)',
+} as React.CSSProperties
+
+const isSceneBg = (bg: HomeLessonBg): bg is 'aurora' | 'stars' | 'candles' | 'waves' | 'skyline' => ['aurora', 'stars', 'candles', 'waves', 'skyline'].includes(bg)
 
 const TRADING_MODULES: string[] = MODULES_BY_CATEGORY.trading
 
@@ -16,6 +36,39 @@ const STEPS = [
 ]
 
 
+
+const COMMUNITY_POSTS = [
+  {
+    id: 1,
+    author: 'Juan P.',
+    time: '18h',
+    channel: 'Trading',
+    title: '¿Cómo identifican un buen soporte?',
+    body: 'Marqué esta zona en 4H y rebotó dos veces. ¿Opiniones?',
+    likes: 7,
+    comments: 5,
+  },
+  {
+    id: 2,
+    author: 'María S.',
+    time: '1d',
+    channel: 'General',
+    title: 'Terminé mi primer módulo de gestión de riesgo',
+    body: 'Lo que más me costó fue entender el stop-loss. Aquí mi resumen.',
+    likes: 14,
+    comments: 10,
+  },
+  {
+    id: 3,
+    author: 'Luis R.',
+    time: '2d',
+    channel: 'Exchange',
+    title: 'Mi portafolio simulado de la semana',
+    body: 'Subió 6% en el exchange spot, pero con mucha volatilidad.',
+    likes: 9,
+    comments: 3,
+  },
+]
 
 const STEP_X = 40
 const CLOSES = [112, 98, 104, 84, 92, 70, 78, 58, 72, 96]
@@ -294,6 +347,10 @@ const ClosingNote: React.FC = () => (
 
 export const HomePage: React.FC = () => {
   const { user, isGuest, completeMission } = usePlatform()
+  const [custom] = useProfileCustomization(user.username)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedStudio = searchParams.get('estudio') as StudioTabId | null
+  const studioOpen = !isGuest && Boolean(requestedStudio && STUDIO_TAB_IDS.includes(requestedStudio))
 
   const [mascotSide, setMascotSide] = useState<MascotSide>('left')
   const [heroWave, setHeroWave] = useState(0)
@@ -303,14 +360,14 @@ export const HomePage: React.FC = () => {
   const today = new Date().toDateString()
   const isMissionDone = user._lastMissionDate === today
 
-  const courseProgress: number = Math.min(100, Math.max(0, (user as any).courseProgress?.trading ?? 0))
-  const nextLesson: string | undefined = (user as any).nextLesson?.trading
-  const modulesDone = Math.min(TRADING_MODULES.length, Math.round((courseProgress / 100) * TRADING_MODULES.length))
+  const modulesDone = Math.min(TRADING_MODULES.length, (user.moduleProgress?.trading || []).length)
+  const courseProgress = TRADING_MODULES.length ? Math.round((modulesDone / TRADING_MODULES.length) * 100) : 0
+  const nextLesson: string | undefined = modulesDone < TRADING_MODULES.length ? TRADING_MODULES[modulesDone] : undefined
   const currentModule = TRADING_MODULES[Math.min(modulesDone, TRADING_MODULES.length - 1)]
 
   const displayName: string = (user as any).username || (user as any).name || 'Usuario'
   const firstName: string = (user.name || displayName).split(' ')[0]
-  const avatarUrl: string | undefined = (user as any).avatar || (user as any).avatarUrl
+  const avatarUrl: string | undefined = isGuest ? undefined : resolveAvatarSrc(user.avatar, user.username)
   const xpPct = Math.min(100, (user.xp / user.xpToNext) * 100)
   const folio = String(
     Array.from(displayName).reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 1000000, 7),
@@ -333,7 +390,8 @@ export const HomePage: React.FC = () => {
   const ProfileWidget = (
     <div className="note-card relative isolate overflow-hidden">
       <div className="relative h-24 overflow-hidden bg-[var(--ink)] text-[var(--bg)]">
-        <svg viewBox="0 0 320 320" className="absolute -right-10 -top-24 h-72 w-72" aria-hidden="true">
+        {custom.homeCredentialCover && <ProfileCover custom={custom} cover={user.cover} className="absolute inset-0 h-full" />}
+        <svg viewBox="0 0 320 320" className={`absolute -right-10 -top-24 h-72 w-72 ${custom.homeCredentialCover ? 'hidden' : ''}`} aria-hidden="true">
           <path d={ROSETTE_B} fill="none" stroke="currentColor" strokeWidth="0.7" strokeOpacity="0.4" />
         </svg>
         <div className="absolute left-1/2 top-2 h-1.5 w-12 -translate-x-1/2 rounded-full border border-white/30 bg-black/30"></div>
@@ -434,7 +492,6 @@ export const HomePage: React.FC = () => {
     </div>
   )
 
-
   const MentorWidget = (
     <Link to="/mentor" className="note-card note-link group block space-y-2 p-5">
       <h2 className="note-display flex items-center gap-2 text-lg font-extrabold text-[var(--text)]">
@@ -451,75 +508,172 @@ export const HomePage: React.FC = () => {
     </Link>
   )
 
-  return (
-    <div ref={rootRef} className="note-home mx-auto max-w-6xl space-y-10 py-6">
-      <style>{NOTE_STYLES}</style>
-      <DraggableMascot side={mascotSide} onSideChange={setMascotSide} anchorRef={rootRef} />
+  const greetingText =
+    custom.homeGreeting === 'custom' ? custom.homeGreetingText.trim() || 'Continúa donde lo dejaste.' : HOME_GREETINGS.find((item) => item.id === custom.homeGreeting)?.text || 'Continúa donde lo dejaste.'
 
-      <h1 className="note-display pr-20 text-4xl font-black leading-[1.02] text-[var(--text)] sm:text-[3.4rem] lg:pr-0">
-        Hola, {firstName}.
-        <span className="block text-[var(--text-muted)]">Continúa donde lo dejaste.</span>
-      </h1>
+  const lessonBg = custom.homeLessonBg
+  const lessonIsDark = HOME_LESSON_BACKGROUNDS.find((item) => item.id === lessonBg)?.dark ?? false
 
-      <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_340px] lg:items-start">
-        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-16">
-          <section className="note-bill note-paper relative isolate order-1 overflow-hidden rounded-[24px] lg:order-none">
-            <Rosette className="pointer-events-none absolute -right-40 -top-44 -z-10 h-[440px] w-[440px]" />
-            <div className="absolute inset-x-6 top-3">
-              <Microtext />
-            </div>
-            <div className="p-6 pt-10 sm:p-9 sm:pt-12">
-              <div className="flex items-center gap-3">
-                <span className="note-wide text-xs font-extrabold text-[var(--ink)]">TRADING Y FINANZAS</span>
-                <span className="h-px w-8 bg-[var(--rule)]"></span>
-                <span className="note-num text-sm text-[var(--text-muted)]">
-                  Módulo {String(Math.min(modulesDone + 1, TRADING_MODULES.length)).padStart(2, '0')} de {String(TRADING_MODULES.length).padStart(2, '0')}
-                </span>
-              </div>
-              <h2 className="note-display mt-4 max-w-[18ch] text-3xl font-black leading-[1.02] text-[var(--text)] sm:text-[2.6rem]">
-                {nextLesson || currentModule}
-              </h2>
+  const mainBlocks: Record<HomeMainSection, React.ReactNode> = {
+    lesson: (
+    <section
+      className={`note-bill relative isolate overflow-hidden rounded-[24px] ${lessonBg === 'bill' ? 'note-paper' : lessonBg === 'paper' ? 'border border-[var(--rule)] bg-[var(--surface)]' : 'border border-transparent'}`}
+      style={lessonIsDark ? LESSON_DARK_VARS : undefined}
+    >
+      {lessonBg === 'ink' && <div className="absolute inset-0 -z-20" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 82%, #000), color-mix(in srgb, var(--primary) 55%, #0b1226))' }}></div>}
+      {isSceneBg(lessonBg) && (
+        <>
+          <ModernBanner style={lessonBg} colorA={DEFAULT_BANNER_A} colorB={DEFAULT_BANNER_B} speed={1} className="absolute inset-0 -z-20 h-full" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(5,10,24,.78),rgba(5,10,24,.35)_75%)]"></div>
+        </>
+      )}
+      {(lessonBg === 'bill' || lessonBg === 'ink') && <Rosette className={`pointer-events-none absolute -right-40 -top-44 -z-10 h-[440px] w-[440px] ${lessonBg === 'ink' ? 'opacity-40' : ''}`} />}
+      {lessonBg !== 'paper' && (
+        <div className="absolute inset-x-6 top-3">
+          <Microtext />
+        </div>
+      )}
+      <div className="p-6 pt-10 sm:p-9 sm:pt-12">
+        <div className="flex items-center gap-3">
+          <span className="note-wide text-xs font-extrabold text-[var(--ink)]">TRADING Y FINANZAS</span>
+          <span className="h-px w-8 bg-[var(--rule)]"></span>
+          <span className="note-num text-sm text-[var(--text-muted)]">
+            Módulo {String(Math.min(modulesDone + 1, TRADING_MODULES.length)).padStart(2, '0')} de {String(TRADING_MODULES.length).padStart(2, '0')}
+          </span>
+        </div>
+        <h2 className="note-display mt-4 max-w-[18ch] text-3xl font-black leading-[1.02] text-[var(--text)] hyphens-auto [overflow-wrap:break-word] sm:text-[2.6rem]">
+          {nextLesson || currentModule}
+        </h2>
 
-              <div className="mt-7 grid grid-cols-8 gap-1.5" aria-label={`Progreso del curso: ${courseProgress}%`}>
-                {TRADING_MODULES.map((title, i) => (
-                  <span
-                    key={title}
-                    title={title}
-                    className={`h-2.5 rounded-full ${i < modulesDone ? 'bg-[var(--ink)]' : i === modulesDone ? 'bg-[color-mix(in_srgb,var(--ink)_45%,transparent)]' : 'bg-[var(--paper-2)]'}`}
-                  ></span>
-                ))}
-              </div>
-              <div className="mt-2 flex justify-between text-sm text-[var(--text-muted)]">
-                <span>
-                  {modulesDone} de {TRADING_MODULES.length} módulos completados
-                </span>
-                <span className="note-num">{courseProgress}%</span>
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link to="/aprender?cat=trading" className="note-btn note-btn-ink">
-                  <i className="fa-solid fa-play text-sm"></i>
-                  Seguir nivel
-                </Link>
-                <Link to="/aprender?cat=trading&view=path" className="note-btn note-btn-line">
-                  Ver camino completo
-                </Link>
-              </div>
-            </div>
-          </section>
-
-
-          <div className="order-5 lg:order-none">
-            <ExchangeShowcase includeMentor={false} />
-          </div>
+        <div className="mt-7 grid grid-cols-8 gap-1.5" aria-label={`Progreso del curso: ${courseProgress}%`}>
+          {TRADING_MODULES.map((title, i) => (
+            <span
+              key={title}
+              title={title}
+              className={`h-2.5 rounded-full ${i < modulesDone ? 'bg-[var(--ink)]' : i === modulesDone ? 'bg-[color-mix(in_srgb,var(--ink)_45%,transparent)]' : 'bg-[var(--paper-2)]'}`}
+            ></span>
+          ))}
+        </div>
+        <div className="mt-2 flex justify-between text-sm text-[var(--text-muted)]">
+          <span>
+            {modulesDone} de {TRADING_MODULES.length} módulos completados
+          </span>
+          <span className="note-num">{courseProgress}%</span>
         </div>
 
-        <aside className="contents lg:flex lg:flex-col lg:gap-5">
-          <div className="order-2 lg:order-none">{ProfileWidget}</div>
-          <div className="order-3 lg:order-none">{MissionWidget}</div>
-          <div className="order-6 lg:order-none">{MentorWidget}</div>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link to="/aprender?cat=trading" className="note-btn note-btn-ink">
+            <i className="fa-solid fa-play text-sm"></i>
+            Seguir nivel
+          </Link>
+          <Link to="/aprender?cat=trading&view=path" className="note-btn note-btn-line">
+            Ver camino completo
+          </Link>
+        </div>
+      </div>
+    </section>
+    ),
+    community: (
+    <section className="min-w-0 space-y-6">
+      <SectionHeading
+        title="Únete a la comunidad"
+        text="Lo que otros estudiantes están compartiendo."
+        action={
+          <Link to="/comunidad" className="note-display group inline-flex shrink-0 items-center gap-1.5 text-base font-bold text-[var(--ink)]">
+            Ir a Comunidad
+            <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-1"></i>
+          </Link>
+        }
+      />
+      <div className="rail-fade -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 pr-16">
+        {COMMUNITY_POSTS.map((p) => (
+          <Link key={p.id} to="/comunidad" className="note-card note-link block w-[80%] shrink-0 snap-start space-y-3 p-5 sm:w-72">
+            <div className="flex items-center gap-3">
+              <span className="note-display flex h-10 w-10 items-center justify-center rounded-full border border-[var(--rule)] text-base font-extrabold text-[var(--ink)]">
+                {p.author.charAt(0)}
+              </span>
+              <div className="leading-tight">
+                <div className="text-[15px] font-semibold text-[var(--text)]">
+                  {p.author} <span className="font-normal text-[var(--text-muted)]">&middot; {p.time}</span>
+                </div>
+                <div className="text-sm text-[var(--text-muted)]">#{p.channel}</div>
+              </div>
+            </div>
+            <h3 className="note-display text-lg font-bold leading-snug text-[var(--text)]">{p.title}</h3>
+            <p className="line-clamp-2 text-[15px] text-[var(--text-muted)]">{p.body}</p>
+            <div className="flex items-center gap-4 pt-1 text-sm text-[var(--text-muted)]">
+              <span className="note-num flex items-center gap-1.5">
+                <i className="fa-regular fa-heart"></i>
+                {p.likes}
+              </span>
+              <span className="note-num flex items-center gap-1.5">
+                <i className="fa-regular fa-comment"></i>
+                {p.comments}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+    ),
+    exchange: <ExchangeShowcase includeMentor={false} />,
+  }
+
+  const sideBlocks: Record<HomeSideSection, React.ReactNode> = {
+    credential: ProfileWidget,
+    mission: MissionWidget,
+    mentor: MentorWidget,
+  }
+
+  const visibleMain = custom.homeMain.filter((id) => id === 'lesson' || !custom.homeHidden.includes(id))
+  const visibleSide = custom.homeSide.filter((id) => !custom.homeHidden.includes(id))
+  const mobileOrder = (column: 'main' | 'side', index: number) => (column === 'side' ? index + 1 : index === 0 ? 0 : visibleSide.length + index)
+
+  return (
+    <div ref={rootRef} className={`note-home mx-auto max-w-6xl py-6 transition-[padding] duration-300 ${custom.homeCompact ? 'space-y-6' : 'space-y-10'} ${studioOpen ? 'lg:pr-[452px]' : ''}`}>
+      <style>{NOTE_STYLES}</style>
+      {custom.homeCredentialCover && <style>{PROFILE_STYLES}</style>}
+      {custom.homeMascot && <DraggableMascot side={mascotSide} onSideChange={setMascotSide} anchorRef={rootRef} />}
+
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="note-display pr-20 text-4xl font-black leading-[1.02] text-[var(--text)] sm:text-[3.4rem] lg:pr-0">
+          Hola, {firstName}.
+          <span className="block text-[var(--text-muted)]">{greetingText}</span>
+        </h1>
+        <button
+          type="button"
+          onClick={() => setSearchParams({ estudio: 'inicio' })}
+          className="note-btn note-btn-line !h-10 !px-4 text-[14px]"
+        >
+          <i className="fa-solid fa-wand-magic-sparkles text-[12px]"></i>
+          Personalizar inicio
+        </button>
+      </div>
+
+      <div className={`flex flex-col lg:grid lg:items-start ${custom.homeCompact ? 'gap-5' : 'gap-8'} ${custom.homeSidebarLeft ? 'lg:grid-cols-[340px_1fr]' : 'lg:grid-cols-[1fr_340px]'}`}>
+        <div className={`contents lg:flex lg:min-w-0 lg:flex-col ${custom.homeCompact ? 'lg:gap-10' : 'lg:gap-16'} ${custom.homeSidebarLeft ? 'lg:order-2' : ''}`}>
+          {visibleMain.map((id, index) => (
+            <div key={id} className="min-w-0" style={{ order: mobileOrder('main', index) }}>
+              {mainBlocks[id]}
+            </div>
+          ))}
+        </div>
+
+        <aside className={`contents lg:flex lg:flex-col lg:gap-5 ${custom.homeSidebarLeft ? 'lg:order-1' : ''}`}>
+          {visibleSide.map((id, index) => (
+            <div key={id} style={{ order: mobileOrder('side', index) }}>
+              {sideBlocks[id]}
+            </div>
+          ))}
         </aside>
       </div>
+
+      <ProfileStudio
+        open={studioOpen}
+        tab={studioOpen ? (requestedStudio as StudioTabId) : 'inicio'}
+        onTabChange={(tab) => setSearchParams({ estudio: tab }, { replace: true })}
+        onClose={() => setSearchParams({})}
+      />
     </div>
   )
 }

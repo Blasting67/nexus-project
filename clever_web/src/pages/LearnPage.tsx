@@ -4,6 +4,7 @@ import { usePlatform } from '../context/PlatformContext'
 import { MODULES_BY_CATEGORY } from '../data/catalog'
 import { GuestSignupGate } from '../components/GuestSignupGate'
 import { TradingTrailMap, type TrailLessonStatus, type TrailScene } from '../components/learn/TradingTrailMap'
+import { useProfileCustomization } from '../services/profileCustomizationService'
 import { Microtext, NOTE_STYLES, ROSETTE_SMALL, Rosette, SmallRosette } from '../components/note/NoteKit'
 
 const COURSE_ID = 'trading'
@@ -23,6 +24,8 @@ const STAGES = [
 ]
 
 const LESSON_SCENES: TrailScene[] = ['company', 'candles', 'range', 'stoploss', 'emotions', 'orders', 'simulator', 'backtest']
+
+const WORLD_PHRASES: Record<string, string> = { city: 'la ciudad', candles: 'el Valle de las velas', island: 'la Isla del tesoro' }
 
 const LESSONS = TRADING_MODULES.map((title, index) => ({
   title,
@@ -165,6 +168,10 @@ const RewardModal: React.FC<{ reward: { title: string; bonus: number; coins: num
 
 export const LearnPage: React.FC = () => {
   const { user, isGuest, completeModule, addXP, addCoins, logActivity, showToast, updateUserProfile } = usePlatform()
+  const [customization, updateCustomization] = useProfileCustomization(user.username)
+  const [previewEnd, setPreviewEnd] = useState(false)
+  const isAdminView = !isGuest && customization.adminMode
+  const showEnd = isAdminView && previewEnd
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [isGuestGateOpen, setIsGuestGateOpen] = useState(isGuest)
@@ -702,21 +709,69 @@ export const LearnPage: React.FC = () => {
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--rule)] pb-5">
             <div>
               <h2 className="note-display text-3xl font-black leading-tight text-[var(--text)] sm:text-4xl">Tu mapa de niveles</h2>
-              <p className="mt-2 text-base text-[var(--text-muted)]">Recorre la ciudad nivel por nivel. Arrastra el mapa para ver todo el camino.</p>
+              <p className="mt-2 text-base text-[var(--text-muted)]">
+                Recorre {WORLD_PHRASES[isGuest ? 'city' : customization.learnWorld]} nivel por nivel. Arrastra el mapa para ver todo el camino.
+              </p>
             </div>
+            {!isGuest && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateCustomization({ adminMode: !customization.adminMode })
+                    setPreviewEnd(false)
+                  }}
+                  aria-pressed={isAdminView}
+                  title={isAdminView ? 'Cambiar a usuario normal' : 'Cambiar a admin'}
+                  className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px] font-semibold transition-colors ${
+                    isAdminView ? 'border-[var(--ink-3)] bg-[var(--ink-3)] text-[var(--bg)]' : 'border-[var(--rule)] text-[var(--text-muted)] hover:bg-[var(--paper)]'
+                  }`}
+                >
+                  <i className={`fa-solid ${isAdminView ? 'fa-user-shield' : 'fa-user'} text-[12px]`}></i>
+                  {isAdminView ? 'Admin' : 'Usuario'}
+                </button>
+                {isAdminView && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewEnd((value) => !value)}
+                    aria-pressed={showEnd}
+                    className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px] font-semibold transition-colors ${
+                      showEnd ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--bg)]' : 'border-[var(--rule)] text-[var(--ink)] hover:bg-[var(--paper)]'
+                    }`}
+                  >
+                    <i className={`fa-solid ${showEnd ? 'fa-rotate-left' : 'fa-flag-checkered'} text-[12px]`}></i>
+                    {showEnd ? 'Ver mi progreso' : 'Ver el final'}
+                  </button>
+                )}
+              </div>
+            )}
+            {!isGuest && (
+              <Link to="/perfil?estudio=mundo" className="inline-flex h-10 items-center gap-2 rounded-full border border-[var(--rule)] px-4 text-[14px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--paper)]">
+                <i className="fa-solid fa-earth-americas text-[12px]"></i>
+                Cambiar mundo
+              </Link>
+            )}
             <span className="note-num text-sm font-semibold text-[var(--text-muted)]">
               {completedSet.size} de {totalLessons} niveles
             </span>
           </div>
+          {showEnd && (
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--ink-3)] bg-[color-mix(in_srgb,var(--ink-3)_8%,transparent)] px-4 py-3 text-[14px] text-[var(--text)]">
+              <i className="fa-solid fa-user-shield text-[var(--ink-3)]"></i>
+              Vista de admin: el mapa muestra el curso terminado. Tu progreso real no cambia.
+            </div>
+          )}
           <div className="relative h-[72vh] min-h-[520px] lg:h-auto lg:flex-1">
             <div className="absolute inset-0">
               <TradingTrailMap
+                key={showEnd ? 'end' : 'real'}
                 lessons={LESSONS}
                 stages={STAGES}
-                statusOf={statusOf}
+                statusOf={showEnd ? () => 'completed' : statusOf}
                 onOpenLesson={openLesson}
-                isCourseDone={isCourseDone}
-                completedCount={completedSet.size}
+                isCourseDone={showEnd || isCourseDone}
+                completedCount={showEnd ? totalLessons : completedSet.size}
+                world={isGuest ? 'city' : customization.learnWorld}
               />
             </div>
           </div>

@@ -47,7 +47,7 @@ export interface AnalysisOptionCardProps {
 }
 
 const ON = '.ao-root:is(:hover,:focus-visible,[data-active="true"])'
-const DARK = ':root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"])'
+const DARK = ':root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"])'
 
 const CSS = `
 .ao-origin-b{transform-box:fill-box;transform-origin:50% 100%}

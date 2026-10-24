@@ -325,7 +325,7 @@ const BannerScene: React.FC<{ style: BannerStyle; cover?: string }> = ({ style, 
     )
   }
 
-  if (style === 'grid') {
+  if (style === 'skyline') {
     return (
       <>
         <div className="pf-layer pf-gradient" />

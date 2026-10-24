@@ -27,7 +27,7 @@ const CSS = `
 
 
 :root{--hud-emerald:#065f46;--hud-emerald-soft:#059669;--hud-rose:#9f1239;--hud-rose-soft:#e11d48;--hud-violet:#6d28d9;--hud-violet-soft:#7c3aed}
-:root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]){--hud-emerald:#6ee7b7;--hud-emerald-soft:#34d399;--hud-rose:#fda4af;--hud-rose-soft:#fb7185;--hud-violet:#c4b5fd;--hud-violet-soft:#a78bfa}
+:root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]){--hud-emerald:#6ee7b7;--hud-emerald-soft:#34d399;--hud-rose:#fda4af;--hud-rose-soft:#fb7185;--hud-violet:#c4b5fd;--hud-violet-soft:#a78bfa}
 .hud-panel{background:color-mix(in srgb,var(--surface) 84%,transparent);--tw-ring-color:var(--border)}
 .hud-panel-active{background:var(--surface);--tw-ring-color:color-mix(in srgb,#8b5cf6 55%,var(--border))}
 .hud-tint-emerald{background:linear-gradient(135deg,color-mix(in srgb,#10b981 14%,var(--surface)),color-mix(in srgb,#14b8a6 7%,var(--surface)));--tw-ring-color:color-mix(in srgb,#10b981 30%,var(--border))}
@@ -44,7 +44,7 @@ const CSS = `
 .hud-ink-rose{color:var(--hud-rose)}
 .hud-ink-violet{color:var(--hud-violet-soft)}
 .hud-ring-surface{--tw-ring-color:var(--surface)}
-:root:is([data-theme="dark"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .hud-blob{opacity:.28}
+:root:is([data-theme="dark"],[data-theme="terminal"],[data-theme="aurora"],[data-theme="neon"],[data-theme="sunset"],[data-theme="ocean"]) .hud-blob{opacity:.28}
 
 @media (prefers-reduced-motion:reduce){
   .hud-label-in,.hud-wheel,.hud-bob,.hud-nudge,.hud-glow,.hud-glow-sky,.hud-fade,.hud-ping{animation:none!important}

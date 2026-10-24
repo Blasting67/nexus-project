@@ -161,8 +161,11 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     }
     document.documentElement.setAttribute('data-theme', user.theme || 'light')
-    if (user.accentColor) {
-      document.documentElement.style.setProperty('--primary', user.accentColor)
+    const accent = (user.accentColor || '').toLowerCase()
+    if (accent && accent !== '#0284c7') {
+      document.documentElement.style.setProperty('--primary', accent)
+    } else {
+      document.documentElement.style.removeProperty('--primary')
     }
   }, [user])
 

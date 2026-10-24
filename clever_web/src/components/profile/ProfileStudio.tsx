@@ -1,446 +1,775 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePlatform } from '../../context/PlatformContext'
+import { AVATAR_PRESETS } from '../../data/avatarPresets'
 import {
   AVATAR_SHAPES,
   BANNER_PRESETS,
   BANNER_STYLES,
-  DEFAULT_BANNER_A,
-  DEFAULT_BANNER_B,
   FRAME_COLORS,
   FRAME_STYLES,
-  MAX_PINNED_ACHIEVEMENTS,
+  HOME_GREETINGS,
+  HOME_LESSON_BACKGROUNDS,
+  HOME_MAIN_SECTIONS,
+  HOME_SIDE_SECTIONS,
+  LEARN_WORLDS,
+  MAX_GREETING_LENGTH,
   MAX_STATUS_LENGTH,
+  NAV_STYLES,
+  PROFILE_LAYOUTS,
   STAT_OPTIONS,
   STATUS_ICONS,
-  STATUS_SUGGESTIONS,
+  unlockKey,
 } from '../../data/profileCustomizationOptions'
-import type { ProfileCustomization, StatId } from '../../types/profileCustomization'
-import { getShapeStyle } from './ProfileVisuals'
+import { ACCENT_COLORS, THEME_GROUPS, THEME_OPTIONS } from '../../data/themeOptions'
+import type { ThemeOption } from '../../data/themeOptions'
+import { getUnlockState, loadProfileCustomization, resetProfileCustomization, useProfileCustomization } from '../../services/profileCustomizationService'
+import type { UnlockState } from '../../services/profileCustomizationService'
+import type { HomeMainSection, HomeSideSection, LearnWorld, NavStyle, ProfileLayout, StatId, UnlockRule } from '../../types/profileCustomization'
 
-export type StudioTabId = 'banner' | 'avatar' | 'status' | 'showcase' | 'effects'
+export type StudioTabId = 'diseno' | 'inicio' | 'datos' | 'tema' | 'barra' | 'mundo'
 
-export const STUDIO_TAB_IDS: StudioTabId[] = ['banner', 'avatar', 'status', 'showcase', 'effects']
+export const STUDIO_TAB_IDS: StudioTabId[] = ['diseno', 'inicio', 'datos', 'tema', 'barra', 'mundo']
 
-const STUDIO_TABS: { id: StudioTabId; label: string; icon: string }[] = [
-  { id: 'banner', label: 'Banner', icon: 'fa-solid fa-panorama' },
-  { id: 'avatar', label: 'Avatar', icon: 'fa-solid fa-user-astronaut' },
-  { id: 'status', label: 'Estado', icon: 'fa-solid fa-comment-dots' },
-  { id: 'showcase', label: 'Vitrina', icon: 'fa-solid fa-trophy' },
-  { id: 'effects', label: 'Efectos', icon: 'fa-solid fa-wand-magic-sparkles' },
+const TABS: { id: StudioTabId; label: string; icon: string }[] = [
+  { id: 'diseno', label: 'Perfil', icon: 'fa-solid fa-swatchbook' },
+  { id: 'inicio', label: 'Inicio', icon: 'fa-solid fa-house' },
+  { id: 'datos', label: 'Datos', icon: 'fa-solid fa-user-pen' },
+  { id: 'tema', label: 'Tema', icon: 'fa-solid fa-palette' },
+  { id: 'barra', label: 'Barra', icon: 'fa-solid fa-bars' },
+  { id: 'mundo', label: 'Mundo', icon: 'fa-solid fa-earth-americas' },
 ]
 
-interface ToggleProps {
-  checked: boolean
-  onChange: (value: boolean) => void
-  label: string
+const STUDIO_STYLES = `
+.st-panel{transition:transform .38s cubic-bezier(.23,1,.32,1),visibility .38s}
+.st-panel[data-open="false"]{transform:translateX(104%);visibility:hidden}
+@media (max-width:1023px){.st-panel[data-open="false"]{transform:translateY(104%)}}
+.st-scrim{transition:opacity .25s,visibility .25s}
+.st-scrim[data-open="false"]{opacity:0;visibility:hidden;pointer-events:none}
+.st-tile{transition:border-color .2s,transform .25s cubic-bezier(.23,1,.32,1),box-shadow .2s}
+.st-tile:not(:disabled):hover{transform:translateY(-2px)}
+.st-tile:not(:disabled):active{transform:scale(.98)}
+.st-tab-ind{transition:left .35s cubic-bezier(.23,1,.32,1)}
+.st-section{animation:st-in .35s cubic-bezier(.23,1,.32,1) both}
+@keyframes st-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.st-panel,.st-scrim,.st-tile,.st-tab-ind{transition:none!important}.st-section{animation:none}}
+`
+
+const BIO_MAX = 160
+const GOAL_MAX = 120
+const NAME_MAX = 40
+
+const resizeImage = (file: File, maxWidth: number, quality = 0.82): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('Imagen no válida'))
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width)
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject(new Error('Canvas no disponible'))
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+
+const SectionTitle: React.FC<{ icon: string; title: string; hint?: string }> = ({ icon, title, hint }) => (
+  <div className="mb-3">
+    <h3 className="flex items-center gap-2 text-[15px] font-bold text-[var(--text)]">
+      <i className={`${icon} text-[13px] text-[var(--ink)]`}></i>
+      {title}
+    </h3>
+    {hint && <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">{hint}</p>}
+  </div>
+)
+
+const LockBadge: React.FC<{ state: UnlockState }> = ({ state }) => {
+  if (state.unlocked) return null
+  return state.reason === 'price' ? (
+    <span className="note-num inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,#d99a1e_16%,var(--surface))] px-2 py-0.5 text-[11.5px] font-bold text-[#a8720f]">
+      <i className="fa-solid fa-coins text-[10px]"></i>
+      {state.price}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-alt)] px-2 py-0.5 text-[11.5px] font-bold text-[var(--text-muted)]">
+      <i className="fa-solid fa-lock text-[9px]"></i>
+      Nivel {state.level}
+    </span>
+  )
+}
+
+interface OptionTileProps {
+  selected: boolean
+  state: UnlockState
+  pending: boolean
+  coins: number
+  title: string
   description?: string
+  preview?: React.ReactNode
+  onSelect: () => void
+  onBuy: () => void
+  onCancel: () => void
+  compact?: boolean
 }
 
-const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, description }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={() => onChange(!checked)}
-    className="w-full flex items-center justify-between gap-3 py-2 text-left cursor-pointer"
-  >
-    <span>
-      <span className="block text-xs font-bold text-[var(--text)]">{label}</span>
-      {description && <span className="block text-[11px] text-[var(--text-muted)]">{description}</span>}
-    </span>
-    <span
-      className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${
-        checked ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-4' : ''
+const OptionTile: React.FC<OptionTileProps> = ({ selected, state, pending, coins, title, description, preview, onSelect, onBuy, onCancel, compact = false }) => {
+  const isLevelLocked = !state.unlocked && state.reason === 'level'
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        disabled={isLevelLocked}
+        onClick={onSelect}
+        aria-pressed={selected}
+        title={isLevelLocked && !state.unlocked && state.reason === 'level' ? `Se desbloquea en el nivel ${state.level}` : undefined}
+        className={`st-tile group w-full overflow-hidden rounded-2xl border-2 bg-[var(--surface)] text-left disabled:cursor-not-allowed ${
+          selected ? 'border-[var(--ink)] shadow-[0_10px_24px_-16px_var(--ink)]' : 'border-[var(--border)] hover:border-[color-mix(in_srgb,var(--ink)_45%,var(--border))]'
         }`}
-      />
-    </span>
-  </button>
-)
-
-const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{children}</div>
-)
-
-const tileClass = (active: boolean) =>
-  `flex flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-3 text-[11px] font-semibold transition-all cursor-pointer ${
-    active
-      ? 'border-[var(--primary)] bg-[var(--bg-alt)] text-[var(--primary)]'
-      : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)]'
-  }`
-
-interface UnlockedAchievement {
-  id: string
-  name: string
+      >
+        {preview && <div className={`relative overflow-hidden border-b border-[var(--border)] ${compact ? 'h-20' : 'h-28'} ${isLevelLocked ? 'opacity-55 grayscale' : ''}`}>{preview}</div>}
+        <div className="flex items-start justify-between gap-2 p-3">
+          <div className="min-w-0">
+            <div className="text-[14px] font-bold text-[var(--text)]">{title}</div>
+            {description && <div className="mt-0.5 text-[12.5px] leading-snug text-[var(--text-muted)]">{description}</div>}
+          </div>
+          {selected ? (
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-[11px] text-[var(--bg)]">
+              <i className="fa-solid fa-check"></i>
+            </span>
+          ) : (
+            <LockBadge state={state} />
+          )}
+        </div>
+      </button>
+      {pending && !state.unlocked && state.reason === 'price' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-3 text-center backdrop-blur-sm">
+          <div className="text-[13px] font-semibold text-[var(--text)]">{title}</div>
+          {coins >= state.price ? (
+            <button type="button" onClick={onBuy} className="note-btn note-btn-ink h-10 px-4 text-[14px]">
+              <i className="fa-solid fa-coins text-[12px]"></i>
+              Comprar por {state.price} Kor
+            </button>
+          ) : (
+            <div className="text-[13px] text-[var(--text-muted)]">
+              Te faltan <span className="note-num font-bold text-[var(--ink-3)]">{state.price - coins}</span> Kor
+            </div>
+          )}
+          <button type="button" onClick={onCancel} className="text-[13px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">
+            Cancelar
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
+
+const ThemePreviewArt: React.FC<{ theme: ThemeOption }> = ({ theme }) => {
+  const p = theme.preview
+  return (
+    <div className="absolute inset-0" style={{ background: p.background }}>
+      <div className="absolute inset-0" style={{ background: p.pattern }}></div>
+      <div className="absolute inset-x-0 top-0 flex h-5 items-center gap-1.5 px-2" style={{ background: p.surface, borderBottom: `1px solid ${p.border}` }}>
+        <span className="h-2 w-2 rounded-full" style={{ background: p.accent }}></span>
+        <span className="h-1 w-8 rounded-full" style={{ background: p.muted, opacity: 0.5 }}></span>
+        <span className="h-1 w-6 rounded-full" style={{ background: p.accent }}></span>
+      </div>
+      <div className="absolute bottom-3 left-3 right-3 rounded-lg px-2.5 py-2" style={{ background: p.surface, border: `1px solid ${p.border}` }}>
+        <div className="text-[18px] font-black leading-none" style={{ color: p.text, fontFamily: p.font }}>
+          Aa 1,250
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <span className="h-1.5 flex-1 rounded-full" style={{ background: p.accent }}></span>
+          <span className="h-1.5 w-6 rounded-full" style={{ background: p.muted, opacity: 0.4 }}></span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const NavPreviewArt: React.FC<{ style: NavStyle }> = ({ style }) => {
+  const bar = 'bg-[var(--surface)] border border-[var(--border)]'
+  const dot = <span className="h-2.5 w-2.5 rounded-full bg-[var(--ink)]"></span>
+  const links = (
+    <span className="flex gap-1.5">
+      <span className="h-1.5 w-7 rounded-full bg-[var(--ink)]"></span>
+      <span className="h-1.5 w-6 rounded-full bg-[var(--text-dim)]"></span>
+      <span className="h-1.5 w-8 rounded-full bg-[var(--text-dim)]"></span>
+    </span>
+  )
+  return (
+    <div className="absolute inset-0 bg-[var(--bg)] p-2.5">
+      {style === 'bill' && (
+        <div className={`${bar} overflow-hidden rounded-md`}>
+          <div className="h-1.5 bg-[var(--paper-2)]"></div>
+          <div className="flex h-6 items-center gap-2 px-2">
+            {dot}
+            {links}
+          </div>
+          <div className="mx-[38px] -mt-0.5 h-0.5 w-7 rounded bg-[var(--ink)]"></div>
+        </div>
+      )}
+      {style === 'island' && (
+        <div className={`${bar} mx-3 mt-1.5 flex h-7 items-center gap-2 rounded-full px-2.5 shadow-md`}>
+          {dot}
+          <span className="h-4 w-9 rounded-full bg-[color-mix(in_srgb,var(--ink)_16%,transparent)]"></span>
+          <span className="h-1.5 w-6 rounded-full bg-[var(--text-dim)]"></span>
+        </div>
+      )}
+      {style === 'ticker' && (
+        <div className={`${bar} overflow-hidden rounded-md`}>
+          <div className="flex h-6 items-center gap-2 px-2">
+            {dot}
+            {links}
+          </div>
+          <div className="flex h-3.5 items-center gap-2 border-t border-[var(--border)] bg-[var(--paper)] px-1.5">
+            <span className="h-2 w-6 rounded-sm bg-[var(--ink)]"></span>
+            <span className="h-1 w-5 rounded-full bg-[var(--success)]"></span>
+            <span className="h-1 w-5 rounded-full bg-[var(--danger)]"></span>
+            <span className="h-1 w-5 rounded-full bg-[var(--success)]"></span>
+          </div>
+        </div>
+      )}
+      {style === 'sidebar' && (
+        <div className="flex h-full gap-2">
+          <div className={`${bar} flex w-7 flex-col items-center gap-1.5 rounded-md py-2`}>
+            {dot}
+            <span className="h-1.5 w-3 rounded-full bg-[var(--ink)]"></span>
+            <span className="h-1.5 w-3 rounded-full bg-[var(--text-dim)]"></span>
+            <span className="h-1.5 w-3 rounded-full bg-[var(--text-dim)]"></span>
+          </div>
+          <div className="flex-1 rounded-md border border-dashed border-[var(--border)]"></div>
+        </div>
+      )}
+      {style !== 'sidebar' && <div className="mt-2 h-[calc(100%-44px)] rounded-md border border-dashed border-[var(--border)]"></div>}
+    </div>
+  )
+}
+
+const WorldPreviewArt: React.FC<{ world: LearnWorld }> = ({ world }) => {
+  const palette = {
+    city: { ground: '#c3e5b5', road: '#4b5563', lane: '#f6f1e4', a: '#fbf7ef', b: '#a9cbea' },
+    candles: { ground: '#f1d9a8', road: '#b98a52', lane: '#fff3d6', a: '#2f9e66', b: '#d4574c' },
+    island: { ground: '#2aa7c9', road: '#a0703f', lane: '#e6c79a', a: '#f2d48f', b: '#3f8b52' },
+  }[world]
+  return (
+    <svg viewBox="0 0 200 110" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="200" height="110" fill={palette.ground} />
+      {world === 'island' && <ellipse cx="100" cy="58" rx="86" ry="44" fill={palette.a} />}
+      <path d="M100 -5 C150 25 50 45 100 70 S150 100 100 120" fill="none" stroke={palette.road} strokeWidth="16" strokeLinecap="round" />
+      <path d="M100 -5 C150 25 50 45 100 70 S150 100 100 120" fill="none" stroke={palette.lane} strokeWidth="1.5" strokeDasharray="5 5" />
+      {world === 'city' && (
+        <>
+          <rect x="18" y="18" width="26" height="34" rx="2" fill={palette.a} stroke="#e6dece" />
+          <rect x="150" y="56" width="30" height="40" rx="2" fill={palette.a} stroke="#e6dece" />
+          <rect x="22" y="24" width="7" height="5" fill={palette.b} />
+          <rect x="33" y="24" width="7" height="5" fill="#ffd66b" />
+          <circle cx="160" cy="24" r="10" fill="#55a564" />
+        </>
+      )}
+      {world === 'candles' && (
+        <>
+          <rect x="22" y="20" width="14" height="40" rx="2" fill={palette.a} />
+          <rect x="28" y="12" width="2" height="56" fill={palette.a} />
+          <rect x="160" y="50" width="14" height="30" rx="2" fill={palette.b} />
+          <rect x="166" y="42" width="2" height="46" fill={palette.b} />
+          <ellipse cx="150" cy="22" rx="9" ry="11" fill="#e4572e" />
+          <rect x="147" y="33" width="6" height="5" fill="#7a5230" />
+        </>
+      )}
+      {world === 'island' && (
+        <>
+          <path d="M40 60 q-2 -20 4 -30" stroke="#7a5230" strokeWidth="3" fill="none" />
+          <path d="M44 30 q-14 -2 -20 6 M44 30 q12 -6 20 2" stroke={palette.b} strokeWidth="4" fill="none" strokeLinecap="round" />
+          <rect x="146" y="70" width="22" height="14" rx="2" fill="#8a5a3b" />
+          <rect x="146" y="70" width="22" height="5" fill="#E3A92F" />
+        </>
+      )}
+      <circle cx="100" cy="70" r="7" fill="var(--ink)" stroke="#fff" strokeWidth="2" />
+    </svg>
+  )
+}
+
+const LayoutPreviewArt: React.FC<{ layout: ProfileLayout }> = ({ layout }) => (
+  <div className="absolute inset-0 bg-[var(--paper)] p-2.5">
+    {layout === 'credential' && (
+      <div className="h-full overflow-hidden rounded-md border border-[var(--rule)] bg-[var(--surface)]">
+        <div className="h-8 bg-[var(--paper-2)]" style={{ background: 'repeating-radial-gradient(circle at 90% 0%, transparent 0 5px, color-mix(in srgb, var(--ink) 25%, transparent) 5px 6px)' }}></div>
+        <div className="-mt-3 flex items-end gap-1.5 px-2">
+          <span className="h-7 w-7 rounded-full border-2 border-[var(--surface)] bg-[var(--ink)]"></span>
+          <span className="mb-0.5 h-2 w-14 rounded-full bg-[var(--text)]"></span>
+        </div>
+        <div className="mx-2 mt-2 h-1.5 rounded-full bg-[var(--ink)] opacity-70"></div>
+      </div>
+    )}
+    {layout === 'office' && (
+      <svg viewBox="0 0 120 70" className="h-full w-full" aria-hidden="true">
+        <rect width="120" height="70" rx="4" fill="var(--surface)" />
+        <rect x="6" y="6" width="44" height="26" rx="2" fill="#bfe3ff" />
+        <rect x="10" y="18" width="6" height="14" fill="#5b7aa0" />
+        <rect x="19" y="12" width="7" height="20" fill="#5b7aa0" />
+        <rect x="29" y="20" width="6" height="12" fill="#5b7aa0" />
+        <rect x="54" y="34" width="24" height="16" rx="2" fill="#141a22" />
+        <rect x="80" y="36" width="20" height="14" rx="2" fill="#141a22" />
+        <path d="M57 46 l5 -4 l5 2 l6 -6" stroke="var(--primary)" strokeWidth="1.5" fill="none" />
+        <rect x="40" y="52" width="74" height="4" rx="1" fill="#8a5a3b" />
+        <rect x="92" y="6" width="20" height="22" rx="2" fill="#7a5230" />
+        <circle cx="102" cy="16" r="6" fill="var(--ink)" />
+      </svg>
+    )}
+    {layout === 'card' && (
+      <div className="flex h-full items-center justify-center gap-3">
+        <div className="h-full w-[52px] rounded-lg p-[3px]" style={{ background: 'linear-gradient(140deg,#38bdf8,#6366f1)', transform: 'rotate(-6deg)' }}>
+          <div className="flex h-full flex-col gap-1 rounded-md bg-[#0e1420] p-1">
+            <span className="h-6 rounded-sm" style={{ background: 'linear-gradient(120deg,#38bdf8,#a855f7)' }}></span>
+            <span className="h-1 w-8 rounded-full bg-white/60"></span>
+            <span className="h-1 w-6 rounded-full bg-white/40"></span>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <span className="block h-2.5 w-16 rounded-full bg-[var(--text)]"></span>
+          <span className="block h-1.5 w-12 rounded-full bg-[var(--text-dim)]"></span>
+        </div>
+      </div>
+    )}
+  </div>
+)
+
+const moveItem = <T,>(list: T[], index: number, delta: number): T[] => {
+  const next = [...list]
+  const target = index + delta
+  if (target < 0 || target >= next.length) return next
+  ;[next[index], next[target]] = [next[target], next[index]]
+  return next
+}
+
+const SectionRow: React.FC<{
+  icon: string
+  label: string
+  hidden: boolean
+  locked?: boolean
+  canUp: boolean
+  canDown: boolean
+  onUp: () => void
+  onDown: () => void
+  onToggle: () => void
+}> = ({ icon, label, hidden, locked = false, canUp, canDown, onUp, onDown, onToggle }) => (
+  <div className={`flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 ${hidden ? 'opacity-55' : ''}`}>
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--paper-2)] text-[13px] text-[var(--ink)]">
+      <i className={icon}></i>
+    </span>
+    <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--text)]">{label}</span>
+    <button type="button" disabled={!canUp} onClick={onUp} aria-label={`Subir ${label}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--paper)] disabled:opacity-30">
+      <i className="fa-solid fa-arrow-up text-[12px]"></i>
+    </button>
+    <button type="button" disabled={!canDown} onClick={onDown} aria-label={`Bajar ${label}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--paper)] disabled:opacity-30">
+      <i className="fa-solid fa-arrow-down text-[12px]"></i>
+    </button>
+    <button
+      type="button"
+      disabled={locked}
+      onClick={onToggle}
+      aria-label={hidden ? `Mostrar ${label}` : `Ocultar ${label}`}
+      title={locked ? 'Siempre visible' : hidden ? 'Mostrar' : 'Ocultar'}
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--paper)] disabled:opacity-30"
+    >
+      <i className={`fa-solid ${locked ? 'fa-lock' : hidden ? 'fa-eye-slash' : 'fa-eye'} text-[12px]`}></i>
+    </button>
+  </div>
+)
+
+const Toggle: React.FC<{ checked: boolean; onChange: (value: boolean) => void; label: string; hint?: string }> = ({ checked, onChange, label, hint }) => (
+  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3">
+    <span>
+      <span className="block text-[14px] font-semibold text-[var(--text)]">{label}</span>
+      {hint && <span className="block text-[12.5px] text-[var(--text-muted)]">{hint}</span>}
+    </span>
+    <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-[var(--ink)]' : 'bg-[var(--border)]'}`}>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`}></span>
+    </span>
+  </label>
+)
 
 interface ProfileStudioProps {
   open: boolean
   tab: StudioTabId
   onTabChange: (tab: StudioTabId) => void
-  draft: ProfileCustomization
-  onChange: (patch: Partial<ProfileCustomization>) => void
-  onSave: () => void
-  onReset: () => void
   onClose: () => void
-  isDirty: boolean
-  confirmDiscard: boolean
-  onDiscard: () => void
-  onKeepEditing: () => void
-  unlockedAchievements: UnlockedAchievement[]
-  hasCover: boolean
 }
 
-export const ProfileStudio: React.FC<ProfileStudioProps> = ({
-  open,
-  tab,
-  onTabChange,
-  draft,
-  onChange,
-  onSave,
-  onReset,
-  onClose,
-  isDirty,
-  confirmDiscard,
-  onDiscard,
-  onKeepEditing,
-  unlockedAchievements,
-  hasCover,
-}) => {
+export const ProfileStudio: React.FC<ProfileStudioProps> = ({ open, tab, onTabChange, onClose }) => {
+  const { user, updateUserProfile, addCoins, showToast } = usePlatform()
+  const [custom, update] = useProfileCustomization(user.username)
+  const [pendingKey, setPendingKey] = useState<string | null>(null)
+  const [name, setName] = useState(user.name || '')
+  const [bio, setBio] = useState(user.bio || '')
+  const [goal, setGoal] = useState(user.goal || '')
+  const [status, setStatus] = useState(custom.status)
+  const [statusIcon, setStatusIcon] = useState(custom.statusIcon)
+  const [isProcessing, setIsProcessing] = useState<'avatar' | 'cover' | null>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const panelRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setName(user.name || '')
+    setBio(user.bio || '')
+    setGoal(user.goal || '')
+    setStatus(custom.status)
+    setStatusIcon(custom.statusIcon)
+    setPendingKey(null)
+    panelRef.current?.focus({ preventScroll: true })
+  }, [open])
+
+  useEffect(() => {
+    setPendingKey(null)
+  }, [tab])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
+  const stateOf = (group: string, id: string, rule?: UnlockRule) => getUnlockState(unlockKey(group, id), rule, custom.owned, user.level, custom.adminMode)
+
+  const choose = (group: string, id: string, rule: UnlockRule | undefined, apply: () => void) => {
+    const state = stateOf(group, id, rule)
+    if (state.unlocked) {
+      setPendingKey(null)
+      apply()
+      return
+    }
+    if (state.reason === 'price') setPendingKey(unlockKey(group, id))
+  }
+
+  const buy = (group: string, id: string, rule: UnlockRule | undefined, apply: () => void) => {
+    const state = stateOf(group, id, rule)
+    if (state.unlocked || state.reason !== 'price') return
+    if (user.coins < state.price) {
+      showToast('No tienes suficientes monedas Kor', 'error')
+      return
+    }
+    addCoins(-state.price)
+    update({ owned: [...custom.owned, unlockKey(group, id)] })
+    setPendingKey(null)
+    apply()
+    showToast('Desbloqueado. Ya es tuyo.', 'success')
+  }
+
+  const tileProps = (group: string, id: string, rule: UnlockRule | undefined, selected: boolean, apply: () => void) => ({
+    selected,
+    state: stateOf(group, id, rule),
+    pending: pendingKey === unlockKey(group, id),
+    coins: user.coins,
+    onSelect: () => choose(group, id, rule, apply),
+    onBuy: () => buy(group, id, rule, apply),
+    onCancel: () => setPendingKey(null),
+  })
+
+  const handleFile = async (event: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setIsProcessing(kind)
+    try {
+      const dataUrl = await resizeImage(file, kind === 'avatar' ? 512 : 1400)
+      if (kind === 'avatar') {
+        updateUserProfile({ avatar: dataUrl })
+        showToast('Foto actualizada', 'success')
+      } else {
+        updateUserProfile({ cover: dataUrl })
+        update({ bannerStyle: 'cover' })
+        showToast('Portada actualizada', 'success')
+      }
+    } catch {
+      showToast('No se pudo procesar la imagen', 'error')
+    } finally {
+      setIsProcessing(null)
+    }
+  }
+
+  const saveData = () => {
+    const cleanName = name.trim()
+    if (!cleanName) {
+      showToast('El nombre no puede estar vacío', 'error')
+      return
+    }
+    updateUserProfile({ name: cleanName, bio: bio.trim(), goal: goal.trim() })
+    update({ status: status.trim(), statusIcon })
+    showToast('Datos guardados', 'success')
+  }
+
+  const dataDirty = name.trim() !== (user.name || '') || bio.trim() !== (user.bio || '') || goal.trim() !== (user.goal || '') || status.trim() !== custom.status || statusIcon !== custom.statusIcon
+
+  const downloadData = () => {
+    const safeUser = Object.fromEntries(Object.entries(user).filter(([key]) => !key.startsWith('_')))
+    const payload = { exportedAt: new Date().toISOString(), profile: safeUser, customization: loadProfileCustomization(user.username) }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `clever-datos-${user.username || 'perfil'}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    showToast('Datos descargados', 'success')
+  }
+
+  const handleReset = () => {
+    if (!confirmReset) {
+      setConfirmReset(true)
+      return
+    }
+    resetProfileCustomization(user.username)
+    setConfirmReset(false)
+    showToast('Estilo restablecido. Tus compras se conservan.', 'success')
+  }
+
   const toggleStat = (id: StatId) => {
-    const has = draft.visibleStats.includes(id)
-    if (has && draft.visibleStats.length === 1) return
-    onChange({
-      visibleStats: has ? draft.visibleStats.filter((s) => s !== id) : [...draft.visibleStats, id],
-    })
+    const has = custom.visibleStats.includes(id)
+    if (has && custom.visibleStats.length === 1) return
+    update({ visibleStats: has ? custom.visibleStats.filter((item) => item !== id) : [...custom.visibleStats, id] })
   }
 
-  const togglePinned = (id: string) => {
-    const has = draft.pinnedAchievements.includes(id)
-    if (!has && draft.pinnedAchievements.length >= MAX_PINNED_ACHIEVEMENTS) return
-    onChange({
-      pinnedAchievements: has
-        ? draft.pinnedAchievements.filter((a) => a !== id)
-        : [...draft.pinnedAchievements, id],
-    })
-  }
-
-  const colorInputValue = (value: string) => (value ? value : '#0a84c6')
+  const inputClass = 'w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-[14px] text-[var(--text)] outline-none transition-colors focus:border-[var(--ink)]'
+  const tabIndex = TABS.findIndex((item) => item.id === tab)
+  const activeAccent = (user.accentColor || '').toLowerCase()
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} aria-hidden="true" />}
-
-      <aside
-        aria-hidden={!open}
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[400px] bg-[var(--surface)] border-l border-[var(--border)] shadow-2xl flex flex-col transition-transform duration-300 ${
-          open ? 'translate-x-0' : 'translate-x-full pointer-events-none'
-        }`}
+      <style>{STUDIO_STYLES}</style>
+      <div data-open={open} className="st-scrim fixed inset-0 z-[60] bg-[rgba(5,10,20,0.35)] lg:hidden" onClick={onClose} aria-hidden="true"></div>
+      <section
+        ref={panelRef}
+        tabIndex={-1}
+        data-open={open}
+        role="dialog"
+        aria-modal="false"
+        aria-label="Estudio de personalización"
+        className="note-home st-panel fixed inset-x-0 bottom-0 z-[61] flex h-[88vh] flex-col overflow-hidden rounded-t-[28px] border border-[var(--border)] bg-[var(--bg-alt)] shadow-[0_-20px_60px_-30px_rgba(10,20,40,.6)] outline-none lg:inset-y-3 lg:left-auto lg:right-3 lg:h-auto lg:w-[440px] lg:rounded-[28px]"
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-          <div>
-            <h2 className="text-sm font-bold text-[var(--text)] flex items-center gap-2">
-              <i className="fa-solid fa-wand-magic-sparkles text-[var(--primary)]"></i>
-              Estudio de perfil
-            </h2>
-            <p className="text-[11px] text-[var(--text-muted)]">Los cambios se ven en vivo en tu perfil.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar estudio de perfil"
-            className="w-8 h-8 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] cursor-pointer"
-          >
-            <i className="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        {confirmDiscard && (
-          <div className="mx-4 mt-4 rounded-lg border border-[var(--warning)] bg-[var(--warning-bg)] p-3 space-y-2.5">
-            <p className="text-xs font-semibold text-[var(--text)] flex items-center gap-2">
-              <i className="fa-solid fa-triangle-exclamation text-[var(--warning)]"></i>
-              Tienes cambios sin guardar
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={onSave} className="platform-btn-primary py-1.5 px-3 text-xs cursor-pointer">
-                Guardar
+        <header className="border-b border-[var(--border)] px-5 pb-3 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="note-wide text-[10px] font-bold text-[var(--ink)]">ESTUDIO</div>
+              <h2 className="note-display text-[24px] font-black leading-tight text-[var(--text)]">Personaliza tu Clever</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  update({ adminMode: !custom.adminMode })
+                  showToast(custom.adminMode ? 'Modo usuario: los bloqueos vuelven a aplicar' : 'Modo admin: todo desbloqueado para pruebas', 'info')
+                }}
+                aria-pressed={custom.adminMode}
+                title={custom.adminMode ? 'Cambiar a usuario normal' : 'Cambiar a admin'}
+                className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-[13px] font-bold transition-colors ${
+                  custom.adminMode ? 'border-[var(--ink-3)] bg-[var(--ink-3)] text-[var(--bg)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                <i className={`fa-solid ${custom.adminMode ? 'fa-user-shield' : 'fa-user'} text-[12px]`}></i>
+                {custom.adminMode ? 'Admin' : 'Usuario'}
               </button>
-              <button type="button" onClick={onDiscard} className="platform-btn-secondary py-1.5 px-3 text-xs cursor-pointer">
-                Descartar
-              </button>
-              <button type="button" onClick={onKeepEditing} className="platform-btn-secondary py-1.5 px-3 text-xs cursor-pointer">
-                Seguir editando
+              <span className="note-num inline-flex h-9 items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,#d99a1e_35%,var(--border))] bg-[color-mix(in_srgb,#d99a1e_10%,var(--surface))] px-3 text-[14px] font-bold text-[var(--text)]">
+                <i className="fa-solid fa-coins text-[12px] text-[#d99a1e]"></i>
+                {user.coins}
+              </span>
+              <button type="button" onClick={onClose} aria-label="Cerrar estudio" className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:text-[var(--text)]">
+                <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
           </div>
-        )}
+          <div className="relative mt-4 grid grid-cols-6 rounded-2xl bg-[var(--surface-alt)] p-1" role="tablist">
+            <span className="st-tab-ind absolute bottom-1 top-1 rounded-xl bg-[var(--surface)] shadow-sm" style={{ left: `calc(${(tabIndex * 100) / 6}% + 3px)`, width: 'calc(16.666% - 6px)' }} aria-hidden="true"></span>
+            {TABS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === item.id}
+                onClick={() => onTabChange(item.id)}
+                className={`relative z-10 flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-bold transition-colors ${tab === item.id ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+              >
+                <i className={`${item.icon} text-[14px]`}></i>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </header>
 
-        <div className="grid grid-cols-5 gap-1 px-3 pt-3">
-          {STUDIO_TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center gap-1 rounded-lg py-2 text-[10px] font-semibold transition-colors cursor-pointer ${
-                tab === item.id
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-alt)]'
-              }`}
-            >
-              <i className={item.icon}></i>
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-          {tab === 'banner' && (
+        <div key={tab} className="st-section min-h-0 flex-1 space-y-7 overflow-y-auto px-5 py-5">
+          {tab === 'diseno' && (
             <>
-              <div className="space-y-2">
-                <SectionLabel>Estilo animado</SectionLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {BANNER_STYLES.map((style) => (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => onChange({ bannerStyle: style.id })}
-                      className={tileClass(draft.bannerStyle === style.id)}
-                    >
-                      <i className={`${style.icon} text-base`}></i>
-                      {style.label}
-                    </button>
+              <div>
+                <SectionTitle icon="fa-solid fa-table-cells-large" title="Diseño del perfil" hint="Cambia por completo cómo se ve tu perfil." />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  {PROFILE_LAYOUTS.map((option) => (
+                    <OptionTile
+                      key={option.id}
+                      title={option.label}
+                      description={option.description}
+                      compact
+                      preview={<LayoutPreviewArt layout={option.id} />}
+                      {...tileProps('layout', option.id, option.unlock, custom.profileLayout === option.id, () => update({ profileLayout: option.id }))}
+                    />
                   ))}
                 </div>
-                {draft.bannerStyle === 'cover' && !hasCover && (
-                  <p className="text-[11px] text-[var(--text-muted)]">
-                    Aún no subes un banner propio. Puedes hacerlo desde Editar datos y aquí se mostrará con movimiento.
-                  </p>
-                )}
               </div>
 
-              <div className="space-y-2">
-                <SectionLabel>Paleta</SectionLabel>
-                <div className="flex flex-wrap gap-2">
-                  {BANNER_PRESETS.map((preset) => {
-                    const active = draft.bannerColorA === preset.a && draft.bannerColorB === preset.b
+              <div>
+                <SectionTitle icon="fa-solid fa-panorama" title="Portada" />
+                <div className="grid grid-cols-4 gap-2">
+                  {BANNER_STYLES.map((option) => {
+                    const state = stateOf('banner', option.id, option.unlock)
+                    const pending = pendingKey === unlockKey('banner', option.id)
+                    const selected = custom.bannerStyle === option.id
                     return (
                       <button
-                        key={preset.id}
+                        key={option.id}
                         type="button"
-                        title={preset.label}
-                        aria-label={`Paleta ${preset.label}`}
-                        onClick={() => onChange({ bannerColorA: preset.a, bannerColorB: preset.b })}
-                        className={`w-10 h-10 rounded-lg border-2 cursor-pointer transition-transform hover:scale-110 ${
-                          active ? 'border-[var(--text)]' : 'border-transparent'
+                        disabled={!state.unlocked && state.reason === 'level'}
+                        onClick={() => (pending ? buy('banner', option.id, option.unlock, () => update({ bannerStyle: option.id })) : choose('banner', option.id, option.unlock, () => update({ bannerStyle: option.id })))}
+                        className={`st-tile relative flex flex-col items-center gap-1.5 rounded-xl border-2 px-1 py-2.5 text-[12px] font-semibold ${
+                          selected ? 'border-[var(--ink)] text-[var(--ink)]' : pending ? 'border-[#d99a1e] text-[#a8720f]' : 'border-[var(--border)] text-[var(--text-muted)]'
                         }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${preset.a || DEFAULT_BANNER_A}, ${preset.b || DEFAULT_BANNER_B})`,
-                        }}
-                      />
+                      >
+                        <i className={`${option.icon} text-[16px]`}></i>
+                        {pending && !state.unlocked && state.reason === 'price' ? `Pagar ${state.price}` : option.label}
+                        {!state.unlocked && !pending && (
+                          <span className="absolute -right-1.5 -top-1.5">
+                            <LockBadge state={state} />
+                          </span>
+                        )}
+                      </button>
                     )
                   })}
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <label className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                    <input
-                      type="color"
-                      value={colorInputValue(draft.bannerColorA)}
-                      onChange={(e) => onChange({ bannerColorA: e.target.value })}
-                      className="w-8 h-8 rounded cursor-pointer border border-[var(--border)] bg-transparent"
-                    />
-                    Color principal
-                  </label>
-                  <label className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                    <input
-                      type="color"
-                      value={colorInputValue(draft.bannerColorB)}
-                      onChange={(e) => onChange({ bannerColorB: e.target.value })}
-                      className="w-8 h-8 rounded cursor-pointer border border-[var(--border)] bg-transparent"
-                    />
-                    Color secundario
-                  </label>
-                </div>
+                {custom.bannerStyle === 'cover' && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <label className="note-btn note-btn-line h-10 cursor-pointer px-4 text-[14px]">
+                      {isProcessing === 'cover' ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-upload text-[12px]"></i>}
+                      Subir imagen
+                      <input type="file" accept="image/*" className="hidden" disabled={isProcessing !== null} onChange={(event) => handleFile(event, 'cover')} />
+                    </label>
+                    {user.cover && (
+                      <button type="button" onClick={() => updateUserProfile({ cover: null })} className="h-10 px-3 text-[14px] font-semibold text-[var(--ink-3)]">
+                        Quitar imagen
+                      </button>
+                    )}
+                  </div>
+                )}
+                {custom.bannerStyle !== 'cover' && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {BANNER_PRESETS.map((preset) => {
+                      const selected = custom.bannerColorA === preset.a && custom.bannerColorB === preset.b
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          title={preset.label}
+                          aria-label={`Colores ${preset.label}`}
+                          onClick={() => update({ bannerColorA: preset.a, bannerColorB: preset.b })}
+                          className={`h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 ${selected ? 'border-[var(--text)]' : 'border-transparent'}`}
+                          style={{ background: preset.a ? `linear-gradient(135deg, ${preset.a}, ${preset.b})` : 'linear-gradient(135deg, var(--grad-a), var(--grad-b))' }}
+                        ></button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <SectionLabel>Velocidad</SectionLabel>
-                  <span className="text-[11px] font-mono text-[var(--text-muted)]">{draft.bannerSpeed.toFixed(1)}x</span>
-                </div>
-                <input
-                  type="range"
-                  min={0.4}
-                  max={2.5}
-                  step={0.1}
-                  value={draft.bannerSpeed}
-                  onChange={(e) => onChange({ bannerSpeed: Number(e.target.value) })}
-                  className="w-full cursor-pointer"
-                  aria-label="Velocidad de la animación del banner"
-                />
-              </div>
-            </>
-          )}
-
-          {tab === 'avatar' && (
-            <>
-              <div className="space-y-2">
-                <SectionLabel>Forma</SectionLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {AVATAR_SHAPES.map((shape) => (
+              <div>
+                <SectionTitle icon="fa-solid fa-user-circle" title="Avatar" />
+                <div className="mb-3 grid grid-cols-3 gap-2">
+                  {AVATAR_SHAPES.map((option) => (
                     <button
-                      key={shape.id}
+                      key={option.id}
                       type="button"
-                      onClick={() => onChange({ avatarShape: shape.id })}
-                      className={tileClass(draft.avatarShape === shape.id)}
-                    >
-                      <span
-                        className="block w-7 h-7 bg-current opacity-80"
-                        style={getShapeStyle(shape.id)}
-                      />
-                      {shape.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <SectionLabel>Marco animado</SectionLabel>
-                <div className="grid grid-cols-3 gap-2">
-                  {FRAME_STYLES.map((frame) => (
-                    <button
-                      key={frame.id}
-                      type="button"
-                      onClick={() => onChange({ frameStyle: frame.id })}
-                      className={tileClass(draft.frameStyle === frame.id)}
-                    >
-                      <i className={`${frame.icon} text-base`}></i>
-                      {frame.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <SectionLabel>Color del marco y del anillo de nivel</SectionLabel>
-                <div className="flex flex-wrap items-center gap-2">
-                  {FRAME_COLORS.map((color) => (
-                    <button
-                      key={color || 'accent'}
-                      type="button"
-                      title={color ? color : 'Color de acento'}
-                      aria-label={color ? `Color ${color}` : 'Color de acento'}
-                      onClick={() => onChange({ frameColor: color })}
-                      className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-transform hover:scale-110 ${
-                        draft.frameColor === color ? 'border-[var(--text)]' : 'border-transparent'
+                      onClick={() => update({ avatarShape: option.id })}
+                      className={`st-tile flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-[13px] font-semibold ${
+                        custom.avatarShape === option.id ? 'border-[var(--ink)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'
                       }`}
-                      style={{ background: color || 'var(--primary)' }}
-                    />
-                  ))}
-                  <input
-                    type="color"
-                    value={colorInputValue(draft.frameColor)}
-                    onChange={(e) => onChange({ frameColor: e.target.value })}
-                    aria-label="Color personalizado del marco"
-                    className="w-8 h-8 rounded cursor-pointer border border-[var(--border)] bg-transparent"
-                  />
-                </div>
-              </div>
-
-              <Link
-                to="/personalizacion?seccion=avatar"
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] px-3 py-2.5 text-xs font-semibold text-[var(--text)] transition-colors hover:border-[var(--primary)]"
-              >
-                <span className="flex items-center gap-2">
-                  <i className="fa-solid fa-user-astronaut text-[var(--primary)]"></i>
-                  Elegir otro avatar o subir mi foto
-                </span>
-                <i className="fa-solid fa-arrow-right text-[10px] text-[var(--text-muted)]"></i>
-              </Link>
-
-              <Toggle
-                checked={draft.showLevelRing}
-                onChange={(value) => onChange({ showLevelRing: value })}
-                label="Anillo de progreso de nivel"
-                description="Muestra tu avance de XP alrededor del avatar."
-              />
-            </>
-          )}
-
-          {tab === 'status' && (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <SectionLabel>Tu estado</SectionLabel>
-                  <span className="text-[11px] font-mono text-[var(--text-muted)]">
-                    {draft.status.length}/{MAX_STATUS_LENGTH}
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={draft.status}
-                  maxLength={MAX_STATUS_LENGTH}
-                  onChange={(e) => onChange({ status: e.target.value })}
-                  placeholder="Qué estás haciendo ahora"
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--primary)]"
-                />
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {STATUS_SUGGESTIONS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => onChange({ status: suggestion })}
-                      className="rounded-full border border-[var(--border)] px-2.5 py-1 text-[11px] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] cursor-pointer"
                     >
-                      {suggestion}
+                      <i className={option.icon}></i>
+                      {option.label}
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <SectionLabel>Icono</SectionLabel>
-                <div className="grid grid-cols-4 gap-2">
-                  {STATUS_ICONS.map((item) => (
-                    <button
-                      key={item.icon}
-                      type="button"
-                      onClick={() => onChange({ statusIcon: item.icon })}
-                      className={tileClass(draft.statusIcon === item.icon)}
-                    >
-                      <i className={`${item.icon} text-base`}></i>
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {tab === 'showcase' && (
-            <>
-              <div className="space-y-2">
-                <SectionLabel>Estadísticas visibles</SectionLabel>
-                <div className="grid grid-cols-2 gap-2">
-                  {STAT_OPTIONS.map((stat) => {
-                    const active = draft.visibleStats.includes(stat.id)
+                <div className="grid grid-cols-5 gap-2">
+                  {FRAME_STYLES.map((option) => {
+                    const state = stateOf('frame', option.id, option.unlock)
+                    const pending = pendingKey === unlockKey('frame', option.id)
                     return (
                       <button
-                        key={stat.id}
+                        key={option.id}
                         type="button"
-                        onClick={() => toggleStat(stat.id)}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
-                          active
-                            ? 'border-[var(--primary)] bg-[var(--bg-alt)] text-[var(--primary)]'
-                            : 'border-[var(--border)] text-[var(--text-muted)]'
+                        disabled={!state.unlocked && state.reason === 'level'}
+                        title={option.label}
+                        onClick={() => (pending ? buy('frame', option.id, option.unlock, () => update({ frameStyle: option.id })) : choose('frame', option.id, option.unlock, () => update({ frameStyle: option.id })))}
+                        className={`st-tile relative flex flex-col items-center gap-1 rounded-xl border-2 py-2.5 text-[11px] font-semibold disabled:opacity-50 ${
+                          custom.frameStyle === option.id ? 'border-[var(--ink)] text-[var(--ink)]' : pending ? 'border-[#d99a1e] text-[#a8720f]' : 'border-[var(--border)] text-[var(--text-muted)]'
                         }`}
                       >
-                        <i className={stat.icon}></i>
-                        {stat.label}
-                        {active && <i className="fa-solid fa-check ml-auto text-[10px]"></i>}
+                        <i className={`${option.icon} text-[15px]`}></i>
+                        {pending && !state.unlocked && state.reason === 'price' ? `Pagar ${state.price}` : option.label}
+                        {!state.unlocked && !pending && (
+                          <span className="absolute -right-1.5 -top-1.5">
+                            <LockBadge state={state} />
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {FRAME_COLORS.map((color) => (
+                    <button
+                      key={color || 'theme'}
+                      type="button"
+                      aria-label={color ? `Marco ${color}` : 'Marco del tema'}
+                      onClick={() => update({ frameColor: color })}
+                      className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${custom.frameColor === color ? 'border-[var(--text)]' : 'border-transparent'}`}
+                      style={{ background: color || 'var(--ink)' }}
+                    ></button>
+                  ))}
+                </div>
+                <div className="mt-3">
+                  <Toggle checked={custom.showLevelRing} onChange={(value) => update({ showLevelRing: value })} label="Anillo de nivel" hint="Muestra tu avance de XP alrededor de la foto" />
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon="fa-solid fa-chart-simple" title="Estado de cuenta" hint="Elige qué números se muestran." />
+                <div className="flex flex-wrap gap-2">
+                  {STAT_OPTIONS.map((option) => {
+                    const active = custom.visibleStats.includes(option.id)
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleStat(option.id)}
+                        className={`inline-flex h-10 items-center gap-2 rounded-full border-2 px-3.5 text-[13px] font-semibold transition-colors ${
+                          active ? 'border-[var(--ink)] bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <i className={option.icon}></i>
+                        {option.label}
                       </button>
                     )
                   })}
@@ -448,127 +777,336 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <SectionLabel>Logros fijados</SectionLabel>
-                  <span className="text-[11px] font-mono text-[var(--text-muted)]">
-                    {draft.pinnedAchievements.length}/{MAX_PINNED_ACHIEVEMENTS}
-                  </span>
-                </div>
-                {unlockedAchievements.length === 0 ? (
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Cuando desbloquees logros podrás fijar hasta {MAX_PINNED_ACHIEVEMENTS} en tu vitrina.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {unlockedAchievements.map((achievement) => {
-                      const pinned = draft.pinnedAchievements.includes(achievement.id)
-                      const blocked = !pinned && draft.pinnedAchievements.length >= MAX_PINNED_ACHIEVEMENTS
-                      return (
-                        <button
-                          key={achievement.id}
-                          type="button"
-                          disabled={blocked}
-                          onClick={() => togglePinned(achievement.id)}
-                          className={`w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-xs text-left transition-colors ${
-                            pinned
-                              ? 'border-[var(--primary)] bg-[var(--bg-alt)] text-[var(--text)]'
-                              : 'border-[var(--border)] text-[var(--text-muted)]'
-                          } ${blocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <i className="fa-solid fa-medal text-[var(--primary)]"></i>
-                          <span className="flex-1">{achievement.name}</span>
-                          <i className={`fa-solid fa-thumbtack text-[10px] ${pinned ? 'text-[var(--primary)]' : ''}`}></i>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-[var(--border)] pt-2">
-                <Toggle
-                  checked={draft.showStreakCalendar}
-                  onChange={(value) => onChange({ showStreakCalendar: value })}
-                  label="Calendario de racha"
-                  description="Las últimas cuatro semanas de actividad."
-                />
-                <Toggle
-                  checked={draft.showLevelJourney}
-                  onChange={(value) => onChange({ showLevelJourney: value })}
-                  label="Ruta de niveles"
-                  description="Tu camino hacia el siguiente nivel."
-                />
+                <SectionTitle icon="fa-solid fa-sliders" title="Secciones y efectos" />
+                <Toggle checked={custom.showStreakCalendar} onChange={(value) => update({ showStreakCalendar: value })} label="Calendario de racha" />
+                <Toggle checked={custom.showLevelJourney} onChange={(value) => update({ showLevelJourney: value })} label="Ruta de niveles" />
+                <Toggle checked={custom.glow} onChange={(value) => update({ glow: value })} label="Resplandor" hint="Sombra de color bajo tu tarjeta principal" />
+                <Toggle checked={custom.tilt} onChange={(value) => update({ tilt: value })} label="Movimiento 3D" hint="Las tarjetas se inclinan al pasar el cursor" />
+                <Toggle checked={custom.density === 'compact'} onChange={(value) => update({ density: value ? 'compact' : 'comfortable' })} label="Vista compacta" />
               </div>
             </>
           )}
 
-          {tab === 'effects' && (
+          {tab === 'datos' && (
             <>
-              <div className="space-y-1">
-                <Toggle
-                  checked={draft.glow}
-                  onChange={(value) => onChange({ glow: value })}
-                  label="Resplandor de la tarjeta"
-                  description="Un halo suave del color de tu banner."
-                />
-                <Toggle
-                  checked={draft.tilt}
-                  onChange={(value) => onChange({ tilt: value })}
-                  label="Efecto 3D en tarjetas"
-                  description="Las estadísticas se inclinan siguiendo el cursor."
-                />
+              <div className="space-y-3">
+                <SectionTitle icon="fa-solid fa-id-card" title="Tu información" />
+                <label className="block">
+                  <span className="mb-1 block text-[13px] font-semibold text-[var(--text)]">Nombre</span>
+                  <input value={name} maxLength={NAME_MAX} onChange={(event) => setName(event.target.value)} className={inputClass} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 flex justify-between text-[13px] font-semibold text-[var(--text)]">
+                    Bio
+                    <span className="note-num font-normal text-[var(--text-muted)]">
+                      {bio.length}/{BIO_MAX}
+                    </span>
+                  </span>
+                  <textarea value={bio} maxLength={BIO_MAX} rows={3} onChange={(event) => setBio(event.target.value)} placeholder="Cuéntale a la comunidad quién eres" className={`${inputClass} resize-none`} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 flex justify-between text-[13px] font-semibold text-[var(--text)]">
+                    Mi meta
+                    <span className="note-num font-normal text-[var(--text-muted)]">
+                      {goal.length}/{GOAL_MAX}
+                    </span>
+                  </span>
+                  <input value={goal} maxLength={GOAL_MAX} onChange={(event) => setGoal(event.target.value)} className={inputClass} />
+                </label>
+                <div>
+                  <span className="mb-1 flex justify-between text-[13px] font-semibold text-[var(--text)]">
+                    Estado
+                    <span className="note-num font-normal text-[var(--text-muted)]">
+                      {status.length}/{MAX_STATUS_LENGTH}
+                    </span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <i className={`${statusIcon} w-6 text-center text-[var(--ink)]`}></i>
+                    <input value={status} maxLength={MAX_STATUS_LENGTH} onChange={(event) => setStatus(event.target.value)} placeholder="Qué estás haciendo ahora" className={inputClass} />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {STATUS_ICONS.map((item) => (
+                      <button
+                        key={item.icon}
+                        type="button"
+                        title={item.label}
+                        aria-label={item.label}
+                        onClick={() => setStatusIcon(item.icon)}
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg border text-[13px] transition-colors ${
+                          statusIcon === item.icon ? 'border-[var(--ink)] bg-[var(--ink)] text-[var(--bg)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--ink)]'
+                        }`}
+                      >
+                        <i className={item.icon}></i>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button type="button" disabled={!dataDirty} onClick={saveData} className="note-btn note-btn-ink h-11 w-full text-[15px] disabled:cursor-not-allowed disabled:opacity-50">
+                  <i className="fa-solid fa-check text-[13px]"></i>
+                  Guardar datos
+                </button>
+              </div>
+
+              <div>
+                <SectionTitle icon="fa-solid fa-image-portrait" title="Foto" />
+                <div className="grid grid-cols-5 gap-2">
+                  {AVATAR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      title={preset.name}
+                      aria-label={`Avatar ${preset.name}`}
+                      onClick={() => updateUserProfile({ avatar: preset.url })}
+                      className={`aspect-square overflow-hidden rounded-xl border-2 transition-transform hover:scale-105 ${user.avatar === preset.url ? 'border-[var(--ink)]' : 'border-transparent'}`}
+                    >
+                      <img src={preset.url} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <label className="note-btn note-btn-line h-10 cursor-pointer px-4 text-[14px]">
+                    {isProcessing === 'avatar' ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-upload text-[12px]"></i>}
+                    Subir foto
+                    <input type="file" accept="image/*" className="hidden" disabled={isProcessing !== null} onChange={(event) => handleFile(event, 'avatar')} />
+                  </label>
+                  {user.avatar && (
+                    <button type="button" onClick={() => updateUserProfile({ avatar: null })} className="h-10 px-3 text-[14px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]">
+                      Usar predeterminada
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
-                <SectionLabel>Densidad del diseño</SectionLabel>
-                <div className="grid grid-cols-2 gap-2">
+                <SectionTitle icon="fa-solid fa-shield-halved" title="Cuenta" hint={`@${user.username} · ${user.email}`} />
+                <button type="button" onClick={downloadData} className="flex w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3 text-left text-[14px] font-semibold text-[var(--text)] hover:border-[var(--ink)]">
+                  <i className="fa-solid fa-download w-4 text-[var(--ink)]"></i>
+                  Descargar mis datos
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  onBlur={() => setConfirmReset(false)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3 text-left text-[14px] font-semibold text-[var(--ink-3)] hover:border-[var(--ink-3)]"
+                >
+                  <i className="fa-solid fa-rotate-left w-4"></i>
+                  {confirmReset ? 'Toca otra vez para confirmar' : 'Restablecer estilo del perfil'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {tab === 'tema' && (
+            <>
+              {THEME_GROUPS.map((group) => (
+                <div key={group.id}>
+                  <SectionTitle icon={group.id === 'bill' ? 'fa-solid fa-money-bill-wave' : group.id === 'market' ? 'fa-solid fa-landmark' : 'fa-solid fa-wand-magic-sparkles'} title={group.label} hint={group.description} />
+                  <div className="grid grid-cols-2 gap-3">
+                    {THEME_OPTIONS.filter((theme) => theme.group === group.id).map((theme) => (
+                      <OptionTile
+                        key={theme.id}
+                        title={theme.name}
+                        description={theme.desc}
+                        compact
+                        preview={<ThemePreviewArt theme={theme} />}
+                        {...tileProps('theme', theme.id, theme.unlock, (user.theme || 'light') === theme.id, () => updateUserProfile({ theme: theme.id, accentColor: '' }))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div>
+                <SectionTitle icon="fa-solid fa-droplet" title="Color de acento" hint="Cambia el color principal sin cambiar de tema." />
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => onChange({ density: 'comfortable' })}
-                    className={tileClass(draft.density === 'comfortable')}
+                    onClick={() => updateUserProfile({ accentColor: '' })}
+                    className={`inline-flex h-9 items-center gap-2 rounded-full border-2 px-3 text-[13px] font-semibold ${!activeAccent || activeAccent === '#0284c7' ? 'border-[var(--ink)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
                   >
-                    <i className="fa-solid fa-expand text-base"></i>
-                    Cómoda
+                    <i className="fa-solid fa-wand-magic-sparkles text-[11px]"></i>
+                    Del tema
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onChange({ density: 'compact' })}
-                    className={tileClass(draft.density === 'compact')}
-                  >
-                    <i className="fa-solid fa-compress text-base"></i>
-                    Compacta
-                  </button>
+                  {ACCENT_COLORS.filter((color) => color !== '#0284c7').map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`Acento ${color}`}
+                      onClick={() => updateUserProfile({ accentColor: color })}
+                      className={`h-9 w-9 rounded-full border-2 transition-transform hover:scale-110 ${activeAccent === color ? 'border-[var(--text)]' : 'border-transparent'}`}
+                      style={{ background: color }}
+                    ></button>
+                  ))}
                 </div>
               </div>
             </>
           )}
+
+          {tab === 'barra' && (
+            <div>
+              <SectionTitle icon="fa-solid fa-bars" title="Estilo de la barra" hint="Se aplica en toda la plataforma en computadora. En celular siempre verás la barra inferior." />
+              <div className="grid grid-cols-2 gap-3">
+                {NAV_STYLES.map((option) => (
+                  <OptionTile
+                    key={option.id}
+                    title={option.label}
+                    description={option.description}
+                    compact
+                    preview={<NavPreviewArt style={option.id} />}
+                    {...tileProps('nav', option.id, option.unlock, custom.navStyle === option.id, () => update({ navStyle: option.id }))}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === 'inicio' && (
+            <>
+              <div>
+                <SectionTitle icon="fa-solid fa-hand" title="Saludo" hint="La segunda línea del saludo en tu inicio." />
+                <div className="flex flex-wrap gap-2">
+                  {HOME_GREETINGS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={custom.homeGreeting === option.id}
+                      onClick={() => update({ homeGreeting: option.id })}
+                      className={`inline-flex h-10 items-center rounded-full border-2 px-3.5 text-[13px] font-semibold transition-colors ${
+                        custom.homeGreeting === option.id ? 'border-[var(--ink)] bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {custom.homeGreeting === 'custom' ? (
+                  <input
+                    value={custom.homeGreetingText}
+                    maxLength={MAX_GREETING_LENGTH}
+                    onChange={(event) => update({ homeGreetingText: event.target.value })}
+                    placeholder="Escribe tu frase"
+                    className={`${inputClass} mt-3`}
+                  />
+                ) : (
+                  <p className="note-display mt-3 text-[18px] font-bold text-[var(--text-muted)]">{HOME_GREETINGS.find((item) => item.id === custom.homeGreeting)?.text}</p>
+                )}
+              </div>
+
+              <div>
+                <SectionTitle icon="fa-solid fa-image" title="Fondo de tu lección actual" hint="La tarjeta grande con tu siguiente lección." />
+                <div className="grid grid-cols-4 gap-2">
+                  {HOME_LESSON_BACKGROUNDS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={custom.homeLessonBg === option.id}
+                      onClick={() => update({ homeLessonBg: option.id })}
+                      className={`st-tile flex flex-col items-center gap-1.5 rounded-xl border-2 px-1 py-2.5 text-[12px] font-semibold ${
+                        custom.homeLessonBg === option.id ? 'border-[var(--ink)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'
+                      }`}
+                    >
+                      <i className={`${option.icon} text-[16px]`}></i>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon="fa-solid fa-table-columns" title="Columna principal" hint="Ordena y oculta las secciones grandes." />
+                <div className="space-y-2">
+                  {custom.homeMain.map((id, index) => {
+                    const option = HOME_MAIN_SECTIONS.find((item) => item.id === id)
+                    if (!option) return null
+                    const hidden = custom.homeHidden.includes(id)
+                    return (
+                      <SectionRow
+                        key={id}
+                        icon={option.icon}
+                        label={option.label}
+                        hidden={hidden}
+                        locked={id === 'lesson'}
+                        canUp={index > 0}
+                        canDown={index < custom.homeMain.length - 1}
+                        onUp={() => update({ homeMain: moveItem(custom.homeMain, index, -1) as HomeMainSection[] })}
+                        onDown={() => update({ homeMain: moveItem(custom.homeMain, index, 1) as HomeMainSection[] })}
+                        onToggle={() => update({ homeHidden: hidden ? custom.homeHidden.filter((item) => item !== id) : [...custom.homeHidden, id] })}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon="fa-solid fa-table-list" title="Columna lateral" />
+                <div className="space-y-2">
+                  {custom.homeSide.map((id, index) => {
+                    const option = HOME_SIDE_SECTIONS.find((item) => item.id === id)
+                    if (!option) return null
+                    const hidden = custom.homeHidden.includes(id)
+                    return (
+                      <SectionRow
+                        key={id}
+                        icon={option.icon}
+                        label={option.label}
+                        hidden={hidden}
+                        canUp={index > 0}
+                        canDown={index < custom.homeSide.length - 1}
+                        onUp={() => update({ homeSide: moveItem(custom.homeSide, index, -1) as HomeSideSection[] })}
+                        onDown={() => update({ homeSide: moveItem(custom.homeSide, index, 1) as HomeSideSection[] })}
+                        onToggle={() => update({ homeHidden: hidden ? custom.homeHidden.filter((item) => item !== id) : [...custom.homeHidden, id] })}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <SectionTitle icon="fa-solid fa-sliders" title="Más opciones" />
+                <Toggle checked={custom.homeSidebarLeft} onChange={(value) => update({ homeSidebarLeft: value })} label="Columna lateral a la izquierda" hint="Solo en computadora" />
+                <Toggle checked={custom.homeCredentialCover} onChange={(value) => update({ homeCredentialCover: value })} label="Usar mi portada en la credencial" hint="La misma portada que elegiste para tu perfil" />
+                <Toggle checked={custom.homeMascot} onChange={(value) => update({ homeMascot: value })} label="Mostrar a Kor en el inicio" />
+                <Toggle checked={custom.homeCompact} onChange={(value) => update({ homeCompact: value })} label="Inicio compacto" hint="Menos espacio entre secciones" />
+              </div>
+
+              <Link to="/" className="note-btn note-btn-line h-11 w-full text-[15px]">
+                Ver mi inicio
+                <i className="fa-solid fa-arrow-right text-[12px]"></i>
+              </Link>
+            </>
+          )}
+
+          {tab === 'mundo' && (
+            <div>
+              <SectionTitle icon="fa-solid fa-earth-americas" title="Mundo de Aprender" hint="El escenario por el que avanzas en tu camino de lecciones." />
+              <div className="grid grid-cols-1 gap-3">
+                {LEARN_WORLDS.map((option) => (
+                  <OptionTile
+                    key={option.id}
+                    title={option.label}
+                    description={option.description}
+                    preview={<WorldPreviewArt world={option.id} />}
+                    {...tileProps('world', option.id, option.unlock, custom.learnWorld === option.id, () => update({ learnWorld: option.id }))}
+                  />
+                ))}
+              </div>
+              <Link to="/aprender" className="note-btn note-btn-line mt-4 h-11 w-full text-[15px]">
+                Ver mi mundo en Aprender
+                <i className="fa-solid fa-arrow-right text-[12px]"></i>
+              </Link>
+            </div>
+          )}
         </div>
 
-        <div className="border-t border-[var(--border)] px-5 py-4 space-y-3">
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Estos ajustes se guardan en este navegador y solo cambian cómo se ve tu perfil.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onReset}
-              className="platform-btn-secondary py-2 px-3 text-xs font-semibold cursor-pointer"
-            >
-              <i className="fa-solid fa-rotate-left mr-1.5"></i>
-              Restablecer
-            </button>
-            <button
-              type="button"
-              onClick={onSave}
-              disabled={!isDirty}
-              className="platform-btn-primary flex-1 py-2 text-xs font-semibold justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <i className="fa-solid fa-floppy-disk mr-1.5"></i>
-              Guardar cambios
-            </button>
-          </div>
-        </div>
-      </aside>
+        <footer className="flex items-center justify-between gap-3 border-t border-[var(--border)] px-5 py-3">
+          <span className="text-[12.5px] text-[var(--text-muted)]">
+            <i className="fa-solid fa-circle-check mr-1.5 text-[var(--success)]"></i>
+            Los cambios se guardan solos
+          </span>
+          <button type="button" onClick={onClose} className="note-btn note-btn-ink h-10 px-5 text-[14px]">
+            Listo
+          </button>
+        </footer>
+      </section>
     </>
   )
 }
