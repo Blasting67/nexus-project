@@ -24,11 +24,12 @@ interface MoreItem {
 const MAIN_ITEMS: NavItem[] = [
   { to: '/', label: 'Inicio', shortLabel: 'Inicio', icon: 'fa-solid fa-house' },
   { to: '/aprender', label: 'Aprender', shortLabel: 'Aprender', icon: 'fa-solid fa-road' },
+  { to: '/analisis', label: 'Análisis Técnico', shortLabel: 'Análisis', icon: 'fa-solid fa-magnifying-glass-chart' },
+  { to: '/mentor', label: 'Mentor IA', shortLabel: 'Mentor', icon: 'fa-solid fa-robot' },
 ]
 
 const MORE_ITEMS: MoreItem[] = [
-  { to: '/analisis', label: 'Análisis Técnico', description: 'Indicadores y gráficas', icon: 'fa-solid fa-magnifying-glass-chart' },
-  { to: '/mentor', label: 'Mentor IA', description: 'Pregúntale a Kor', icon: 'fa-solid fa-robot' },
+  { to: '/conocenos', label: 'Conócenos', description: 'Quiénes somos', icon: 'fa-solid fa-circle-info' },
 ]
 
 const PROFILE_ITEMS: MoreItem[] = [
@@ -513,11 +514,11 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
 
           <div
             data-open={isMoreOpen}
-            className={`nav-pop absolute left-1/2 w-[440px] origin-top -translate-x-1/2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)] ${
+            className={`nav-pop absolute left-1/2 ${MORE_ITEMS.length > 1 ? 'w-[440px]' : 'w-max min-w-[15rem]'} origin-top -translate-x-1/2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[0_24px_60px_-24px_rgba(10,20,40,.5)] ${
               isIsland ? 'top-[calc(100%+14px)]' : 'top-[calc(100%+6px)]'
             }`}
           >
-            <div className="grid grid-cols-2 gap-1">
+            <div className={`grid gap-1 ${MORE_ITEMS.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {MORE_ITEMS.map((item) => {
                 const isActive = matchesPath(pathname, item.to)
                 return (

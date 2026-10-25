@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { EventSimulatorModal } from './components/EventSimulatorModal'
 import { MentorWidget } from './components/MentorWidget'
@@ -7,6 +7,7 @@ import { PageTutorial } from './components/PageTutorial'
 import { SyncModal } from './components/SyncModal'
 import { ToastContainer, type ToastData } from './components/Toast'
 import { PlatformProvider, usePlatform } from './context/PlatformContext'
+import { AboutPage } from './pages/AboutPage'
 import { AnalysisPage } from './pages/AnalysisPage'
 import { CustomizationPage } from './pages/CustomizationPage'
 import { DiagnosticPage } from './pages/DiagnosticPage'
@@ -27,9 +28,12 @@ import { SettingsPage } from './pages/SettingsPage'
 import { StockAnalysisPage } from './pages/StockAnalysisPage'
 import { CryptoAnalysisPage } from './pages/CryptoAnalysisPage'
 import { TradingTerminalPage } from './pages/TradingTerminalPage'
+import { loadMemberPage } from './components/about/preload'
 import { api } from './services/api'
 import { useProfileCustomization } from './services/profileCustomizationService'
 import type { Asset, MarketEvent, MarketOverview, Portfolio, Top10ComparisonItem, Transaction } from './types'
+
+const MemberPage = lazy(() => loadMemberPage().then((m) => ({ default: m.MemberPage })))
 
 const MainAppContent: React.FC = () => {
   const { toasts, dismissToast, showToast, user, isGuest } = usePlatform()
@@ -130,6 +134,15 @@ const MainAppContent: React.FC = () => {
           <Route path="/experiencias" element={<ExperiencesPage />} />
           <Route path="/misiones" element={<Navigate to="/" replace />} />
           <Route path="/mentor" element={<MentorPage />} />
+          <Route path="/conocenos" element={<AboutPage />} />
+          <Route
+            path="/conocenos/:slug"
+            element={
+              <Suspense fallback={null}>
+                <MemberPage />
+              </Suspense>
+            }
+          />
           <Route path="/analisis" element={<AnalysisPage />} />
           <Route path="/logros" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<Navigate to="/" replace />} />

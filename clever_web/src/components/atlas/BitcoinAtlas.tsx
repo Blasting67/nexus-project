@@ -38,7 +38,7 @@ export const BitcoinAtlas: React.FC = () => {
   const mood = useSmoothNumber((data.sentiment + data.fearGreed + (100 - data.risk)) / 3, 0.06)
 
   return (
-    <div className="relative isolate overflow-hidden rounded-3xl bg-white p-3 text-slate-900 lg:min-w-[1232px] shadow-xl shadow-slate-200/70 ring-1 ring-slate-200">
+    <div className="atlas-root relative isolate overflow-hidden rounded-3xl bg-[var(--surface)] p-3 text-[var(--text)] ring-1 ring-[var(--border)] shadow-[0_24px_48px_-36px_rgba(15,23,42,0.45)] lg:min-w-[1232px]">
       <AtlasStyles />
       <SceneStyles />
 

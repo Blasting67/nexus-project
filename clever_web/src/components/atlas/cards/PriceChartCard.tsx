@@ -89,8 +89,8 @@ const DOWN = '#f43f5e'
 const axisLabel = (v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v.toFixed(0)}`)
 
 const PLOT_BG =
-  'radial-gradient(80% 60% at 50% 115%, rgba(245,158,11,.12), transparent 60%),' +
-  'linear-gradient(180deg, var(--color-white), var(--color-slate-50))'
+  'radial-gradient(80% 60% at 50% 115%, rgba(245,158,11,.08), transparent 60%),' +
+  'linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface-alt) 45%, var(--surface)))'
 
 /** Precio → velas japonesas con periodos y detalle (apertura, máximo, mínimo, cierre) al pasar el mouse */
 export const PriceChartCard: React.FC<{ price: number; volatility: number; trend: number }> = ({
@@ -140,7 +140,7 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
       tint="rgba(251,146,60,0.10)"
       className="h-full"
       actions={
-        <div role="tablist" aria-label="Periodo" className="flex rounded-full border border-slate-200 bg-white p-0.5">
+        <div role="tablist" aria-label="Periodo" className="flex rounded-full border border-[var(--border)] bg-[var(--surface)] p-0.5">
           {PERIODS.map((per) => (
             <button
               key={per}
@@ -153,8 +153,8 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
               }}
               className={`rounded-full px-2.5 py-1 font-mono text-[11px] transition ${
                 per === period
-                  ? 'bg-amber-400 font-semibold text-slate-950 shadow shadow-amber-500/30'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-[color-mix(in_oklab,#f59e0b_24%,var(--surface))] font-semibold text-[var(--text)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)]'
               }`}
             >
               {per}
@@ -163,7 +163,7 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
         </div>
       }
     >
-      <div className="-mt-1 mb-3 flex items-center justify-between text-xs text-slate-500">
+      <div className="-mt-1 mb-3 flex items-center justify-between text-xs text-[var(--text-muted)]">
         <span className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Simulado
@@ -183,7 +183,7 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
       <div className="flex flex-1 flex-col">
         <div className="flex min-h-[280px] flex-1">
           {/* eje Y */}
-          <div className="relative w-12 shrink-0 text-[11px] tabular-nums text-slate-500">
+          <div className="relative w-12 shrink-0 text-[11px] tabular-nums text-[var(--text-muted)]">
             {ticks.map((t) => (
               <span key={t.label + t.top} className="absolute right-2 -translate-y-1/2" style={{ top: `${t.top}%` }}>
                 {t.label}
@@ -193,7 +193,7 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
 
           {/* área del gráfico */}
           <div
-            className="relative flex-1 touch-pan-y rounded-xl ring-1 ring-slate-200"
+            className="relative flex-1 touch-pan-y rounded-xl ring-1 ring-[var(--border)]"
             style={{ background: PLOT_BG }}
             onPointerMove={onMove}
             onPointerLeave={() => setHover(null)}
@@ -212,8 +212,8 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
                   x2={W}
                   y1={H * f}
                   y2={H * f}
-                  stroke="#0f172a"
-                  strokeOpacity="0.06"
+                  stroke="var(--text)"
+                  strokeOpacity="0.07"
                   vectorEffect="non-scaling-stroke"
                 />
               ))}
@@ -267,8 +267,8 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
                 className="pointer-events-none absolute flex h-3 w-3 -translate-x-1/2 -translate-y-1/2"
                 style={{ left: `${((n - 0.5) / n) * 100}%`, top: `${(yLast / H) * 100}%` }}
               >
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white" />
+                <span className="absolute -inset-1.5 rounded-full bg-amber-400/20" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400 ring-2 ring-[var(--surface)]" />
               </span>
             )}
 
@@ -276,11 +276,11 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
             {active && hover !== null && (
               <>
                 <span
-                  className="pointer-events-none absolute inset-y-0 rounded bg-slate-900/5"
+                  className="pointer-events-none absolute inset-y-0 rounded bg-[color-mix(in_oklab,var(--text)_6%,transparent)]"
                   style={{ left: `${(hover / n) * 100}%`, width: `${100 / n}%` }}
                 />
                 <div
-                  className={`pointer-events-none absolute top-2 z-10 w-44 rounded-xl border border-amber-300 bg-white/95 p-3 shadow-lg ${
+                  className={`pointer-events-none absolute top-2 z-10 w-44 rounded-xl border border-[var(--border)] bg-[var(--bg-alt)] p-3 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] ${
                     hoverFrac < 0.5 ? 'right-2' : 'left-2'
                   }`}
                 >
@@ -294,14 +294,14 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
                     </span>
                   </div>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[11px] tabular-nums">
-                    <dt className="text-slate-500">Apertura</dt>
-                    <dd className="text-right text-slate-900">{formatPrice(active.o)}</dd>
-                    <dt className="text-slate-500">Máximo</dt>
-                    <dd className="text-right text-slate-900">{formatPrice(active.h)}</dd>
-                    <dt className="text-slate-500">Mínimo</dt>
-                    <dd className="text-right text-slate-900">{formatPrice(active.l)}</dd>
-                    <dt className="text-slate-500">Cierre</dt>
-                    <dd className="text-right font-semibold text-slate-900">{formatPrice(active.c)}</dd>
+                    <dt className="text-[var(--text-muted)]">Apertura</dt>
+                    <dd className="text-right text-[var(--text)]">{formatPrice(active.o)}</dd>
+                    <dt className="text-[var(--text-muted)]">Máximo</dt>
+                    <dd className="text-right text-[var(--text)]">{formatPrice(active.h)}</dd>
+                    <dt className="text-[var(--text-muted)]">Mínimo</dt>
+                    <dd className="text-right text-[var(--text)]">{formatPrice(active.l)}</dd>
+                    <dt className="text-[var(--text-muted)]">Cierre</dt>
+                    <dd className="text-right font-semibold text-[var(--text)]">{formatPrice(active.c)}</dd>
                   </dl>
                 </div>
               </>
@@ -310,7 +310,7 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
         </div>
 
         {/* eje X */}
-        <div className="ml-12 mt-2 flex justify-between text-[11px] text-slate-500">
+        <div className="ml-12 mt-2 flex justify-between text-[11px] text-[var(--text-muted)]">
           {cfg.labels.map((l, i) => (
             <span key={l + i}>{l}</span>
           ))}
@@ -318,4 +318,4 @@ export const PriceChartCard: React.FC<{ price: number; volatility: number; trend
       </div>
     </AtlasCard>
   )
-}
+}

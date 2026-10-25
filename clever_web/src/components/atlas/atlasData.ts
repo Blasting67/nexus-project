@@ -102,10 +102,13 @@ export function sampleColor(stops: Array<[number, string]>, v: number): string {
   return mixHex(last, last, 0)
 }
 
+// colores sobrios; con un tramo lima entre el ámbar y el verde (mezclarlos directamente da un olivo apagado)
 const GOOD_STOPS: Array<[number, string]> = [
-  [0, '#dc2626'],
-  [50, '#d97706'],
-  [100, '#16a34a'],
+  [0, '#c2413a'],
+  [35, '#cf6a2c'],
+  [50, '#c58a1c'],
+  [68, '#6f9a2e'],
+  [100, '#2b8a57'],
 ]
 /** Rojo → ámbar → verde (valor alto = bueno). */
 export const goodColor = (v: number) => sampleColor(GOOD_STOPS, v)

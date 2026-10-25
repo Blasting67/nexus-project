@@ -74,20 +74,20 @@ export const SimulatorPanel: React.FC<SimulatorPanelProps> = ({
         role="dialog"
         aria-label="Simulador"
         aria-hidden={!open}
-        className={`fixed right-0 top-0 z-[60] flex h-full w-[360px] max-w-[92vw] flex-col border-l border-slate-200 bg-white text-slate-900 shadow-2xl transition-all duration-300 ${
+        className={`fixed right-0 top-0 z-[60] flex h-full w-[360px] max-w-[92vw] flex-col border-l border-[var(--border)] bg-[var(--bg-alt)] text-[var(--text)] shadow-2xl transition-all duration-300 ${
           open ? 'visible translate-x-0' : 'invisible translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Simulador</h2>
-            <p className="text-xs text-slate-500">Mueve los valores y mira cómo reacciona el Atlas.</p>
+            <h2 className="text-base font-semibold text-[var(--text)]">Simulador</h2>
+            <p className="text-xs text-[var(--text-muted)]">Mueve los valores y mira cómo reacciona el Atlas.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar simulador"
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            className="rounded-full p-1.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-alt)] hover:text-[var(--text)]"
           >
             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
@@ -95,13 +95,13 @@ export const SimulatorPanel: React.FC<SimulatorPanelProps> = ({
           </button>
         </div>
 
-        <div className="flex flex-wrap gap-2 border-b border-slate-200 px-5 py-4">
+        <div className="flex flex-wrap gap-2 border-b border-[var(--border)] px-5 py-4">
           {PRESET_BUTTONS.map((p) => (
             <button
               key={p.key}
               type="button"
               onClick={() => onPreset(p.key)}
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 transition hover:border-amber-400 hover:bg-white"
+              className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text)] transition-colors hover:border-[color-mix(in_oklab,var(--text)_25%,var(--border))] hover:bg-[var(--surface-alt)]"
             >
               <span className={`h-2 w-2 rounded-full ${p.dot}`} />
               {p.label}
@@ -110,7 +110,7 @@ export const SimulatorPanel: React.FC<SimulatorPanelProps> = ({
           <button
             type="button"
             onClick={onReset}
-            className="ml-auto rounded-full px-3 py-1.5 text-xs text-slate-500 transition hover:text-slate-900"
+            className="ml-auto rounded-full px-3 py-1.5 text-xs text-[var(--text-muted)] transition hover:text-[var(--text)]"
           >
             Restablecer
           </button>
@@ -120,7 +120,7 @@ export const SimulatorPanel: React.FC<SimulatorPanelProps> = ({
           {FIELDS.map((f) => (
             <label key={f.key} className="block">
               <span className="mb-1.5 flex items-center justify-between text-xs">
-                <span className="text-slate-600">{f.label}</span>
+                <span className="text-[var(--text-muted)]">{f.label}</span>
                 <span className="font-mono text-amber-600">
                   {f.format ? f.format(data[f.key]) : Math.round(data[f.key])}
                 </span>

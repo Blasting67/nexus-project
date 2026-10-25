@@ -75,10 +75,10 @@ export const InfoTip: React.FC<{
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         onBlur={() => setOpen(false)}
-        className={`flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold shadow-sm transition duration-200 ${
+        className={`flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors duration-200 ${
           open
-            ? 'scale-110 border-amber-500 bg-amber-500 text-white shadow-md shadow-amber-400/50'
-            : 'border-amber-300 bg-amber-50 text-amber-700 hover:scale-110 hover:border-amber-500 hover:bg-amber-500 hover:text-white hover:shadow-md hover:shadow-amber-400/50'
+            ? 'border-[var(--text-muted)] bg-[var(--text)] text-[var(--bg-alt)]'
+            : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[var(--text-muted)] hover:text-[var(--text)]'
         }`}
       >
         ?
@@ -89,7 +89,7 @@ export const InfoTip: React.FC<{
           <span
             ref={tipRef}
             role="tooltip"
-            className={`pointer-events-none fixed z-[9999] rounded-xl border border-amber-300 bg-white p-3.5 text-left text-[13px] font-normal leading-relaxed text-slate-700 shadow-2xl shadow-slate-900/20 ring-4 ring-amber-100/70 ${
+            className={`pointer-events-none fixed z-[9999] rounded-xl border border-[var(--border)] bg-[var(--bg-alt)] p-3.5 text-left text-[13px] font-normal leading-relaxed text-[var(--text)] shadow-[0_18px_40px_-20px_rgba(15,23,42,0.5)] ${
               more ? 'w-64' : 'w-60'
             }`}
             style={{
@@ -100,22 +100,22 @@ export const InfoTip: React.FC<{
           >
             {text}
             {more && (
-              <span className="mt-2.5 block border-t border-amber-100 pt-2.5">
+              <span className="mt-2.5 block border-t border-[var(--border)] pt-2.5">
                 {more.title && (
-                  <span className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-wider text-amber-700">
+                  <span className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                     {more.title}
                   </span>
                 )}
                 {more.chips && (
                   <span className="flex flex-wrap gap-1.5">
                     {more.chips.map((c) => (
-                      <span key={c} className="rounded-full bg-amber-50 px-2 py-0.5 text-[11.5px] font-medium text-amber-800 ring-1 ring-amber-200">
+                      <span key={c} className="rounded-full bg-[var(--surface-alt)] px-2 py-0.5 text-[11.5px] font-medium text-[var(--text)] ring-1 ring-[var(--border)]">
                         {c}
                       </span>
                     ))}
                   </span>
                 )}
-                {more.note && <span className="mt-1.5 block text-[12px] leading-snug text-slate-600">{more.note}</span>}
+                {more.note && <span className="mt-1.5 block text-[12px] leading-snug text-[var(--text-muted)]">{more.note}</span>}
               </span>
             )}
           </span>,
@@ -148,7 +148,7 @@ export const AtlasCard: React.FC<AtlasCardProps> = ({
   children,
 }) => (
   <section
-    className={`relative z-0 flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/70 transition duration-300 focus-within:z-20 hover:z-20 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md ${className}`}
+    className={`relative z-0 flex flex-col rounded-2xl border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-alt)_35%,var(--surface))] p-4 transition-[border-color] duration-300 focus-within:z-20 hover:z-20 hover:border-[color-mix(in_oklab,var(--text)_22%,var(--border))] ${className}`}
   >
     <div
       aria-hidden="true"
@@ -156,7 +156,7 @@ export const AtlasCard: React.FC<AtlasCardProps> = ({
       style={{ background: `radial-gradient(120% 90% at 90% -10%, ${tint}, transparent 60%)` }}
     />
     <header className="relative z-10 mb-3 flex items-center justify-between gap-2">
-      <h3 className="text-sm font-medium text-slate-700">{title}</h3>
+      <h3 className="text-sm font-medium text-[var(--text)]">{title}</h3>
       <div className="flex items-center gap-2">
         {actions}
         <InfoTip text={tip} more={tipMore} />
@@ -175,8 +175,8 @@ export const Readout: React.FC<{
 }> = ({ value, suffix, label, labelColor }) => (
   <div>
     <div className="flex items-baseline gap-1.5">
-      <span className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</span>
-      {suffix && <span className="text-xs text-slate-400">{suffix}</span>}
+      <span className="text-3xl font-semibold tabular-nums tracking-tight text-[var(--text)]">{value}</span>
+      {suffix && <span className="text-xs text-[var(--text-muted)]">{suffix}</span>}
     </div>
     {label && (
       <div className="mt-0.5 text-sm font-medium" style={{ color: labelColor }}>
