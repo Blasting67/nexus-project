@@ -8,8 +8,8 @@ export const emilianoBriones = defineMember({
   email: '',
   linkedin: '',
   answers: {
+    personal: '',
     carrera: '',
-    tecnologia: '',
     motivacion: '',
     consejo: '',
   },
