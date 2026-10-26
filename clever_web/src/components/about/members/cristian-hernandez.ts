@@ -8,8 +8,8 @@ export const cristianHernandez = defineMember({
   email: '',
   linkedin: '',
   answers: {
+    personal: '',
     carrera: '',
-    tecnologia: '',
     motivacion: '',
     consejo: '',
   },
