@@ -27,7 +27,7 @@ export const MemberDetail: React.FC<{ member: TeamMember }> = ({ member }) => {
           {member.name}
         </h1>
         <span aria-hidden="true" className="mb-rule" />
-        <p className="mb-role">{CAREER}</p>
+        <p className="mb-role">{member.career || CAREER}</p>
         <p className="mb-bio">{member.description}</p>
 
         <div className="mb-actions">

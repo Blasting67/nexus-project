@@ -1,0 +1,287 @@
+GUÍA DE ESTUDIO: ANÁLISIS TÉCNICO, TRADING, CRIPTOMONEDAS Y BLOCKCHAIN
+
+Propósito
+
+Esta guía organiza los temas de análisis y aprendizaje disponibles en el sitio en tres niveles: principiante, intermedio y avanzado. Incluye conceptos de trading, lectura de gráficos, indicadores, gestión del riesgo, criptomonedas y tecnología blockchain.
+
+El análisis técnico estudia el comportamiento histórico del precio y del volumen para construir escenarios. No permite conocer el futuro con certeza. Los ejemplos y las señales descritas son educativos, no recomendaciones de compra o venta. Los criptoactivos pueden sufrir pérdidas importantes, cambios de liquidez, fallos tecnológicos y riesgos de custodia.
+
+RUTA DE APRENDIZAJE
+
+Nivel 1: Principiante
+Lecciones 1 a 5. Familiarizarse con los mercados, los gráficos, las velas y los conceptos esenciales de blockchain.
+
+Nivel 2: Intermedio
+Lecciones 6 a 10. Interpretar estructura de mercado, indicadores y patrones; comprender mejor activos digitales, redes y custodia.
+
+Nivel 3: Avanzado
+Lecciones 11 a 15. Integrar varias herramientas, evaluar escenarios y riesgos, y entender las capas y mecanismos de consenso de blockchain.
+
+NIVEL 1: PRINCIPIANTE
+
+Lección 1. Qué es el trading y en qué mercados se opera
+
+El trading consiste en comprar y vender un activo o contrato con la intención de beneficiarse de cambios de precio. El precio puede subir o bajar, por lo que toda operación implica riesgo.
+
+Conceptos iniciales:
+- Trader: persona que analiza y ejecuta operaciones.
+- Exchange o plataforma: servicio donde se intercambian activos. Puede ser centralizado o descentralizado.
+- Activo: instrumento que se compra, vende o analiza, como una acción, una divisa o un criptoactivo.
+- Mercado: entorno y reglas bajo las que se negocia un activo.
+
+Algunos mercados:
+- Acciones: participación en empresas.
+- Bonos: instrumentos de deuda emitidos por gobiernos o empresas.
+- ETF: fondo que agrupa activos o busca seguir un índice.
+- Forex: mercado de intercambio de divisas.
+- Materias primas: activos como petróleo, oro o productos agrícolas.
+- Criptoactivos: activos digitales asociados a redes o aplicaciones blockchain.
+- Derivados: contratos cuyo valor depende de otro activo o referencia. Su funcionamiento puede ser complejo y añadir riesgo.
+
+Los estilos de operación suelen distinguirse por el tiempo que se mantiene una posición:
+- Scalping: operaciones de duración muy breve.
+- Day trading: posiciones que normalmente se cierran el mismo día.
+- Swing trading: operaciones que pueden durar días o semanas.
+- Trading de posición: operaciones que pueden durar semanas o meses.
+
+La duración no hace que una estrategia sea automáticamente más segura o rentable. Cada estilo exige tiempo, disciplina y control del riesgo.
+
+Lección 2. Cómo leer un gráfico de precios
+
+Un gráfico representa el precio a lo largo del tiempo. El eje horizontal suele mostrar el tiempo y el vertical, el precio. El intervalo elegido determina qué representa cada punto o vela: por ejemplo, una hora o un día.
+
+Tipos frecuentes:
+- Línea: conecta precios de cierre y permite observar la dirección general.
+- Barras OHLC: muestran apertura, máximo, mínimo y cierre de cada periodo.
+- Velas japonesas: representan esos mismos cuatro valores de forma visual.
+- Heikin Ashi: transforma y suaviza los datos de las velas para facilitar la observación de tendencias, pero sus valores no son los precios exactos de ejecución.
+- Renko: forma bloques según el movimiento del precio y reduce la importancia del tiempo.
+- Área: muestra una línea de precios, normalmente cierres, con el espacio inferior relleno.
+
+Antes de comparar gráficos, comprueba el activo, la moneda de cotización, el intervalo de tiempo y la escala. Un mismo activo puede parecer distinto si cambian el marco temporal o la escala.
+
+Lección 3. Anatomía de una vela japonesa
+
+Cada vela resume cuatro precios del intervalo:
+- Apertura: precio al inicio del periodo.
+- Cierre: precio al final.
+- Máximo: precio más alto del periodo.
+- Mínimo: precio más bajo del periodo.
+
+El cuerpo muestra la diferencia entre apertura y cierre. Si el cierre queda por encima de la apertura, la vela suele colorearse como alcista; si queda por debajo, como bajista. Las mechas muestran los extremos alcanzados por encima y por debajo del cuerpo.
+
+Una mecha larga puede indicar que el precio exploró un nivel, pero no logró mantenerse allí al cierre del periodo. No demuestra por sí sola que vaya a producirse una reversión. El significado depende del contexto, del volumen, del intervalo y de lo que ocurra después.
+
+Lección 4. Tendencia, soporte y resistencia
+
+Una tendencia describe la dirección predominante del precio:
+- Alcista: el precio suele formar máximos y mínimos progresivamente más altos.
+- Bajista: suele formar máximos y mínimos progresivamente más bajos.
+- Lateral: el precio se mueve dentro de una zona sin dirección sostenida clara.
+
+Soporte es una zona en la que anteriormente apareció interés comprador o se frenó una caída. Resistencia es una zona en la que anteriormente apareció presión vendedora o se frenó una subida. Son zonas aproximadas, no líneas infalibles ni garantías de rebote.
+
+Una zona puede dejar de funcionar. Si el precio la atraviesa, conviene esperar confirmación y revisar el contexto en vez de asumir que el movimiento continuará automáticamente.
+
+Ejercicio: observa un gráfico histórico y marca una tendencia, una zona de soporte y una zona de resistencia. Anota qué ocurrió después sin modificar las marcas para que coincidan con el resultado.
+
+Lección 5. Blockchain, criptomonedas y carteras
+
+Blockchain es un tipo de registro digital compartido entre participantes de una red. Las transacciones se agrupan en bloques y se validan según las reglas del protocolo. La estructura criptográfica enlaza los bloques y ayuda a detectar cambios no autorizados. La descentralización, la seguridad y la velocidad dependen de cómo esté diseñada y operada cada red.
+
+Conceptos básicos:
+- Nodo: equipo que ejecuta el software de una red y participa en la propagación, verificación o almacenamiento de datos.
+- Transacción: instrucción firmada que solicita una operación en la red.
+- Hash: resultado de una función matemática que identifica datos. Un cambio en esos datos normalmente produce otro hash.
+- Clave privada: secreto criptográfico que permite autorizar operaciones. Debe mantenerse privada.
+- Clave pública o dirección: información que permite identificar una cuenta o verificar firmas, según el sistema.
+- Criptomoneda: activo nativo de una red, como BTC en Bitcoin.
+- Token: activo creado mediante las reglas de una plataforma o protocolo; puede cumplir diferentes funciones.
+- Stablecoin: token diseñado para mantener un valor relacionado con una referencia, por ejemplo una moneda fiduciaria. Puede perder esa relación y conserva riesgos de emisor, reservas, red y mercado.
+- NFT: token que identifica un elemento digital según las reglas de una red. No garantiza por sí mismo derechos de autor o propiedad legal.
+
+Una cartera digital normalmente gestiona claves y permite firmar operaciones; los activos se registran en la blockchain. Una cartera caliente está conectada a internet y suele ser más cómoda, pero queda más expuesta a amenazas en línea. Una cartera fría mantiene las claves fuera de línea o con menor exposición, pero exige respaldo y custodia cuidadosos.
+
+La frase de recuperación, si existe, puede dar control total sobre los fondos. No la compartas, no la fotografíes ni la introduzcas en páginas o aplicaciones que no hayas verificado. Perderla puede impedir recuperar el acceso; divulgarla puede permitir el robo.
+
+NIVEL 2: INTERMEDIO
+
+Lección 6. Volumen y estructura del mercado
+
+El volumen representa la cantidad negociada durante un periodo, según la fuente de datos. Puede ayudar a evaluar si un movimiento de precio tuvo participación relevante, pero las cifras no son idénticas entre plataformas y mercados.
+
+Al combinar precio y volumen, formula preguntas:
+- ¿El movimiento ocurre con actividad mayor o menor que la habitual?
+- ¿El precio avanza, pero el volumen disminuye?
+- ¿Hay una ruptura de una zona relevante y continúa el interés después?
+
+Una ruptura puede ser falsa. No se debe considerar confirmada solo porque una vela atraviese momentáneamente una zona. La confirmación puede evaluarse mediante cierres, continuidad, volumen y comportamiento posterior, sin que ninguno de estos factores garantice el resultado.
+
+Lección 7. Patrones de velas: pistas, no predicciones
+
+Los patrones describen formas que aparecen en velas y pueden resumir el equilibrio temporal entre compradores y vendedores. Se interpretan mejor junto con la tendencia y las zonas cercanas.
+
+Ejemplos alcistas que suelen estudiarse:
+- Martillo: cuerpo pequeño y mecha inferior larga, observado con frecuencia después de una caída.
+- Envolvente alcista: el cuerpo de una vela alcista cubre el cuerpo de la vela bajista previa.
+- Estrella de la mañana: secuencia de tres velas que puede sugerir pérdida de impulso bajista.
+
+Ejemplos bajistas:
+- Estrella fugaz: cuerpo pequeño y mecha superior larga, que puede aparecer después de una subida.
+- Envolvente bajista: el cuerpo de una vela bajista cubre el cuerpo de la vela alcista previa.
+- Estrella del atardecer: secuencia de tres velas que puede sugerir pérdida de impulso alcista.
+
+Doji y otras velas de cuerpo reducido pueden reflejar indecisión en ese intervalo. Ningún patrón anuncia por sí solo una subida o bajada. La forma, el cierre, el volumen y la ubicación en el gráfico cambian su interpretación.
+
+Lección 8. Medias móviles y lectura de tendencia
+
+Una media móvil resume precios de varios periodos para reducir parte del ruido visual:
+- SMA, media móvil simple: asigna el mismo peso a los datos incluidos.
+- EMA, media móvil exponencial: da más peso a los datos recientes.
+- Otras variantes, como SMMA, LWMA, DEMA y TEMA, aplican métodos distintos de suavizado o ponderación.
+
+Una media puede servir como referencia de tendencia o zona dinámica, pero se retrasa respecto al precio y puede producir señales confusas en mercados laterales. Un cruce de medias no constituye una orden ni una prueba de que el movimiento continuará. Los periodos elegidos modifican la lectura y deben probarse con datos, considerando costes y posibles sesgos.
+
+Ichimoku combina varias líneas y una nube para resumir contexto y posibles zonas de soporte o resistencia. El precio por encima, dentro o por debajo de la nube cambia la lectura habitual, pero no elimina la incertidumbre.
+
+Lección 9. Indicadores de impulso y volatilidad
+
+Los indicadores transforman datos del precio y, a veces, del volumen. Son herramientas descriptivas; muchos derivan del mismo precio y pueden repetir información.
+
+RSI:
+- Oscilador que suele mostrarse entre 0 y 100.
+- Lecturas por encima de 70 o por debajo de 30 se consideran a menudo zonas de sobrecompra o sobreventa.
+- Una lectura extrema puede persistir durante una tendencia fuerte; no implica una reversión inmediata.
+
+MACD:
+- Compara medias móviles y suele presentarse con una línea MACD, una línea de señal y un histograma.
+- Cruces y cambios del histograma pueden aportar pistas sobre impulso.
+- Puede retrasarse y dar señales falsas, especialmente en mercados laterales.
+
+KDJ o estocástico:
+- Compara el cierre con un rango reciente para estudiar el impulso.
+- Sus cruces y zonas extremas deben leerse junto con el contexto.
+
+Bandas de Bollinger:
+- Rodean una media y se expanden o contraen con la volatilidad.
+- Bandas estrechas reflejan menor volatilidad reciente, no la dirección de un movimiento futuro.
+- Tocar una banda no significa automáticamente que el activo esté caro, barato o vaya a revertirse.
+
+ADX:
+- Busca medir la fuerza de una tendencia, no su dirección.
+- Una lectura elevada no dice por sí sola si el precio subirá o bajará.
+
+Lección 10. Criptoactivos, redes y transferencias
+
+Un activo puede existir en más de una red. El nombre o símbolo no basta para identificar la ruta correcta de una transferencia. Estándares como ERC-20, TRC-20 y BEP-20 describen formatos de tokens asociados a redes distintas; BTC es el activo nativo de Bitcoin y no un estándar ERC-20.
+
+Antes de transferir:
+1. Confirma que la plataforma de origen y la de destino admiten la misma red.
+2. Comprueba la dirección completa y cualquier dato adicional que solicite el destino.
+3. Revisa comisiones, tiempos estimados y requisitos de depósito.
+4. Si es apropiado y económicamente razonable, verifica primero con una cantidad pequeña.
+
+Una transferencia a una red o dirección equivocada puede ser irreversible. Las comisiones, tiempos y disponibilidad varían; verifica la información actual en las plataformas implicadas.
+
+NIVEL 3: AVANZADO
+
+Lección 11. Gestión del riesgo y planificación de operaciones
+
+Antes de abrir una operación, define una hipótesis comprobable, el punto que invalidaría esa hipótesis, el tamaño de la posición y cuánto se puede perder. Un stop-loss puede ayudar a limitar una pérdida planificada, pero en movimientos bruscos puede ejecutarse a un precio distinto del esperado o no ejecutarse como se anticipaba.
+
+Conceptos para practicar:
+- Riesgo por operación: pérdida potencial aceptada si el escenario queda invalidado.
+- Tamaño de posición: cantidad operada, que debe relacionarse con el riesgo aceptado y la distancia hasta el punto de salida.
+- Relación riesgo/beneficio: comparación entre la pérdida potencial y el beneficio potencial planteados; no indica la probabilidad de éxito.
+- Apalancamiento: exposición superior al capital aportado. Amplifica tanto ganancias como pérdidas y puede provocar liquidación.
+- Liquidez: facilidad de operar sin cambiar demasiado el precio. Un mercado poco líquido puede tener spreads amplios y deslizamiento.
+- Diversificación: distribuir exposición; no elimina los riesgos ni garantiza protección, sobre todo cuando varios activos se mueven juntos.
+
+No arriesgues dinero necesario para gastos básicos ni uses apalancamiento como forma de compensar pérdidas. Evita el all-in, la revancha, el FOMO y la sobreoperación. Llevar un registro de hipótesis, entradas, salidas, costes y errores ayuda a evaluar el proceso sin confundir una operación afortunada con una estrategia sólida.
+
+Lección 12. Estructura avanzada y herramientas de niveles
+
+Fibonacci:
+- Los retrocesos de 23,6 %, 38,2 %, 50 % y 61,8 % se usan como zonas de referencia entre dos extremos de un movimiento.
+- La selección de los extremos puede ser subjetiva.
+- El precio no está obligado a respetar esos niveles.
+
+Ondas de Elliott:
+- Modelo interpretativo que describe fases de impulso y corrección, a menudo como cinco ondas de avance y tres de corrección.
+- Distintos analistas pueden contar las ondas de manera diferente.
+- Las etiquetas deben tratarse como escenarios revisables, no como predicción segura.
+
+Al utilizar herramientas de estructura, formula qué evidencia apoyaría o invalidaría cada escenario. Evita cambiar las reglas después de observar el resultado.
+
+Lección 13. Consenso y seguridad de blockchain
+
+El consenso es el conjunto de reglas que permite que una red acuerde qué transacciones y bloques aceptar, y en qué orden. También ayuda a afrontar el doble gasto y las discrepancias entre participantes.
+
+Proof of Work (PoW):
+- Participantes conocidos como mineros compiten mediante trabajo computacional para proponer bloques.
+- Otros nodos verifican que el bloque cumpla las reglas.
+- Puede ofrecer seguridad mediante el coste de participar en un ataque, pero consume recursos y su rendimiento depende del diseño de la red.
+
+Proof of Stake (PoS):
+- Validadores bloquean activos como garantía y participan en la propuesta o validación de bloques.
+- El protocolo puede aplicar penalizaciones, como slashing, ante ciertas conductas.
+- Sus riesgos y supuestos de seguridad difieren de PoW; no es correcto reducir la comparación a que uno siempre es mejor.
+
+Otros diseños incluyen variantes delegadas y mecanismos basados en tolerancia a fallas bizantinas. Para comparar redes, analiza sus supuestos, concentración de validadores, reglas de penalización, finalidad de transacciones, coste y resiliencia.
+
+El hash enlaza datos y ayuda a detectar modificaciones. Las firmas digitales permiten comprobar que una instrucción fue autorizada por quien controla la clave correspondiente. Ninguno de estos elementos evita por sí solo errores de usuario, fallas de software, pérdida de claves, fraudes o riesgos de gobernanza.
+
+Lección 14. Capas de una blockchain y contratos inteligentes
+
+Una forma didáctica de describir una blockchain es separarla en capas:
+- Datos: bloques, transacciones, hashes, firmas y estructuras de organización.
+- Red: comunicación y propagación entre nodos.
+- Consenso: reglas para validar y ordenar bloques.
+- Incentivos: tarifas, recompensas y penalizaciones que afectan la participación.
+- Aplicación: carteras, contratos inteligentes, aplicaciones descentralizadas y otros servicios.
+
+Las capas se relacionan y no siempre se implementan de la misma forma en todas las redes. Los contratos inteligentes son programas que ejecutan reglas en una blockchain. Pueden automatizar acuerdos, pero pueden contener errores, depender de datos externos o interactuar con otros contratos. Una transacción ejecutada de forma incorrecta puede ser difícil o imposible de revertir.
+
+Lección 15. Integración de análisis y evaluación crítica
+
+Un análisis consistente separa observaciones, hipótesis y decisiones:
+1. Define el activo, el mercado y el horizonte temporal.
+2. Describe la tendencia y las zonas relevantes antes de añadir indicadores.
+3. Identifica qué datos observas: precio, volumen, volatilidad y contexto de mercado.
+4. Construye al menos un escenario favorable y uno contrario.
+5. Especifica qué hecho invalidaría cada escenario.
+6. Establece de antemano el riesgo máximo y considera comisiones, spread y deslizamiento.
+7. Registra la decisión y evalúa el proceso después, no solo el resultado.
+
+No acumules indicadores que repiten la misma información. La confluencia de varias herramientas no garantiza una operación; algunas señales pueden ser dependientes entre sí. Para evaluar una estrategia, considera muestras suficientes, costes reales, cambios de condiciones y sesgo de selección. Un resultado histórico no garantiza resultados futuros.
+
+ERRORES FRECUENTES
+
+- Operar por intuición o por una señal aislada.
+- Usar demasiados indicadores sin una hipótesis clara.
+- Copiar estrategias sin adaptarlas ni comprobar sus riesgos.
+- Cambiar de activo o método continuamente sin registrar resultados.
+- Creer que una operación o un activo es seguro.
+- Arriesgar demasiado, usar apalancamiento sin comprender la liquidación o hacer all-in.
+- Perseguir subidas por miedo a quedarse fuera (FOMO) o buscar revancha tras una pérdida.
+- Tratar patrones, niveles o indicadores como certezas.
+- Enviar criptoactivos sin verificar la red y la dirección.
+- Compartir claves privadas o frases de recuperación.
+
+GLOSARIO BREVE
+
+Activo: instrumento o bien que se puede negociar.
+Blockchain: registro distribuido organizado en bloques y protegido por reglas criptográficas y de consenso.
+Cierre: último precio registrado de un intervalo.
+Criptoactivo: activo digital asociado a una blockchain o sistema criptográfico.
+Deslizamiento: diferencia entre el precio esperado y el precio efectivo de ejecución.
+Indicador: cálculo que resume datos del mercado para apoyar el análisis.
+Liquidez: capacidad de comprar o vender con impacto limitado en el precio.
+Resistencia: zona donde el precio ha enfrentado presión vendedora.
+Soporte: zona donde el precio ha encontrado interés comprador.
+Spread: diferencia entre el mejor precio de compra y el de venta.
+Volatilidad: intensidad de las variaciones del precio.
+
+CIERRE
+
+El análisis técnico es una forma de organizar información del mercado, no un método para eliminar la incertidumbre. La formación, la práctica con datos históricos y simuladores, la seguridad de las claves y la gestión del riesgo son fundamentales. Antes de tomar decisiones financieras, verifica la información y considera asesoría profesional independiente.
