@@ -15,6 +15,7 @@ export interface MemberInput {
   slug: string
   name: string
   color: string
+  career?: string
   description: string
   email: string
   linkedin: string

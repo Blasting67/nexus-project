@@ -32,7 +32,7 @@ export const MemberCard: React.FC<{ member: TeamMember }> = ({ member }) => (
     </span>
     <span className="ab-body">
       <span className="ab-name">{member.name}</span>
-      <span className="ab-career">{CAREER}</span>
+      <span className="ab-career">{member.career || CAREER}</span>
       <span className="ab-desc">{member.description}</span>
     </span>
     <span className="ab-more" aria-hidden="true">
