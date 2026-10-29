@@ -3,6 +3,7 @@ import { CleverkorMascot3D } from '../CleverkorMascot3D'
 import type { LearnWorld } from '../../types/profileCustomization'
 import { CANDLES_KIT, ISLAND_KIT, WORLD_STYLES } from './TrailWorlds'
 import type { WorldKit } from './TrailWorlds'
+import FitText from '../FitText'
 
 export type TrailLessonStatus = 'completed' | 'current' | 'available' | 'locked'
 
@@ -880,7 +881,7 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
                   tabIndex={-1}
                   aria-hidden="true"
                   onClick={() => handleOpen(i)}
-                  className={`absolute z-10 -translate-y-1/2 rounded-xl border-2 text-left ${isCompact ? 'w-[40%] px-2 py-1.5' : 'w-[min(36%,210px)] px-3 py-2'} shadow-[0_10px_20px_-14px_rgba(0,0,0,.6)] [overflow-wrap:anywhere] disabled:cursor-not-allowed ${
+                  className={`absolute z-10 -translate-y-1/2 rounded-xl border-2 text-left ${isCompact ? 'w-[40%] px-2 py-1.5' : 'w-[min(36%,210px)] px-3 py-2'} shadow-[0_10px_20px_-14px_rgba(0,0,0,.6)] disabled:cursor-not-allowed ${
                     isCurrent ? 'border-[var(--ink)] bg-white' : 'border-white/70 bg-white/90'
                   } ${labelOnLeft ? 'text-right' : ''}`}
                   style={{
@@ -891,7 +892,7 @@ export const TradingTrailMap: React.FC<TradingTrailMapProps> = ({ lessons, stage
                   <span className={`note-num block ${isCompact ? 'text-[9px]' : 'text-[11px]'} ${isLocked ? 'text-[#9aa1ad]' : 'text-[#5b6472]'}`}>
                     Nivel {String(i + 1).padStart(2, '0')} &middot; +{xp} XP
                   </span>
-                  <span className={`note-display block font-bold leading-snug ${isCompact ? 'text-[11px]' : 'text-sm'} ${isLocked ? 'text-[#7b8390]' : 'text-[#111827]'}`}>{lessons[i].title}</span>
+                  <FitText as="span" minSize={8} className={`note-display block font-bold leading-snug ${isCompact ? 'text-[11px]' : 'text-sm'} ${isLocked ? 'text-[#7b8390]' : 'text-[#111827]'}`}>{lessons[i].title}</FitText>
                 </button>
                 {lessons[i].scene && !isCompact && (
                   <div

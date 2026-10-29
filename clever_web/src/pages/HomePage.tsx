@@ -11,6 +11,7 @@ import { ProfileCover } from '../components/profile/ProfileLayouts'
 import { PROFILE_STYLES } from '../components/profile/ProfileVisuals'
 import { DEFAULT_BANNER_A, DEFAULT_BANNER_B, HOME_GREETINGS, HOME_LESSON_BACKGROUNDS } from '../data/profileCustomizationOptions'
 import { ModernBanner } from '../components/profile/ProfileBanners'
+import FitText from '../components/FitText'
 import { resolveAvatarSrc } from '../data/avatarPresets'
 import { useProfileCustomization } from '../services/profileCustomizationService'
 import type { HomeLessonBg, HomeMainSection, HomeSideSection } from '../types/profileCustomization'
@@ -27,6 +28,13 @@ const LESSON_DARK_VARS = {
 const isSceneBg = (bg: HomeLessonBg): bg is 'aurora' | 'stars' | 'candles' | 'waves' | 'skyline' => ['aurora', 'stars', 'candles', 'waves', 'skyline'].includes(bg)
 
 const TRADING_MODULES: string[] = MODULES_BY_CATEGORY.trading
+
+const lessonTitleSize = (title: string) => {
+  const longest = Math.max(0, ...(title || '').split(/\s+/).map((word) => word.length))
+  if (longest > 16) return 'max-w-full text-[22px] sm:text-[2rem]'
+  if (longest > 12) return 'max-w-[22ch] text-2xl sm:text-[2.2rem]'
+  return 'max-w-[18ch] text-3xl sm:text-[2.6rem]'
+}
 
 const STEPS = [
   { icon: 'fa-solid fa-clipboard-question', title: 'Diagnóstico', text: 'Un examen corto detecta desde dónde empiezas.' },
@@ -509,9 +517,9 @@ export const HomePage: React.FC = () => {
             Módulo {String(Math.min(modulesDone + 1, TRADING_MODULES.length)).padStart(2, '0')} de {String(TRADING_MODULES.length).padStart(2, '0')}
           </span>
         </div>
-        <h2 className="note-display mt-4 max-w-[18ch] text-3xl font-black leading-[1.02] text-[var(--text)] hyphens-auto [overflow-wrap:break-word] sm:text-[2.6rem]">
+        <FitText as="h2" className={`note-display mt-4 font-black leading-[1.02] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${lessonTitleSize(nextLesson || currentModule)}`}>
           {nextLesson || currentModule}
-        </h2>
+        </FitText>
 
         <div className="mt-7 grid grid-cols-8 gap-1.5" aria-label={`Progreso del curso: ${courseProgress}%`}>
           {TRADING_MODULES.map((title, i) => (
@@ -561,10 +569,10 @@ export const HomePage: React.FC = () => {
       {custom.homeMascot && <DraggableMascot side={mascotSide} onSideChange={setMascotSide} anchorRef={rootRef} />}
 
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="note-display pr-20 text-4xl font-black leading-[1.02] text-[var(--text)] sm:text-[3.4rem] lg:pr-0">
+        <FitText as="h1" className="note-display min-w-0 max-w-full pr-20 text-4xl font-black leading-[1.02] text-[var(--text)] sm:text-[3.4rem] lg:pr-0">
           Hola, {firstName}.
           <span className="block text-[var(--text-muted)]">{greetingText}</span>
-        </h1>
+        </FitText>
         <button
           type="button"
           onClick={() => setSearchParams({ estudio: 'inicio' })}
@@ -575,22 +583,24 @@ export const HomePage: React.FC = () => {
         </button>
       </div>
 
-      <div className={`flex flex-col lg:grid lg:items-start ${custom.homeCompact ? 'gap-5' : 'gap-8'} ${custom.homeSidebarLeft ? 'lg:grid-cols-[340px_1fr]' : 'lg:grid-cols-[1fr_340px]'}`}>
-        <div className={`contents lg:flex lg:min-w-0 lg:flex-col ${custom.homeCompact ? 'lg:gap-10' : 'lg:gap-16'} ${custom.homeSidebarLeft ? 'lg:order-2' : ''}`}>
-          {visibleMain.map((id, index) => (
-            <div key={id} className="min-w-0" style={{ order: mobileOrder('main', index) }}>
-              {mainBlocks[id]}
-            </div>
-          ))}
-        </div>
+      <div className="@container">
+        <div className={`flex flex-col @4xl:grid @4xl:items-start ${custom.homeCompact ? 'gap-5' : 'gap-8'} ${custom.homeSidebarLeft ? '@4xl:grid-cols-[340px_1fr]' : '@4xl:grid-cols-[1fr_340px]'}`}>
+          <div className={`contents @4xl:flex @4xl:min-w-0 @4xl:flex-col ${custom.homeCompact ? '@4xl:gap-10' : '@4xl:gap-16'} ${custom.homeSidebarLeft ? '@4xl:order-2' : ''}`}>
+            {visibleMain.map((id, index) => (
+              <div key={id} className="min-w-0" style={{ order: mobileOrder('main', index) }}>
+                {mainBlocks[id]}
+              </div>
+            ))}
+          </div>
 
-        <aside className={`contents lg:flex lg:flex-col lg:gap-5 ${custom.homeSidebarLeft ? 'lg:order-1' : ''}`}>
-          {visibleSide.map((id, index) => (
-            <div key={id} style={{ order: mobileOrder('side', index) }}>
-              {sideBlocks[id]}
-            </div>
-          ))}
-        </aside>
+          <aside className={`contents @4xl:flex @4xl:flex-col @4xl:gap-5 ${custom.homeSidebarLeft ? '@4xl:order-1' : ''}`}>
+            {visibleSide.map((id, index) => (
+              <div key={id} style={{ order: mobileOrder('side', index) }}>
+                {sideBlocks[id]}
+              </div>
+            ))}
+          </aside>
+        </div>
       </div>
 
       <ProfileStudio

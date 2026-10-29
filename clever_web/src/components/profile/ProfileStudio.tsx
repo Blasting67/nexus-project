@@ -564,8 +564,8 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({ open, tab, onTabCh
         className="note-home st-panel fixed inset-x-0 bottom-0 z-[61] flex h-[88vh] flex-col overflow-hidden rounded-t-[28px] border border-[var(--border)] bg-[var(--bg-alt)] shadow-[0_-20px_60px_-30px_rgba(10,20,40,.6)] outline-none lg:inset-y-3 lg:left-auto lg:right-3 lg:h-auto lg:w-[440px] lg:rounded-[28px]"
       >
         <header className="border-b border-[var(--border)] px-5 pb-3 pt-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="min-w-[150px] flex-1 basis-0">
               <div className="note-wide text-[10px] font-bold text-[var(--ink)]">ESTUDIO</div>
               <h2 className="note-display text-[24px] font-black leading-tight text-[var(--text)]">Personaliza tu Clever</h2>
             </div>
@@ -701,7 +701,7 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({ open, tab, onTabCh
                       key={option.id}
                       type="button"
                       onClick={() => update({ avatarShape: option.id })}
-                      className={`st-tile flex items-center justify-center gap-2 rounded-xl border-2 py-2.5 text-[13px] font-semibold ${
+                      className={`st-tile flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-1 py-2.5 text-[13px] font-semibold min-[380px]:flex-row min-[380px]:gap-2 ${
                         custom.avatarShape === option.id ? 'border-[var(--ink)] text-[var(--ink)]' : 'border-[var(--border)] text-[var(--text-muted)]'
                       }`}
                     >
@@ -901,7 +901,7 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({ open, tab, onTabCh
               {THEME_GROUPS.map((group) => (
                 <div key={group.id}>
                   <SectionTitle icon={group.id === 'bill' ? 'fa-solid fa-money-bill-wave' : group.id === 'market' ? 'fa-solid fa-landmark' : 'fa-solid fa-wand-magic-sparkles'} title={group.label} hint={group.description} />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
                     {THEME_OPTIONS.filter((theme) => theme.group === group.id).map((theme) => (
                       <OptionTile
                         key={theme.id}
@@ -944,7 +944,7 @@ export const ProfileStudio: React.FC<ProfileStudioProps> = ({ open, tab, onTabCh
           {tab === 'barra' && (
             <div>
               <SectionTitle icon="fa-solid fa-bars" title="Estilo de la barra" hint="Se aplica en toda la plataforma en computadora. En celular siempre verás la barra inferior." />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
                 {NAV_STYLES.map((option) => (
                   <OptionTile
                     key={option.id}

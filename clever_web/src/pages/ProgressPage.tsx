@@ -19,7 +19,7 @@ export const ProgressPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 text-center font-mono">
+      <div className="grid grid-cols-2 gap-3 text-center font-mono sm:grid-cols-4">
         <div className="platform-card p-3.5">
           <div className="text-[10px] text-[var(--text-muted)] uppercase">Nivel</div>
           <div className="text-lg font-bold text-[var(--text)] mt-1">{user.level}</div>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { usePlatform } from '../context/PlatformContext'
 import { CATEGORIES, MODULES_BY_CATEGORY } from '../data/catalog'
 import type { DiagnosticResult } from '../types/platform'
+import FitText from '../components/FitText'
 
 export const ResultPage: React.FC = () => {
   const { user, isGuest } = usePlatform()
@@ -49,18 +50,18 @@ export const ResultPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="platform-card p-4 text-center">
-          <div className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Conocimiento</div>
+        <div className="platform-card px-2 py-4 text-center sm:p-4">
+          <FitText minSize={7} className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Conocimiento</FitText>
           <div className="text-xl font-bold font-mono text-[var(--text)] mt-1">{result.knowledge}%</div>
         </div>
 
-        <div className="platform-card p-4 text-center">
-          <div className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Decisión</div>
+        <div className="platform-card px-2 py-4 text-center sm:p-4">
+          <FitText minSize={7} className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Decisión</FitText>
           <div className="text-xl font-bold font-mono text-[var(--text)] mt-1">{result.decisionMaking}%</div>
         </div>
 
-        <div className="platform-card p-4 text-center">
-          <div className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Análisis</div>
+        <div className="platform-card px-2 py-4 text-center sm:p-4">
+          <FitText minSize={7} className="text-[10px] text-[var(--text-muted)] uppercase font-mono">Análisis</FitText>
           <div className="text-xl font-bold font-mono text-[var(--text)] mt-1">{result.analyticalThinking}%</div>
         </div>
       </div>
