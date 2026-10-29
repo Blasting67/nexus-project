@@ -40,6 +40,9 @@ const PROFILE_ITEMS: MoreItem[] = [
   { to: '/configuracion', label: 'Configuración', description: '', icon: 'fa-solid fa-gear' },
 ]
 
+const ISLAND_MAX = 1240
+const ISLAND_SCROLLED_MIN = 1000
+
 const NAV_MICROTEXT = 'CLEVER · TRADING Y FINANZAS · APRENDE PRACTICANDO · SERIE KOR · '.repeat(10)
 
 const NAV_STYLES = `
@@ -73,7 +76,7 @@ const NAV_STYLES = `
 .nav-item-icon{transition:background-color .2s,color .2s}
 .nav-item-row:hover .nav-item-icon{background:var(--ink);color:var(--bg)}
 .nav-xp{transition:width .8s cubic-bezier(.23,1,.32,1)}
-.nav-island{transition:height .35s cubic-bezier(.23,1,.32,1),box-shadow .35s,max-width .45s cubic-bezier(.23,1,.32,1)}
+.nav-island{transition:height .4s cubic-bezier(.22,1,.36,1),box-shadow .4s ease,background-color .4s ease,max-width .5s cubic-bezier(.22,1,.36,1)}
 .nav-rail{transition:width .32s cubic-bezier(.23,1,.32,1),box-shadow .32s}
 .nav-rail-label{transition:opacity .2s .05s,transform .25s cubic-bezier(.23,1,.32,1)}
 .nav-rail:not(:hover):not(:focus-within) .nav-rail-label{opacity:0;transform:translateX(-6px);pointer-events:none}
@@ -157,11 +160,12 @@ const StatChip: React.FC<{
   reduced: boolean
   iconClassName?: string
   progress?: number
-}> = ({ icon, value, prefix = '', suffix = '', color, label, reduced, iconClassName = '', progress }) => {
+  compact?: boolean
+}> = ({ icon, value, prefix = '', suffix = '', color, label, reduced, iconClassName = '', progress, compact = false }) => {
   const { display, pulse } = useCountUp(value, reduced)
   return (
     <span
-      className="relative inline-flex h-8 items-center gap-1.5 overflow-visible rounded-full border px-2.5"
+      className={`relative inline-flex h-8 shrink-0 items-center gap-1.5 overflow-visible rounded-full border ${compact ? 'px-2' : 'px-2.5'}`}
       style={{ borderColor: `color-mix(in srgb, ${color} 32%, var(--border))`, background: `color-mix(in srgb, ${color} 9%, var(--surface))` }}
       aria-label={`${label}: ${prefix}${value}${suffix}`}
       title={label}
@@ -174,7 +178,7 @@ const StatChip: React.FC<{
           {suffix}
         </span>
       </span>
-      {progress !== undefined && (
+      {progress !== undefined && !compact && (
         <span className="hidden h-1 w-9 overflow-hidden rounded-full lg:block" style={{ background: `color-mix(in srgb, ${color} 18%, transparent)` }} aria-hidden="true">
           <span className="nav-xp block h-full rounded-full" style={{ width: `${Math.round(progress * 100)}%`, background: color }}></span>
         </span>
@@ -299,6 +303,13 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
   const [hoverKey, setHoverKey] = useState<string | null>(null)
   const [indicator, setIndicator] = useState({ left: 0, width: 0, visible: false })
   const [isScrolled, setIsScrolled] = useState(false)
+  const [fitLevel, setFitLevel] = useState(0)
+  const [contentWidth, setContentWidth] = useState(0)
+  const fitLevelRef = useRef(0)
+  const neededRef = useRef<number[]>([0, 0, 0])
+  const rowRef = useRef<HTMLDivElement>(null)
+  const leftRef = useRef<HTMLDivElement>(null)
+  const rightRef = useRef<HTMLDivElement>(null)
 
   const itemRefs = useRef(new Map<string, HTMLElement>())
   const linksRef = useRef<HTMLDivElement>(null)
@@ -336,6 +347,54 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
     setIndicator({ left: box.left - origin.left, width: box.width, visible: true })
   }, [targetKey])
 
+  const measureFit = useCallback(() => {
+    const row = rowRef.current
+    const left = leftRef.current
+    const right = rightRef.current
+    if (!row || !left || !right) return
+    const style = getComputedStyle(row)
+    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+    let available = row.clientWidth - padding
+    if (row.dataset.island === 'true' && row.parentElement) {
+      const parentStyle = getComputedStyle(row.parentElement)
+      const outer = row.parentElement.clientWidth - parseFloat(parentStyle.paddingLeft) - parseFloat(parentStyle.paddingRight)
+      available = Math.min(outer, ISLAND_MAX) - padding - 2
+    }
+    const level = fitLevelRef.current
+    const needed = left.scrollWidth + right.scrollWidth + 32
+    neededRef.current[level] = needed
+    setContentWidth((current) => (Math.abs(current - (needed + padding)) > 1 ? needed + padding : current))
+    if (needed > available && level < 2) {
+      fitLevelRef.current = level + 1
+      setFitLevel(level + 1)
+    } else if (level > 0 && neededRef.current[level - 1] && available >= neededRef.current[level - 1] + 12) {
+      fitLevelRef.current = level - 1
+      setFitLevel(level - 1)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    measureFit()
+  })
+
+  useEffect(() => {
+    const row = rowRef.current
+    if (!row || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => measureFit())
+    observer.observe(row)
+    const resetFit = () => {
+      fitLevelRef.current = 0
+      neededRef.current = [0, 0, 0]
+      setFitLevel(0)
+    }
+    document.fonts?.ready.then(resetFit)
+    document.fonts?.addEventListener?.('loadingdone', resetFit)
+    return () => {
+      observer.disconnect()
+      document.fonts?.removeEventListener?.('loadingdone', resetFit)
+    }
+  }, [measureFit, navStyle])
+
   useLayoutEffect(() => {
     measure()
   }, [measure, pathname, navStyle, isScrolled])
@@ -343,8 +402,19 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
   useEffect(() => {
     window.addEventListener('resize', measure)
     document.fonts?.ready.then(measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [measure])
+    document.fonts?.addEventListener?.('loadingdone', measure)
+    const container = linksRef.current
+    const observer = typeof ResizeObserver !== 'undefined' && container ? new ResizeObserver(() => measure()) : null
+    if (observer && container) {
+      observer.observe(container)
+      Array.from(container.children).forEach((child) => observer.observe(child))
+    }
+    return () => {
+      window.removeEventListener('resize', measure)
+      document.fonts?.removeEventListener?.('loadingdone', measure)
+      observer?.disconnect()
+    }
+  }, [measure, navStyle])
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)
@@ -381,9 +451,9 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
 
   const renderStats = () => (
     <>
-      <StatChip icon="fa-solid fa-fire" iconClassName="nav-flame" value={user.streak} suffix="d" color="var(--ink-3)" label="Racha de días" reduced={reduced} />
-      <StatChip icon="fa-solid fa-star" value={user.level} prefix="Nv. " color="var(--ink-2)" label="Nivel" reduced={reduced} progress={xpProgress} />
-      <StatChip icon="fa-solid fa-coins" value={user.coins} color="var(--coin)" label="Monedas Kor" reduced={reduced} />
+      <StatChip icon="fa-solid fa-fire" iconClassName="nav-flame" value={user.streak} suffix="d" color="var(--ink-3)" label="Racha de días" reduced={reduced} compact={fitLevel >= 1} />
+      <StatChip icon="fa-solid fa-star" value={user.level} prefix={fitLevel >= 1 ? '' : 'Nv. '} color="var(--ink-2)" label="Nivel" reduced={reduced} progress={xpProgress} compact={fitLevel >= 1} />
+      <StatChip icon="fa-solid fa-coins" value={user.coins} color="var(--coin)" label="Monedas Kor" reduced={reduced} compact={fitLevel >= 1} />
     </>
   )
 
@@ -409,7 +479,6 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
           </div>
         </div>
       </div>
-      {placement === 'below' && <div className="hidden items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 md:flex lg:hidden">{renderStats()}</div>}
       <div className="p-1.5">
         {PROFILE_ITEMS.map((item) => (
           <Link
@@ -459,7 +528,7 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
           className="flex cursor-pointer items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-[var(--paper)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ink)] xl:pr-3"
         >
           <Avatar src={avatarSrc} initials={initials} progress={xpProgress} />
-          <span className="nav-font hidden text-[14px] font-semibold text-[var(--text)] xl:inline">{user.username}</span>
+          <span className={`nav-font hidden text-[14px] font-semibold text-[var(--text)] ${fitLevel >= 1 ? '' : 'xl:inline'}`}>{user.username}</span>
           <i className={`nav-chevron fa-solid fa-chevron-down hidden text-[9px] text-[var(--text-muted)] xl:inline ${isProfileOpen ? 'rotate-180' : ''}`}></i>
         </button>
         {renderProfilePanel('below')}
@@ -482,18 +551,19 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
             to={item.to}
             end={item.to === '/'}
             ref={registerItem(item.to)}
+            title={fitLevel >= 2 ? item.label : undefined}
             onMouseEnter={() => setHoverKey(item.to)}
             onFocus={() => setHoverKey(item.to)}
             onBlur={() => setHoverKey(null)}
             className={({ isActive }) =>
-              `nav-link nav-font relative flex items-center gap-2 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
+              `nav-link nav-font relative flex shrink-0 items-center gap-2 whitespace-nowrap px-2.5 text-[14px] font-semibold xl:px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] ${
                 isIsland ? 'h-10 rounded-full' : 'h-14'
               } ${isActive ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`
             }
           >
             <i className={`${item.icon} text-[12px] opacity-80`}></i>
-            <span className="lg:hidden">{item.shortLabel}</span>
-            <span className="hidden lg:inline">{item.label}</span>
+            <span className={fitLevel >= 2 ? 'sr-only' : fitLevel === 1 ? '' : 'xl:hidden'}>{item.shortLabel}</span>
+            <span className={fitLevel >= 1 ? 'hidden' : 'hidden xl:inline'}>{item.label}</span>
           </NavLink>
         ))}
 
@@ -504,7 +574,7 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
             onClick={() => setIsMoreOpen((open) => !open)}
             aria-haspopup="true"
             aria-expanded={isMoreOpen}
-            className={`nav-link nav-font relative flex cursor-pointer items-center gap-1.5 px-3 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] lg:px-3.5 ${
+            className={`nav-link nav-font relative flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap px-2.5 text-[14px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ink)] xl:px-3.5 ${
               isIsland ? 'h-10 rounded-full' : 'h-14'
             } ${isMoreActive || isMoreOpen ? 'text-[var(--ink)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
           >
@@ -567,13 +637,13 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
       </div>
       <div className="relative">
         <WaveField className="pointer-events-none absolute inset-y-0 right-0 h-full w-[46%] opacity-40 [mask-image:linear-gradient(to_right,transparent,#000_40%)]" />
-        <div className="relative mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-6 lg:gap-8">
+        <div ref={rowRef} className="relative mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div ref={leftRef} className="flex min-w-0 items-center gap-6 lg:gap-8">
             <LogoMark />
             {navStyle !== 'sidebar' && renderDesktopLinks()}
           </div>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            {!isGuest && <div className="flex items-center gap-1.5 md:hidden lg:flex">{renderStats()}</div>}
+          <div ref={rightRef} className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {!isGuest && <div className="flex shrink-0 items-center gap-1.5">{renderStats()}</div>}
             {renderAccount()}
           </div>
         </div>
@@ -597,17 +667,22 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
   const renderIslandHeader = () => (
     <header className="note-home nav-shell pointer-events-none sticky top-0 z-40 px-3 pt-3 sm:px-5">
       <div
-        className={`nav-island pointer-events-auto mx-auto flex items-center justify-between gap-3 rounded-full border border-[var(--border)] bg-[color-mix(in_srgb,var(--bg-alt)_84%,transparent)] pl-3 pr-2 backdrop-blur-xl ${
-          isScrolled ? 'h-14 max-w-[1080px] shadow-[0_18px_40px_-22px_rgba(10,20,40,.55)]' : 'h-16 max-w-[1240px] shadow-[0_10px_30px_-24px_rgba(10,20,40,.4)]'
+        ref={rowRef}
+        data-island="true"
+        style={{ maxWidth: isScrolled ? Math.min(ISLAND_MAX, Math.max(ISLAND_SCROLLED_MIN, contentWidth + 48)) : ISLAND_MAX }}
+        className={`nav-island pointer-events-auto mx-auto flex items-center justify-between gap-3 rounded-full border border-[var(--border)] pl-3 pr-2 backdrop-blur-xl ${
+          isScrolled
+            ? 'h-14 bg-[color-mix(in_srgb,var(--bg-alt)_92%,transparent)] shadow-[0_18px_40px_-22px_rgba(10,20,40,.55)]'
+            : 'h-16 bg-[color-mix(in_srgb,var(--bg-alt)_84%,transparent)] shadow-[0_10px_30px_-24px_rgba(10,20,40,.4)]'
         }`}
       >
-        <div className="flex min-w-0 items-center gap-4 lg:gap-6">
+        <div ref={leftRef} className="flex min-w-0 items-center gap-4 lg:gap-6">
           <LogoMark />
           <span className="hidden h-6 w-px bg-[var(--border)] md:block" aria-hidden="true"></span>
           {renderDesktopLinks()}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {!isGuest && <div className="flex items-center gap-1.5 md:hidden lg:flex">{renderStats()}</div>}
+        <div ref={rightRef} className="flex shrink-0 items-center gap-2">
+          {!isGuest && <div className="flex shrink-0 items-center gap-1.5">{renderStats()}</div>}
           {renderAccount()}
         </div>
       </div>
@@ -717,7 +792,7 @@ export const Navbar: React.FC<NavbarProps> = ({ assets = [] }) => {
           aria-label="Navegación principal"
           className="fixed inset-x-0 bottom-0 z-[57] border-t border-[var(--rule)] bg-[color-mix(in_srgb,var(--bg-alt)_94%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
         >
-          <div className="relative grid h-16 grid-cols-3">
+          <div className="relative grid h-16" style={{ gridTemplateColumns: `repeat(${MAIN_ITEMS.length + 1}, minmax(0, 1fr))` }}>
             <span
               className="nav-tab-ind pointer-events-none absolute top-2 h-8 w-14 -translate-x-1/2 rounded-full bg-[color-mix(in_srgb,var(--ink)_14%,transparent)]"
               style={{ left: `${((tabIndex + 0.5) * 100) / (MAIN_ITEMS.length + 1)}%`, opacity: tabIndex >= 0 ? 1 : 0 }}
