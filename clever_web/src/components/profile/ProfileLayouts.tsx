@@ -5,6 +5,7 @@ import { DEFAULT_BANNER_A, DEFAULT_BANNER_B } from '../../data/profileCustomizat
 import { Microtext, Rosette, SmallRosette, WaveField } from '../note/NoteKit'
 import { AvatarFrame, ProfileBanner } from './ProfileVisuals'
 import { ModernBanner } from './ProfileBanners'
+import FitText from '../FitText'
 
 export interface AchievementItem {
   id: string
@@ -60,6 +61,8 @@ export const nameSizeClass = (name: string, size: 'xl' | 'lg' = 'xl') => {
   if (length > 16) return 'text-[30px] sm:text-[38px] lg:text-[42px]'
   return size === 'xl' ? 'text-[38px] sm:text-[52px]' : 'text-[34px] sm:text-[42px]'
 }
+
+export const hasLongWord = (text: string, limit = 12) => (text || '').split(/\s+/).some((word) => word.length > limit)
 
 export const getFolio = (username: string) => {
   let hash = 7
@@ -185,14 +188,14 @@ export const CredentialHero: React.FC<HeroProps> = (props) => {
         </div>
       </div>
 
-      <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
+      <div className="@container relative px-5 pb-6 sm:px-8 sm:pb-8">
         <div className="flex flex-col items-center gap-x-6 gap-y-4 sm:flex-row sm:flex-wrap sm:items-start">
           <div className="-mt-16 shrink-0 sm:-mt-[72px]">
             <Avatar props={props} size={140} />
           </div>
           <div className="min-w-0 flex-1 text-center sm:pt-5 sm:text-left">
             <div className="note-wide text-[10px] font-bold text-[var(--text-muted)]">TITULAR</div>
-            <h1 className={`note-display mt-1 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</h1>
+            <FitText as="h1" className={`note-display mt-1 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</FitText>
             <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[14px] text-[var(--text-muted)] sm:justify-start">
               <span className="font-semibold text-[var(--text)]">@{user.username}</span>
               <span className="h-1 w-1 rounded-full bg-[var(--text-dim)]"></span>
@@ -201,7 +204,7 @@ export const CredentialHero: React.FC<HeroProps> = (props) => {
               <span>Desde {memberSince(user.createdAt)}</span>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap justify-center gap-2 sm:basis-full sm:justify-start sm:pl-[164px] lg:basis-auto lg:pl-0 lg:pt-7">{actions}</div>
+          <div className={`flex shrink-0 flex-wrap justify-center gap-2 sm:basis-full sm:justify-start sm:pl-[164px] ${hasLongWord(displayName) ? '' : '@3xl:basis-auto @3xl:pl-0 @3xl:pt-7'}`}>{actions}</div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -435,12 +438,12 @@ export const OfficeHero: React.FC<HeroProps> = (props) => {
         </g>
       </svg>
 
-      <div className="relative flex flex-col gap-5 border-t border-[var(--rule)] px-5 py-5 sm:flex-row sm:items-center sm:px-8">
+      <div className="relative flex flex-col gap-5 border-t border-[var(--rule)] px-5 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:px-8">
         <div className="-mt-16 shrink-0 self-center sm:self-auto">
           <Avatar props={props} size={112} />
         </div>
         <div className="min-w-0 flex-1 text-center sm:text-left">
-          <h1 className={`note-display font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName, 'lg')}`}>{displayName}</h1>
+          <FitText as="h1" className={`note-display font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName, 'lg')}`}>{displayName}</FitText>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[14px] text-[var(--text-muted)] sm:justify-start">
             <span className="font-semibold text-[var(--text)]">@{user.username}</span>
             <span>{user.levelLabel}</span>
@@ -451,7 +454,7 @@ export const OfficeHero: React.FC<HeroProps> = (props) => {
             {user.bio && <p className="text-[15px] text-[var(--text)]">{user.bio}</p>}
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-center gap-2">{actions}</div>
+        <div className={`flex shrink-0 flex-wrap justify-center gap-2 ${hasLongWord(displayName) ? 'sm:basis-full sm:justify-start sm:pl-[132px]' : ''}`}>{actions}</div>
       </div>
     </section>
   )
@@ -499,11 +502,11 @@ export const CardHero: React.FC<HeroProps> = (props) => {
 
   return (
     <section
-      className="relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[var(--surface)] px-5 py-8 sm:px-10"
+      className="@container relative overflow-hidden rounded-[28px] border border-[var(--rule)] bg-[var(--surface)] px-5 py-8 sm:px-10"
       style={custom.glow ? { boxShadow: `0 30px 70px -40px ${rarity.colors[0]}` } : undefined}
     >
       <Rosette className="pointer-events-none absolute -left-40 -top-40 h-[520px] w-[520px] opacity-40" />
-      <div className="relative grid items-center gap-10 md:grid-cols-[auto_1fr]">
+      <div className="relative grid items-center gap-10 @2xl:grid-cols-[auto_1fr]">
         <div className="mx-auto" style={{ perspective: 900 }} onPointerMove={onMove} onPointerLeave={onLeave}>
           <div
             ref={cardRef}
@@ -552,22 +555,22 @@ export const CardHero: React.FC<HeroProps> = (props) => {
           </div>
         </div>
 
-        <div className="min-w-0 text-center md:text-left">
+        <div className="min-w-0 text-center @2xl:text-left">
           <div className="note-wide text-[10px] font-bold" style={{ color: rarity.colors[1] }}>
             CARTA {rarity.label.toUpperCase()} · #{folio}
           </div>
-          <h1 className={`note-display mt-2 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</h1>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[14px] text-[var(--text-muted)] md:justify-start">
+          <FitText as="h1" className={`note-display mt-2 font-black leading-[0.98] text-[var(--text)] [overflow-wrap:break-word] [text-wrap:balance] ${nameSizeClass(displayName)}`}>{displayName}</FitText>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[14px] text-[var(--text-muted)] @2xl:justify-start">
             <span className="font-semibold text-[var(--text)]">@{user.username}</span>
             <span>{user.levelLabel}</span>
             <span>Desde {memberSince(user.createdAt)}</span>
           </div>
-          <div className="mt-4 flex flex-col items-center gap-2 md:items-start">
+          <div className="mt-4 flex flex-col items-center gap-2 @2xl:items-start">
             {statusSlot}
             {user.bio && <p className="max-w-xl text-[15px] leading-relaxed text-[var(--text)]">{user.bio}</p>}
           </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-2 md:justify-start">{actions}</div>
-          <div className="mt-7 flex items-center justify-center gap-3 md:justify-start">
+          <div className="mt-6 flex flex-wrap justify-center gap-2 @2xl:justify-start">{actions}</div>
+          <div className="mt-7 flex items-center justify-center gap-3 @2xl:justify-start">
             <span className="note-wide text-[10px] font-bold text-[var(--text-muted)]">VITRINA</span>
             <PinnedStamps pinned={pinned} />
           </div>

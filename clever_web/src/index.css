@@ -339,6 +339,8 @@
 @layer base {
   * {
     box-sizing: border-box;
+    -webkit-hyphens: manual;
+    hyphens: manual;
   }
   body {
     font-family: var(--font-body);
@@ -485,4 +487,4 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
-}
+}
